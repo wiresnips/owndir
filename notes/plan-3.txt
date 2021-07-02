@@ -1,0 +1,213 @@
+
+
+for scheduling?
+	https://github.com/breejs/bree
+
+
+
+=============
+
+
+
+
+
+
+
+
+this is starting to come together, but I'm not convinced that it's all the way there ....
+
+
+I know that I'm going to use JSX as my templating, that was a good pickup
+
+I know that I'm going to evaluate a blob of javascript, and take it's `exports` as a value 
+
+
+
+
+
+
+
+
+
+
+Let's think about context/environment
+
+	If we say that each 'central' receives a _context_ from above, and _returns_ a context which is passed down, that gets me somewhere ...
+
+	I can define things almost as middleware ....
+
+
+
+
+
+So, let's say that our context is a map, with arbitrary keys
+	
+	{
+		html: (context) => (),
+	}
+
+
+
+Now, we start at the root directory, and we execute .central with an empty map as input
+
+	then, for each child, we take the result of that and execute the child's .central with the paren't output
+
+
+
+
+
+
+
+
+Okay, but what happens with the result of that recursive build?
+I've moved through my directory, and I've got an object (of some sort) for each path that I care about
+
+
+NOW I want to SERVE the damned thing, right?
+
+
+
+
+
+So, I need to take that list of paths (ie, the directories that had a .central in them), and create a ROUTE using the object 
+	well, the stupidest possible thing would be if the context just contained a bunch of handlers, right?
+
+
+	// an example of how to locate a router at a path: https://gist.github.com/zcaceres/f38b208a492e4dcd45f487638eff716c
+	const express = require('express')
+
+	function contextRouter (app, context) {
+
+		const router = express.Router();
+
+
+		// if there are no explicit routes, convert the thing we DO have into some ...
+		// there's surely a graceful way to uplift whatever degenerate thing is the default, after all
+		// not literally this, but something like it ...
+		if (!_.has(context, '.routes')) {
+			context = { ['.routes']: {['/']: { get: context } } }
+		}
+
+
+		_.toPairs(context['.routes']).forEach(([path, handlers]) => {
+
+			// if it's just a function, make it a get handler
+			if (_.isFunction(handlers)) {
+				handlers = {
+					get: handlers
+				}
+			}
+
+			// any handlers we have, add to the router
+			const {get, put, post, patch, delete} = handlers
+			get && router.get(path, get)
+			put && router.put(path, put)
+			post && router.post(path, post)
+			patch && router.patch(path, patch)
+			delete && router.delete(path, delete)
+		})
+
+		return router
+	}
+
+
+
+Okay, that's about the right flavour of stupid
+
+
+Then, the missing sauce would be, how do I quietly do the right thing with some simpler examples?
+	this is a whole-ass web app, which isn't really what I'm looking for in a TYPICAL case
+
+
+
+
+
+
+
+Okay, so what's a typical case, really?
+
+
+	Well, I've got this notion that the context is the basis for templating, right?
+	Like, I can call 
+
+		context.html(context)
+
+	and it'll render out a web page
+		- most values having been established further out, and child pages subbing in just the bits that they need
+
+
+
+	so, in order to convert that to a route-handler, I would want something like this:
+
+		{['.routes']: {
+			['/']: {
+				get: (req, res) => res.send(context.html(context))
+			}
+		}}
+
+
+
+
+
+
+
+
+I want to think a little more about this. Let's think about MARKDOWN, which is a pretty basic usecase, right?
+
+
+	So, for a folder expected to contain one or more markdown files, I might have something like this:
+
+
+		// https://github.com/markdown-it/markdown-it
+		const renderMarkdown = (new (require('markdown-it'))()).render
+
+		export function articles (context) {
+
+			// this needs finangling around how exactly I'll get the files, 
+			// but I'm thinking that I provide a map with some metadata, and a *function* that will pull the body
+			// RETHINK THIS SPEC LATER ON
+
+			return = context['.dir'].files
+						.sort((a, b) => a.path.localeCompare(b.path)) // https://stackoverflow.com/questions/51165/how-to-sort-strings-in-javascript
+						.filter(({path}) => path.endsWith('.md'))
+						.map(({read}) => read()) 					  // NOT FINAL INTERFACE
+						.map(renderMarkdown)
+		}
+
+
+	And put that in a context where the root is going to expect `articles` to exist when it calls `html(context)`
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Okay, so with that in place, what do I still need?
+
+
+	- I need to specify some parts of the context object
+		- what datastructures will I INJECT, to be consumed by the .central customizations?
+		- what values will I INTERPRET, that should be RETURNED by the .central customizations?
+
+
+	- I need to somehow bridge the gap between my router-specification and whatever-my-output-is
+		- some kind of specifiable middleware?
+
+
+	- I need to think about how to do vertical features like search
+		- perhaps, just allowing the top-level to see into their children is enough?
+
+
+	- open questions:
+		- realtime vs cached?
+		- built-in scheduler?
+		- how to access static files?
+		- middleware plugins?

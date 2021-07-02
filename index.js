@@ -1,18 +1,21 @@
+const _ = require('lodash')
+const fs = require('fs')
+const pathUtil = require("path")
+
+
+const dirmap = require('./dirmap.js')
+const compile = require('./compile.js')
 
 
 
 
-var argparser = require("argparse").ArgumentParser({
-	description: "Coming soon to a knowing-what-the-fuck-this-is near you!"
-})
-
-argparser.addArgument("dir", {
-	type: "string"
-})
+console.log(
+compile('/home/ben/projects/central/example/.central/index.js')
+)
 
 
 
-var args = argparser.parseArgs()
 
-console.log(args)
+
+
 
