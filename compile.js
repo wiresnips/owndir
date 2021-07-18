@@ -47,7 +47,18 @@ module.exports = function compile (path) {
 
 		const rawCode = fs.readFileSync(path, 'utf8')
 		const code = babel.transformSync(rawCode, babelOpts).code
-		return requireFromString(code, path)
+		try {
+			return requireFromString(code, path)
+		}
+		catch (exception) {
+			return {
+				['.error']: {
+					rawCode,
+					code,
+					exception
+				}
+			}
+		}
 	}
 	catch (error) {
 

@@ -211,3 +211,191 @@ Okay, so with that in place, what do I still need?
 		- built-in scheduler?
 		- how to access static files?
 		- middleware plugins?
+
+
+
+
+
+
+
+
+I've lost a thread with the jump to expecting routers
+	
+	before, I expected to call a function that would cough out some html
+	and I was going to pass in a loosely-defined "context" 
+
+
+
+I've also missed a beat in the notion of the modules ... 
+How exactly am I expecting the overloads to happen if I'm just treating them as maps?
+
+	Yeah, this is a BIG issue with my approach
+
+
+
+
+
+Hang on, these two are actually the answer to each other
+
+	Modules are closures (at least, they sure look like closures)
+	I can override values of module.export, but inside the module, that's not what's being used as a lookup table
+
+	For example, I built this simple test rig without thinking too hard about what was going on:
+
+
+		const reqStr = require('require-from-string')
+
+		let m1 = reqStr(`module.exports = {
+				f: () => 'calling g(): ' + g(),
+				g: () => 'base'
+			}
+		`)
+
+		let m2 = reqStr(`
+			module.exports = {
+				g: () => 'overload'
+			}
+		`)
+
+		m1.f()
+
+
+	and it IMMEDIATELY failed, because in m1, g IS NOT ACTUALLY DEFINED
+		because obviously, because that's how it's ALWAYS WORKED
+
+
+	What this means is, I can't naively merge modules into each other and expect them to override each other's functions 
+
+
+So, if I want a module to have overridable 'slots', I need to explicitly ask some kind of context to give them to me
+
+	
+	export function html (context) {
+
+
+		// oooh, I kinda like this
+		const {directory, routes} = context['.central']
+
+
+
+		const { headItems, sidebarItems, main } = context
+		// const { headItems, sidebarItems, main } = context.central
+		// const { headItems, sidebarItems, main } = context['.central']
+
+
+		return <>
+			<head>
+				<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌐</text></svg>">
+				
+				<!-- also need to think about _accumulating_ values -->
+				{ headItems }
+			</head>
+
+			<body>
+
+				<header />
+
+				<sidebar comment="assume this component has been defined elsewhere">
+					{sidebarItems}
+				</sidebar>
+
+				<nav />
+
+				<main />
+
+			</body>
+		</>
+	}
+
+
+
+Okay, that's not insane - so the merged module will BE the context ... 
+	How do I map that back into the router?
+
+
+
+
+Well, let's have a look at taking apart the request
+There was a notion that we could just use nested routers, but that doesn't really jibe with symlinks bullshit ... 
+
+
+
+
+app.all('*', (req, res) => {
+
+
+	
+	
+})
+
+
+
+
+====================================================
+
+
+It looks like there's no way to remove routes after the app's started, 
+and no way to add routes anywhere but the end (which means I can't use the default route to inject new routes higher in the priority list)
+
+	https://github.com/expressjs/express/issues/2596
+
+
+https://stackoverflow.com/questions/31632763/how-does-express-know-which-router-path-to-use-when-multiple-paths-match
+
+	It seems like I could make the FIRST route
+
+		app.all('*' (req, res, next) => { ... })
+
+	and then use that to create new, matching routes on the fly,
+	which will go lower in the stack,
+	and then call 'next' on them to let them fall down into the new route ...
+
+	This isn't that far from just building my own router, though ...
+
+	Like, at some point I should EITHER do that, OR abandon loops altogether
+
+
+
+
+So, what if I go in for static generation, then?
+	- drop out of loops
+	- allow multiple paths to the "same place"
+	- aggregate modules at build time
+
+
+
+--------
+
+
+wait, shit
+
+	a router is just a function, you can call it:
+
+		app.all('*', (req, res, next) => {
+			yourFancyRouter(req, res, next)
+		}	
+
+	
+
+	Okay, that's a reasonable answer to the first half of my dynamic routing problem
+
+	if I want middleware to cascade correctly 
+		(I'm assuming that I'll figure out how to incorporate middleware at some point)
+
+	then it'd be convenient to actually have the routers `use` each other
+
+	Presumably, then, I can cascade this all the way down? Yeah, that sounds about right ....
+
+
+
+
+
+
+
+
+Okay, let's think about MIDDLEWARE
+
+
+	Keeping in mind that middleware is really just more routes
+
+
