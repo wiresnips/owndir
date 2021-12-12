@@ -1,0 +1,58 @@
+
+
+Plugins
+
+	how do they work?
+		function takes and returns a module, stack that shit like middleware
+
+		Have to be careful to return the SAME object, otherwise we could break the prototype chain
+
+			Or, maybe just don't use the return value, to be safe
+
+
+	how are they INCORPORATED ?
+
+		- need to relate them to the build
+
+		- need to require and run them in `index.js`
+
+
+
+
+Client-side code
+
+	how the fuck do I want to do THIS?
+
+	Seems like the kinda thing that ought to live in a plugin, but it'll need support from Build
+
+
+
+Build Plugins
+
+	I want to be able to write modules in clojurescript. 
+
+	Some other jerks probably want to do it in typescript or whatever.
+
+	Bring-your-own-compiler seems necessary
+
+
+
+
+
+Remote Access
+
+	Actually, I think that we don't _need_ remote access 
+		just run this out of a dropbox folder and put up a local server
+
+		Or a fuckin' git repo, who cares
+
+		Point is, I don't have to fuck around with making ONE server public, I can just use existing filesync tools for distribution
+
+
+
+
+
+
+
+
+

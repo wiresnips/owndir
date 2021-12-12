@@ -108,10 +108,3 @@ Directory Structure:
 		text: async (encoding?) => "file body, as text"
 
 	}
-
-
-Request Structure (extending an expressjs request):
-
-{
-	context : { /* the module that this  */ }
-}

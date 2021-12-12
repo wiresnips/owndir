@@ -1,7 +1,5 @@
 
-import {fbutts} from './lib/fbutts.jsx'
 
-module.exports = {
-	butts: 'lol, butts',
-	fbutts
+module.exports = function (context) {
+	context.butts = 'lol, butts'
 }

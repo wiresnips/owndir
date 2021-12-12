@@ -7,7 +7,6 @@ const path = require('path')
 var self;
 try {
   self = require('./central.js')
-  // console.log('SELF', __dirname,  self)
 } catch (error) {
   if (error.code !== "MODULE_NOT_FOUND") {
     console.log('Error loading', __dirname)
@@ -28,13 +27,9 @@ if (!self['.central']) {
 
 self['.central'].children = {}
 fs.readdirSync(__dirname).forEach(name => {
-  try {
-    const childModule = path.resolve(__dirname, name, 'index.js')
-    if (fs.existsSync(childModule)) {
-      self['.central'].children[name] = require(childModule)
-    }
-  } catch (err) {
-    console.error(err)
+  const childModule = path.resolve(__dirname, name, 'index.js')
+  if (fs.existsSync(childModule)) {
+    self['.central'].children[name] = require(childModule)
   }
 })
 
@@ -52,3 +47,4 @@ try {
 
 
 Object.assign(module.exports, self);
+
