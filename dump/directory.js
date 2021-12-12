@@ -68,6 +68,56 @@ function map (path, parentCentral, visited) {
 
 
 
+// alright, what I'm doing HERE is, I'm taking an already-transformed, already compiled, central 
+// and contructing a router that respects it
+
+
+const Router = require('express').Router
+const methods = require('methods')
+
+function router (directory) {
+	const { children } = directory.children
+	let { middleware, routes } = directory.central['.central'] || {}
+
+	const router = Router()
+
+	// normalize middleware a little
+	middleware = _.isArray(middleware) ? middleware : _.isFunction(middleware) ? [middleware] : []
+
+	// and right at the front, make sure that our current context is available in the request
+	middleware.unshift((req, res, next) => {
+		req.context = directory;
+		next()
+	})
+
+	middleware.forEach(mwareFn => router.use(mwareFn))
+
+	_.toPairs(children).forEach(([key, child]) => {
+		if (child.router)
+			router.use(`/${key}`, child.router)
+	})
+
+	addRoutes(router, routes)
+	return router
+}
+
+function addRoutes (router, routes) {
+	const paths = Object.keys(routes || {})
+
+	paths.forEach(path => {
+		const handlers = routes[path]
+
+		methods.forEach(method => {
+			const handler = handlers[method]
+			if (handler) {
+				router[method](path, handler)
+			}
+		})
+	})
+}
+
+
+
 
 
 function refreshPath (dir, path) {
@@ -104,63 +154,7 @@ function _refreshPath (parent, visited, [step, ...pathSegments]) {
 
 
 
-/*
 
-	there's some considerations in how EXACTLY the router should work
-
-		1- how should middleware be specified?
-			an export from the module is ... SORT OF an answer, but it's not great
-
-		2- how should it interact with the directory tree?
-			I kinda want both, right?
-
-			['.central'].middleware 
-				PRE routes (ie, routes that have higher priority than child routes)
-				expecting this to be used for middleware that `next`s out instead of returning  
-		
-			['.central'].routes
-				POST routes (ie, routes have)
-				expecting this to be used for default routes, that children can override
-//*/
-
-
-// alright, what I'm doing HERE is, I'm taking an already-transformed, already compiled, central 
-// and contructing a router that respects it
-
-
-const Router = require('express').Router
-const methods = require('methods')
-
-function router (directory) {
-	const { children } = directory.children
-	const { middleware, routes } = directory.central['.central'] || {}
-
-	const router = Router()
-	addRoutes(router, middleware)
-
-	_.toPairs(children).forEach(([key, child]) => {
-		if (child.router)
-			router.use(`/${key}`, child.router)
-	})
-
-	addRoutes(router, routes)
-	return router
-}
-
-function addRoutes (router, routes) {
-	const paths = Object.keys(routes)
-
-	paths.forEach(path => {
-		const handlers = routes[path]
-
-		methods.forEach(method => {
-			const handler = handlers[method]
-			if (handler) {
-				router[method](path, handler)
-			}
-		})
-	})
-}
 
 
 
@@ -170,38 +164,5 @@ module.exports = {
 	map, 
 	refreshPath
 }
-
-
-
-
-
-
-
-
-/*
-
-function get (dir, path) {
-	if (!dir.path.startsWith(path)) {
-		return null
-	}
-
-	const pathSegments = path.slice(dir.path.length).split(pathUtil.sep).filter(segment => !_.isEmpty(segment))
-	return _get(dir, pathSegments)
-}
-
-function _get (dir, pathSegments) {
-	if (_.isEmpty(pathSegments))
-		return dir 
-
-	const head = pathSegments[0]
-	const child = dir.children[head]
-
-	if (!child || child.isFile)
-		return dir
-
-	return _.get(child, pathSegments.slice(1))
-}
-
-*/
 
 

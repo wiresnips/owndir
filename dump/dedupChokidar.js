@@ -3,7 +3,8 @@ function dedupCkd (minWait, maxWait, handler) {
 	// okay, a new event comes in
 
 	// we're going to wait at LEAST minWait ms, and at MOST maxWait ms
-	// and aggregate paths, until we find the
+	// and aggregate paths, until we find the deepest common root
+
 
 	function timeouts (path, ...args) {
 		function trigger () {
@@ -18,13 +19,12 @@ function dedupCkd (minWait, maxWait, handler) {
 			
 			touch: () => {
 				clearTimeout(timeouts.min)
-				timeouts.min = setTimeout
+				timeouts.min = setTimeout(trigger, minWait)
 			}
 			clear: () => {
 				clearTimeout(timeouts.min)
 				clearTimeout(timeouts.max)
 			},
-
 		}
 		return timeouts
 	}

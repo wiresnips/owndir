@@ -1,0 +1,117 @@
+
+
+
+Let's just keep track of specific calls that we've made so far
+
+
+Build:
+	- central.js is the build target
+	- index.js is used to tie modules together
+	- each module is built into a parallel temp directory tree, with .central folders collapsed down into their parents
+		- ie, ~/example/foo/.central/index.js will become /tmp/tmp-123/example/foo/central.js
+
+
+Module Structure: 
+
+	{
+		// this is where I'm going to keep all of *my* keys
+		'.central': {
+
+			children: {
+
+				// child modules (not including .central folders)
+				'<directory-name>': {
+					/* the child module */
+				},
+			}, 
+
+			parent: {
+				/* the parent module (if not root) */
+			},
+
+			directory: {
+				/* the DIRECTORY node */
+			}
+
+			// ROUTING
+			// routes are given in the following structure:
+			//		an ordered list of pairs, 
+			// 			first element (key) is the route path - see https://expressjs.com/en/guide/routing.html#route-paths
+			//			second element (value) is ALSO an ordered list of pairs,
+			//				key is the METHOD - see https://expressjs.com/en/5x/api.html#routing-methods
+			//				value is the handler - (req, res, next) => { /* request handler */ }
+
+			// there are TWO keys to establish routes - `middleware` and `routes`
+			// the only difference between these is priority, and _intended_ meaning
+			//		- middleware is applied BEFORE child routes
+			// 		- routes are applied AFTER child routes
+
+			middleware: [
+				['*', [
+					['<method (usually "all")>', (req, res, next) => { 
+						/* middleware handler */ 
+						next();
+					}],
+				]],
+			],
+
+			routes: [
+				['/any/given/path', [
+					['<method>': (req, res, next) => { 
+						/* route handler */ 
+					}],
+				]],
+			],
+
+
+
+		}
+	}
+
+Directory Structure: 
+
+	{
+		name: 'the name of the file or dir',
+		path: '/the/absolute/path/to/the/file/or/dir',
+		absolutePath: '/the/absolute/path/to/the/file/or/dir', // synonym to 'path'
+		relativePath: 'path/to/the/node/from/the/root',
+
+		root: {
+			/* the root node (of the central server), not the filesystem */
+		},
+
+		parent: {
+			/* the parent node, if any */
+		},
+
+		children: {
+			/* if a directory, any child nodes keyed by name */
+		}
+
+		// basically a dump of the stat object
+		isFile: true/false,
+		isDirectory: true/false,
+		isSymbolicLink: true/false,
+
+		// https://nodejs.org/api/fs.html#stat-time-values
+		atime: number, // access time
+		mtime: number, // modify time
+		ctime: number, // change time
+
+		// if a file, the size
+		// if a directory, the aggregate size of the contents
+		size: 9001,
+
+		// a shortcut to fs/promises open function, preloaded with the absolute path
+		open: async (...args) => filehandle,
+
+		text: async (encoding?) => "file body, as text"
+
+	}
+
+
+Request Structure (extending an expressjs request):
+
+{
+	context : { /* the module that this  */ }
+}

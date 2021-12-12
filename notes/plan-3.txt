@@ -151,7 +151,6 @@ Okay, so what's a typical case, really?
 
 
 
-
 I want to think a little more about this. Let's think about MARKDOWN, which is a pretty basic usecase, right?
 
 
@@ -389,13 +388,24 @@ wait, shit
 
 
 
-
-
-
-
 Okay, let's think about MIDDLEWARE
-
 
 	Keeping in mind that middleware is really just more routes
 
+	Well, I definitely need pre- and post- routes
+		Ie, routes that go ahead of the children in the stack, and routes that go after
 
+
+
+
+
+
+=======================================================
+
+
+
+No, I need to think about the linkage between the routes and the HTML.
+
+	I started looking at middleware, and compiling modules, and there's a whole THING down that rabbithole,
+
+	but what I _really_ need is to understand how I'm going to decide what to return when my route gets called
