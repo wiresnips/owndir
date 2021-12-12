@@ -323,8 +323,6 @@ Hmmm
 		---------
 
 
-	So, what are my options?
+	So, if I want to run child code, I have to run it FROM THE CHILD
 
-		Well, I could work out some kind of conventional around prototypical inheritance, right?
-
-		
+		The child has the parent in it's prototype chain, but the handler has to be on IT's router if I want IT's code to be used in the rendering

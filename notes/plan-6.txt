@@ -1,0 +1,19 @@
+Alright, let's think about PLUGINS
+
+
+First thought, plugins are functions that transform modules
+
+
+	function plugin (_module) {
+		// this isn't how middleware works (yet), but you get the idea
+		_module['.central'].middleware.push((req) => {
+
+		})
+
+		return _module
+	}
+
+
+Which certainly seems like it would be powerful enough
+
+
