@@ -4,12 +4,20 @@ tmp.setGracefulCleanup();
 
 const fs = require('fs')
 const { resolve } = require('path')
+const esbuild = require('esbuild')
+const { NodeModulesPolyfillPlugin } = require('@esbuild-plugins/node-modules-polyfill')
+
 
 var args = (require('yargs/yargs')(process.argv.slice(2))
   .option('p', {
     alias: 'port',
     default: 0,
     type: 'integer'
+  })
+  .option('noclean', {
+    alias: 'nc',
+    default: false,
+    type: 'boolean'
   })
   .argv);
 
@@ -34,27 +42,57 @@ const directory = require('./directory.js')
 const router = require('./router.js')
 
 // need a path to introduce difference build functions
-const esbuild = require('./buildFn_esbuild.js')
-const buildFns = [esbuild]
+const esbuildFn = require('../libs/builders/esbuild.js')
+const buildFns = [esbuildFn]
 
 const express = require('express')
 
 
 
-tmp.dir({unsafeCleanup: true, prefix: 'central-'}, async (tmpErr, buildDir) => {
+
+tmp.dir({unsafeCleanup: !args.noclean, prefix: 'central'}, async (tmpErr, buildDir) => {
 
   await build(buildFns, args.path, buildDir)
+  const builtPath = resolve(buildDir, '.central', 'index.js')
+  console.log("built to", builtPath)
 
-  const centralRoot = require(resolve(buildDir, 'index.js'))
-
+  const centralRoot = require(builtPath)
   console.log('built central', centralRoot)
-
 
   const dir = await directory.map(args.path)
   directory.inject(dir, centralRoot)
 
+
+
+  // shit, this seems to be actually working
+  // okay, we need to figure out how to actually incorporate it, then
+  // and then, we also need to 
+
+  const browserRepack = await esbuild.build({
+    platform: 'browser',
+    entryPoints: [builtPath],
+    bundle: true,
+    minify: false,
+    write: false,
+    plugins: [NodeModulesPolyfillPlugin()]
+  }).then(result => {
+    result.errors.forEach(error => console.error(error))
+    result.warnings.forEach(warning => console.warn(warning))
+    return result.outputFiles
+  })
+
+
+
+
+
   const app = express()
   app.use(router(centralRoot))
+
+  const appConfig = centralRoot['.central'].app;
+  if (!_.isEmpty(appConfig)) {
+    _.toPairs(appConfig.engine || {}).forEach(([ext, engine]) => app.engine(ext, engine))
+    _.toPairs(appConfig.set || {}).forEach(([key, val]) => app.set(key, val))
+  }
 
   const server = app.listen(args.port, () => {
     console.log(`listening at ${JSON.stringify(server.address(), null, 2)}`)
@@ -63,7 +101,4 @@ tmp.dir({unsafeCleanup: true, prefix: 'central-'}, async (tmpErr, buildDir) => {
   // tmp isn't actually handling sigint, see: https://github.com/raszi/node-tmp/issues/233
   process.on('SIGINT', () => server.close());
 })
-
-
-
 

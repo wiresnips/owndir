@@ -1,0 +1,40 @@
+
+
+Okay - I've redone the way build works, to generate bespoke index.js files that don't rely on `fs` and `path`
+
+	let's see if we can actually build out a browser version now ...
+
+	Okay, that's closer
+		I still need to get past the external libraries thing, though - that _might_ need to be an esbuild plugin
+		
+		or, maybe I can use the analyzer (?) https://esbuild.github.io/api/#metafile
+			to construct a list of things that need to be marked "external"
+
+		oh shit, or maybe I can even shim them in!
+
+			@esbuild-plugins/node-modules-polyfill
+
+				TODO: audit this lib, it's a good place for sneaky shit
+
+
+
+
+Then, we need to think about *directory*
+
+	directory structure is generated separately from BUILD, injected afterwards
+
+	So, if I'm gonna do something similar for the browser, what does that look like?
+		- need to translate the api into a browser-friendly variant (FileReader looks like a candidate?)
+		- need to slam _another_ shim layer in front, 
+			`client.js`, that looks something like this:
+
+				```
+				const central = require('./central')
+				const Dir = require('./directory') // dammit, now I have to go build this
+				const directory = Dir.map('/hardcoded/path/because/this/is/generated/code')
+				Dir.inject(central, directory)
+				module.exports = central;
+				```
+
+	this is also going to need some kind of server-side support for, eg, file streaming
+

@@ -1,0 +1,12 @@
+{
+  "name": "central-plugin-react",
+  "version": "0.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {},
+  "author": "Ben Ells",
+  "license": "",
+  "dependencies": {
+    "lodash": "^4.17.21"
+  }
+}

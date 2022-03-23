@@ -1,17 +1,21 @@
 {
-  "name": "central",
+  "name": "central-server",
   "version": "0.0.0",
   "description": "",
   "main": "server.js",
   "scripts": {
-    "example": "node --trace-warnings src/index.js -p 3232 example/"
+    "test": "node src/index.js -p 3232 --noclean ./example",
+    "cleanup": "rm -R /tmp/central-* ; exit 0"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "Ben Ells",
+  "license": "",
   "dependencies": {
+    "@esbuild-plugins/node-modules-polyfill": "^0.1.4",
     "esbuild": "^0.13.8",
+    "esbuild-plugin-fileloc": "0.0.6",
     "express": "^4.17.1",
     "lodash": "^4.17.21",
+    "mmmagic": "^0.5.3",
     "tmp": "^0.2.1",
     "yargs": "^17.0.1"
   }

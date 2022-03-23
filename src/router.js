@@ -2,14 +2,12 @@ const _ = require('lodash')
 const Router = require('express').Router
 
 function makeRouter (context) {
-	
 	const router = Router()
-	const {routes, children, middleware} = context['.central'];
+	const {routes, children, middleware, directory} = context['.central'];
 
 	// this is a good candidate for a middleware plugin
 	router.use((req, res, next) => {
-		const directory = context['.central'].directory
-		const target = directory.children && directory.children[req.path.slice(1)]
+		const target = context['.central']?.directory?.children?.[req.path.slice(1)]
 		if (target && target.isFile) {
 			req.file = target
 		}
@@ -25,6 +23,11 @@ function makeRouter (context) {
 
 	applyRoutes(context, router, routes)
 
+	// if we are directly targetting a file, pass through to IT'S router last
+	_.toPairs(directory || {}).filter(([key, node]) => node.isFile).forEach(([key, node]) => {
+		router.use(`/${key}`, fileRouter(node))
+	})
+
 	return router
 }
 
@@ -39,5 +42,44 @@ function applyRoutes (context, router, routes) {
 		})	
 	}
 }
+
+
+// create an express router that allows a file to be interacted with
+function fileRouter (node) {
+  if (!node.isFile) {
+    return null;
+  }
+  const router = Router();
+
+  router.get('/', (req, res, next) => {
+    if (node.mime?.contentType) {
+      response.setHeader('Content-Type', node.mime?.contentType)
+    }
+    fs.createReadStream(node.path).pipe(response)
+  })
+
+  router.delete('/', (req, res, next) => {
+    // lol. Let's set off every red flag that I have, all at once, shall we?
+  })
+
+  router.put('/', (req, res, next) => {
+    // use fs to replace the content of the file
+    // maybe check stat.mode first, to make sure the file isn't executable
+  })
+
+  router.patch('/', (req, res, next) => {
+    // this seems like a neat idea, not sure how to actually DO it ...
+  })
+
+  router.post('/', (req, res, next) => {
+    // maybe a away to _append_ ?
+  })
+
+  return router;
+}
+
+
+
+
 
 module.exports = makeRouter

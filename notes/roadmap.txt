@@ -1,4 +1,67 @@
 
+1. expose directory to client
+	- files can serve themselves as a stream
+	- router exposes files as directly as possible
+		GET 	- fetch the file
+		DELETE 	- ooof, yeah I want this to be possible
+		PUT 	- completely replace the file
+		POST 	- append to the end of the file (?) options 
+		PATCH	- oooh, now _this_ I like
+
+
+
+2. deliver code to client
+
+
+3. draft up a plugin that can handle react 
+	- provide a custom template engine that does something useful with jsx
+	- how the fuck am I going to handle view template directories?
+
+
+4. decide how plugins operate
+	- run a function?
+	- merge in attrs?
+		kinda like this now, actually ... 
+		makes it so I can't use a plugin to *wrap* a function, though ... 
+
+
+5. incorporate plugins into index.js
+
+
+6. dependency management should probably be centralized
+	right now, every central and plugin is a whole independant app
+	
+	they're going to duplicate react, aren't they?
+		is that going to work?
+
+		https://nodejs.org/api/modules.html#loading-from-node_modules-folders
+
+			> If the module identifier passed to require() is not a core module, and does not begin with '/', '../', or './', then Node.js starts at the directory of the current module, and adds /node_modules, and attempts to load the module from that location. Node.js will not append node_modules to a path already ending in node_modules.
+			>
+			> If it is not found there, then it moves to the parent directory, and so on, until the root of the file system is reached.
+
+	So, I can ... just not run the install locally, and then YES run the install at the top level, if I need to
+		which will at least keep the versions in line with each other
+
+		ooh, wait 
+			/foo/bar/.central will never actually find /foo/.central/node_modules
+			hmmm, that's a problem, unless I get clever with symlinks somehow(?)
+			
+
+	Now, let's notice that I'm _also_ currently building everything completely independently
+		ie, building the example, independently bundles react for the root, AND for markdown
+
+		might need to rethink the build system, then ... 
+			could be, I have to step away from individual builds
+
+
+
+
+
+
+
+
+
 
 Plugins
 
@@ -10,11 +73,15 @@ Plugins
 			Or, maybe just don't use the return value, to be safe
 
 
+
 	how are they INCORPORATED ?
 
 		- need to relate them to the build
 
 		- need to require and run them in `index.js`
+
+
+	
 
 
 

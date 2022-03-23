@@ -91,7 +91,7 @@ const withNonTempDir = (prefix, f) => {
     }
     return fsp.mkdtemp(pathUtil.resolve(os.tmpdir(), prefix || ''))
     .then((dir) => {
-      console.log(`rm -r ${dir}`)
+      // console.log(`rm -r ${dir}`)
       tempDir = `${dir}`;
       return f(dir)
     })
