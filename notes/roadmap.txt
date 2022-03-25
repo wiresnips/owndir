@@ -8,6 +8,8 @@
 		POST 	- append to the end of the file (?) options 
 		PATCH	- oooh, now _this_ I like
 
+		- maybe some way for .central to express limits on what can be done?
+			I think my default stance is "trust", though, right?
 
 
 2. deliver code to client

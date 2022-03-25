@@ -58,9 +58,10 @@ function fileRouter (node) {
     fs.createReadStream(node.path).pipe(response)
   })
 
-  router.delete('/', (req, res, next) => {
-    // lol. Let's set off every red flag that I have, all at once, shall we?
-  })
+
+  // lol. Let's set off every red flag that I have, all at once, shall we?
+
+  // okay, yeah - this is going to need to be more affirmative than "every file is fair game"
 
   router.put('/', (req, res, next) => {
     // use fs to replace the content of the file
@@ -73,6 +74,9 @@ function fileRouter (node) {
 
   router.post('/', (req, res, next) => {
     // maybe a away to _append_ ?
+  })
+
+  router.delete('/', (req, res, next) => {
   })
 
   return router;

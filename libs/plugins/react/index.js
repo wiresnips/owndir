@@ -65,8 +65,6 @@ module.exports = function (context) {
 
 					return origRender(templatePath, context, callback)
 				}
-
-
 				next();
 			}
 		]]
