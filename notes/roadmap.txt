@@ -1,4 +1,11 @@
 
+0. rejigger Build, for dependency management
+	- don't build each folder individually
+	- instead, 
+
+
+
+
 1. expose directory to client
 	- files can serve themselves as a stream
 	- router exposes files as directly as possible
@@ -11,6 +18,9 @@
 		- maybe some way for .central to express limits on what can be done?
 			I think my default stance is "trust", though, right?
 
+		Okay, reconsidering a little 
+			- I can build utilities that make it easy for any given .central to expose that functionality, 
+			- BUT, that's the way to expose files. Full stop.
 
 2. deliver code to client
 
@@ -21,10 +31,8 @@
 
 
 4. decide how plugins operate
-	- run a function?
-	- merge in attrs?
-		kinda like this now, actually ... 
-		makes it so I can't use a plugin to *wrap* a function, though ... 
+	- plugins are functions that take and return a module
+	- plugins are used by CALLING THEM DIRECTLY ON YOUR MODULE, YOURSELF
 
 
 5. incorporate plugins into index.js

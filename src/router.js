@@ -44,6 +44,9 @@ function applyRoutes (context, router, routes) {
 }
 
 
+
+
+
 // create an express router that allows a file to be interacted with
 function fileRouter (node) {
   if (!node.isFile) {
@@ -60,8 +63,10 @@ function fileRouter (node) {
 
 
   // lol. Let's set off every red flag that I have, all at once, shall we?
-
   // okay, yeah - this is going to need to be more affirmative than "every file is fair game"
+  // so, let's think about how an access permission might work?
+
+
 
   router.put('/', (req, res, next) => {
     // use fs to replace the content of the file
@@ -81,6 +86,7 @@ function fileRouter (node) {
 
   return router;
 }
+
 
 
 

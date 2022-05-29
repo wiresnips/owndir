@@ -40,6 +40,12 @@ async function build (buildFns, srcRoot, dstRoot, path) {
   }
 
 
+  
+  /*
+
+  // the plugin-handling code is no longer correct, because I'm moving to single-build instead of building each .central in isolation
+  // the upshot of this is, I can use regular-style dependency management 
+
   // okay, let's also build any plugins that are present
   const srcPlugins = resolve(src, '.central', 'plugins')
   const dstPlugins = resolve(dst, 'plugins')
@@ -57,6 +63,8 @@ async function build (buildFns, srcRoot, dstRoot, path) {
         }
     })
   )
+  */
+
 
   await (fsp.readdir(src)
     // .then(x => {console.log('child paths:', x); return x})
@@ -126,13 +134,21 @@ async function genIndexJs (dst, isRoot) {
   )
 
   const {loadSelf, loadParent, loadChildren, moduleExport} = INDEX_JS_FRAGMENTS
-  const index_js = `${loadSelf}
+  const index_js = `
+
+${loadSelf}
+
 ${!isRoot ? loadParent : ''}
+
 const children = [
   ${childPaths.map(path => JSON.stringify(path)).join(',\n  ')}
 ];
+
 ${loadChildren}
-${moduleExport}`;
+
+${moduleExport}
+
+`;
 
   return fsp.writeFile(resolve(dst, 'index.js'), index_js)
 }

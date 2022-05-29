@@ -100,12 +100,6 @@ Module Structure:
 				}
 			}
 
-			buildFns: [
-				function (src, dst) {
-
-				}
-			],
-
 		}
 	}
 

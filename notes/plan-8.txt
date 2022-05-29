@@ -1,0 +1,47 @@
+
+
+In order to solve the issue of DEPENDENCIES, I need to rejigger the way build works
+
+
+Instead of building each .central individually (which duplicated packages at every level), I need to just refer to the code DIRECTLY
+
+This way, I can build ONCE, instead of building each folder individually
+
+which means, I can let the existing build tools do all the dependency resolution that they do
+	- try not to include one copy of React _per folder_, mmkay?
+
+
+
+
+
+BUT
+
+	now, I also need to answer the question: how do I manage dependencies _at all_ ?
+
+	And, this is the part where I start to move closer to being a compiler again, which I am _not_ a fan of ...
+
+
+	Okay, so 
+		- each folder _is_ an individual program
+		- generate a package.json that imports each folder individually
+			- generate an index.js that requires the import
+		- or, if the .central is NOT a whole program with dependencies, just generate an index.js that requires the absolute path of the file
+		- and also any plugins (?)
+
+
+
+
+BUILD PLUGINS
+
+	are dead now. Can't do them anymore. 
+
+	if I'm not building each folder individually, then I absolutely CANNOT mix and match, eg, js in one place and ts in another
+	which, honestly, is a bit of a relief?
+	I've _never_ known how that was going to be approached, and now it's clear that it was stupid anyways ...
+
+
+	it's still *sort of* possible 
+		(ie, I could build the package as before if it's not pure js)
+		but that WILL dupe all dependencies, and it WILL be a nightmare to get it integrating with upstream code ...
+
+		and, a major part of the goal of this exercize is letting code integrate in an intuitive, implicit way

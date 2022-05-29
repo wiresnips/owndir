@@ -44,7 +44,7 @@ function pathIfFileExists (path) {
 
 
 
-module.exports = async function build (src, dst) {
+async function build (src, dst) {
     // console.log('esbuild starting', src)
 
     const entryPoint = await getEntryPoint(src)
@@ -78,6 +78,12 @@ module.exports = async function build (src, dst) {
         console.error(err);
         return false;
     })
+}
+
+
+module.exports = {
+    build, 
+    packages
 }
 
 

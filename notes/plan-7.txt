@@ -38,3 +38,15 @@ Then, we need to think about *directory*
 
 	this is also going to need some kind of server-side support for, eg, file streaming
 
+
+
+
+
+----------------------------------
+
+
+the fact that .central isn't heritable continues to be a problem
+
+But, what if we made a way that it _could_ be heritable?
+
+	_sigh_ I guess I need a way to propagate a .central, without necessarily propagating _all_ of it ...
