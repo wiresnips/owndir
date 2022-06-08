@@ -28,7 +28,7 @@ BUT
 		- or, if the .central is NOT a whole program with dependencies, just generate an index.js that requires the absolute path of the file
 		- and also any plugins (?)
 
-
+	This is going to require some mid-grade shenanigans. Seems like npm would really prefer NOT to be used programmatically...
 
 
 BUILD PLUGINS
@@ -44,4 +44,8 @@ BUILD PLUGINS
 		(ie, I could build the package as before if it's not pure js)
 		but that WILL dupe all dependencies, and it WILL be a nightmare to get it integrating with upstream code ...
 
-		and, a major part of the goal of this exercize is letting code integrate in an intuitive, implicit way
+		and, a major part of the goal of this exercise is letting code integrate in an intuitive, implicit way
+
+
+
+

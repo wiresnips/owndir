@@ -1,3 +1,8 @@
-export const butts = 'lol butts 2'
+const butts = 'lol butts 2'
 
-export const dongs = 'haha dongs'
+const dongs = 'haha dongs'
+
+module.exports = {
+	butts,
+	dongs
+}

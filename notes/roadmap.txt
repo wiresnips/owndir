@@ -1,12 +1,21 @@
 
-0. rejigger Build, for dependency management
-	- don't build each folder individually
-	- instead, 
+0. deliver code to client
+	let's just ignore directory for a hot minute, and focus on delivering ANY working code to the client 
+		- build index.js for the client
+			- SOME fucking how, deliver the client output
+			- watch it do literally _anything_ in the browser
+			- watch it do JSX stuff in the browser
 
 
+1. re-merge build.js and directory.js
+
+	this should make it a _lot_ easier to build code in a sane way,
+	and also to build different code for client vs server ...
+
+	need to re-examine the relationship between ['.central'] and ['.central'].directory
 
 
-1. expose directory to client
+2. expose directory to client
 	- files can serve themselves as a stream
 	- router exposes files as directly as possible
 		GET 	- fetch the file
@@ -22,8 +31,6 @@
 			- I can build utilities that make it easy for any given .central to expose that functionality, 
 			- BUT, that's the way to expose files. Full stop.
 
-2. deliver code to client
-
 
 3. draft up a plugin that can handle react 
 	- provide a custom template engine that does something useful with jsx
@@ -35,34 +42,9 @@
 	- plugins are used by CALLING THEM DIRECTLY ON YOUR MODULE, YOURSELF
 
 
-5. incorporate plugins into index.js
+5. incorporate plugins into BUILD
 
 
-6. dependency management should probably be centralized
-	right now, every central and plugin is a whole independant app
-	
-	they're going to duplicate react, aren't they?
-		is that going to work?
-
-		https://nodejs.org/api/modules.html#loading-from-node_modules-folders
-
-			> If the module identifier passed to require() is not a core module, and does not begin with '/', '../', or './', then Node.js starts at the directory of the current module, and adds /node_modules, and attempts to load the module from that location. Node.js will not append node_modules to a path already ending in node_modules.
-			>
-			> If it is not found there, then it moves to the parent directory, and so on, until the root of the file system is reached.
-
-	So, I can ... just not run the install locally, and then YES run the install at the top level, if I need to
-		which will at least keep the versions in line with each other
-
-		ooh, wait 
-			/foo/bar/.central will never actually find /foo/.central/node_modules
-			hmmm, that's a problem, unless I get clever with symlinks somehow(?)
-			
-
-	Now, let's notice that I'm _also_ currently building everything completely independently
-		ie, building the example, independently bundles react for the root, AND for markdown
-
-		might need to rethink the build system, then ... 
-			could be, I have to step away from individual builds
 
 
 
@@ -104,17 +86,6 @@ Client-side code
 
 
 
-Build Plugins
-
-	I want to be able to write modules in clojurescript. 
-
-	Some other jerks probably want to do it in typescript or whatever.
-
-	Bring-your-own-compiler seems necessary
-
-
-
-
 
 Remote Access
 
@@ -124,12 +95,6 @@ Remote Access
 		Or a fuckin' git repo, who cares
 
 		Point is, I don't have to fuck around with making ONE server public, I can just use existing filesync tools for distribution
-
-
-
-
-
-
 
 
 

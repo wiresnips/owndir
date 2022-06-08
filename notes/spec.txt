@@ -3,29 +3,6 @@
 
 Let's just keep track of specific calls that we've made so far
 
-
-Build:
-	- central.js is the build target
-	- index.js is used to tie modules together
-	- each module is built into a parallel temp directory tree
-		- ie, ~/example/foo/.central will become: 
-			/tmp/tmp-123/example/foo/.central/central.js - the individual module
-			/tmp/tmp-123/example/foo/.central/index.js   - module merged into children and parents
-			/tmp/tmp-123/example/foo/.central/plugins/*  - the plugins also get built to here
-
-
-Build Function:
-	(src, dst) => {
-		// the actual build function 
-		// 	- src is the path to the entry point of whatever we're building
-		// 		can be an exact path, or a directory
-		//	- dst is the path at which to place the build output
-
-		// return falsey if the build didn't work for whatever reason, 
-		// and the next buildFn will be tried
-	}
-
-
 Module Structure: 
 
 	{

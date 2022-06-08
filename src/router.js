@@ -24,7 +24,8 @@ function makeRouter (context) {
 	applyRoutes(context, router, routes)
 
 	// if we are directly targetting a file, pass through to IT'S router last
-	_.toPairs(directory || {}).filter(([key, node]) => node.isFile).forEach(([key, node]) => {
+	console.log({directory, pairs: _.toPairs(directory || {})})
+	_.toPairs(directory || {}).filter(([key, node]) => node && node.isFile).forEach(([key, node]) => {
 		router.use(`/${key}`, fileRouter(node))
 	})
 
@@ -62,27 +63,31 @@ function fileRouter (node) {
   })
 
 
+  
+
+  /*
   // lol. Let's set off every red flag that I have, all at once, shall we?
-  // okay, yeah - this is going to need to be more affirmative than "every file is fair game"
-  // so, let's think about how an access permission might work?
-
-
 
   router.put('/', (req, res, next) => {
     // use fs to replace the content of the file
     // maybe check stat.mode first, to make sure the file isn't executable
+    next();
   })
 
   router.patch('/', (req, res, next) => {
     // this seems like a neat idea, not sure how to actually DO it ...
+    next();
   })
 
   router.post('/', (req, res, next) => {
     // maybe a away to _append_ ?
+    next();
   })
 
   router.delete('/', (req, res, next) => {
+  	next();
   })
+  //*/
 
   return router;
 }
