@@ -47,9 +47,10 @@ async function mapDir (path, parent, root, visited) {
     isFile: stat.isFile(),
     isDirectory: stat.isDirectory(),
     isSymbolicLink: stat.isSymbolicLink(),
-    atime: stat.atime,
-    mtime: stat.mtime,
-    ctime: stat.ctime,
+
+    mtime: stat.mtimeMs,
+    ctime: stat.ctimeMs,
+    // atime: stat.atimeMs,
 
     // this could do with some expansion, once I figure out how I want to
     mode: stat.mode
@@ -62,7 +63,7 @@ async function mapDir (path, parent, root, visited) {
 
   if (node.isFile) {
     node.size = stat.size
-    mimeType(node.path).then(mime => node.mime = mime)
+    node.mime = await mimeType(node.path)
 
     // I dunno, maybe just slap on some utilities?
     node.open = (...args) => fsp.open(absPath, ...args)
@@ -80,6 +81,7 @@ async function mapDir (path, parent, root, visited) {
     node.size = 0
     node.children = {}
     
+
     await fsp.readdir(node.path).then(relPaths => Promise.all(
       relPaths
         .filter(relPath => !relPath.startsWith('.central')) // don't recurse into .central dirs
@@ -100,17 +102,41 @@ async function mapDir (path, parent, root, visited) {
 function inject (directory, central) {
   if (!central) { return; }
 
-  central['.central'].directory = directory;
+  central.C.directory = directory;
 
   _.toPairs(directory.children || {}).forEach(
-    ([name, childDir]) => inject(childDir, (central['.central'].children || {})[name])
+    ([name, childDir]) => inject(childDir, (central.C.children || {})[name])
   )
 }
 
 
-
-module.exports.map = mapDir 
+module.exports.map = mapDir
 module.exports.inject = inject
 
 
 
+
+
+
+/*
+
+Okay, so what's the dream here?
+
+  I think I want, _somehow_, for 'directory' to be able to output it's own source code in a useful way
+
+  Is that the dream? right now, I walk through the directory gathering useful info, and I inject that into built tree ...
+
+  so, instead, I would be inverting, and the built tree would ... already know this stuff? that seems awfully brittle ...
+
+  Mmmkay, no - that's not what I want to do, actually
+
+But, I _do_ want to get _some_ kind of relationship between build and directory, 
+  because I currently don't have a way to replicate the injection in the client ...
+
+
+So, how do we do that?
+
+  I need some request that a client can make
+
+
+//*/

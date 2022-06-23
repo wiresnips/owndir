@@ -21,7 +21,7 @@ async function content (req) {
 module.exports = {
 	content,
 
-	'.central': {
+	C: {
 
 		middleware: [
 			["*", 

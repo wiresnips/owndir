@@ -147,7 +147,7 @@ function genNodeJs (nodePath, reqPath, selfVar, parentVar, rootVar) {
   if (!reqPath) {
     jsFragments.push(`
 
-const ${selfVar} = {'.central': {children: {}}};
+const ${selfVar} = {C: {children: {}}};
     
     `)
   } 
@@ -166,11 +166,11 @@ try {
   ${selfVar} = {}
 }
 
-if (!${selfVar}['.central']) {
-  ${selfVar}['.central'] = {children: {}}
+if (!${selfVar}.C) {
+  ${selfVar}.C = {children: {}}
 }
-else if (!${selfVar}['.central'].children) {
-  ${selfVar}['.central'].children = {}
+else if (!${selfVar}.C.children) {
+  ${selfVar}.C.children = {}
 }
 
     `)
@@ -179,9 +179,9 @@ else if (!${selfVar}['.central'].children) {
   if (parentVar) {
     jsFragments.push(`
 
-${selfVar}['.central'].parent = ${parentVar};
-${parentVar}['.central'].children[${JSON.stringify(dir)}] = ${selfVar};
-Object.setPrototypeOf(${selfVar}, ${parentVar}); \n${selfVar}['.central'].parent = ${parentVar};
+${selfVar}.C.parent = ${parentVar};
+${parentVar}.C.children[${JSON.stringify(dir)}] = ${selfVar};
+Object.setPrototypeOf(${selfVar}, ${parentVar});
 
     `)
   }
@@ -189,7 +189,7 @@ Object.setPrototypeOf(${selfVar}, ${parentVar}); \n${selfVar}['.central'].parent
   if (rootVar) {
     jsFragments.push(`
 
-${selfVar}['.central'].root = ${rootVar};
+${selfVar}.C.root = ${rootVar};
       
       `)
   }

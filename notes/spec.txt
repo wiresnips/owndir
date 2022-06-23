@@ -7,7 +7,7 @@ Module Structure:
 
 	{
 		// this is where I'm going to keep all of *my* keys
-		'.central': {
+		C: {
 
 			root: {
 				/* the root module */

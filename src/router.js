@@ -3,11 +3,11 @@ const Router = require('express').Router
 
 function makeRouter (context) {
 	const router = Router()
-	const {routes, children, middleware, directory} = context['.central'];
+	const {routes, children, middleware, directory} = context.C;
 
 	// this is a good candidate for a middleware plugin
 	router.use((req, res, next) => {
-		const target = context['.central']?.directory?.children?.[req.path.slice(1)]
+		const target = context.C?.directory?.children?.[req.path.slice(1)]
 		if (target && target.isFile) {
 			req.file = target
 		}

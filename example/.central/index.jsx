@@ -26,7 +26,7 @@ async function html (content) {
 module.exports = {
 	html,
 
-	'.central': {
+	C: {
 
 //*
 		middleware: [

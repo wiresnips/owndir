@@ -1,18 +1,13 @@
 
-0. deliver code to client
+1. deliver code to client
 	let's just ignore directory for a hot minute, and focus on delivering ANY working code to the client 
 		- build index.js for the client
 			- SOME fucking how, deliver the client output
 			- watch it do literally _anything_ in the browser
 			- watch it do JSX stuff in the browser
 
-
-1. re-merge build.js and directory.js
-
-	this should make it a _lot_ easier to build code in a sane way,
-	and also to build different code for client vs server ...
-
-	need to re-examine the relationship between ['.central'] and ['.central'].directory
+	So, the point of this exercise is to think about what delivering code to the client, and executing it there, can possibly look like
+		- pull forwards the react plugin, just as regular code?
 
 
 2. expose directory to client
