@@ -46,7 +46,7 @@ args.path = absPath;
   const app = express()
   app.use(router(centralRoot))
 
-  const appConfig = centralRoot.C.app;
+  const appConfig = centralRoot.H.app;
   if (!_.isEmpty(appConfig)) {
     _.toPairs(appConfig.engine || {}).forEach(([ext, engine]) => app.engine(ext, engine))
     _.toPairs(appConfig.set || {}).forEach(([key, val]) => app.set(key, val))

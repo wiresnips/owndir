@@ -147,7 +147,7 @@ function genNodeJs (nodePath, reqPath, selfVar, parentVar, rootVar) {
   if (!reqPath) {
     jsFragments.push(`
 
-const ${selfVar} = {C: {children: {}}};
+const ${selfVar} = {H: {children: {}}};
     
     `)
   } 
@@ -166,11 +166,11 @@ try {
   ${selfVar} = {}
 }
 
-if (!${selfVar}.C) {
-  ${selfVar}.C = {children: {}}
+if (!${selfVar}.H) {
+  ${selfVar}.H = {children: {}}
 }
-else if (!${selfVar}.C.children) {
-  ${selfVar}.C.children = {}
+else if (!${selfVar}.H.children) {
+  ${selfVar}.H.children = {}
 }
 
     `)
@@ -179,8 +179,8 @@ else if (!${selfVar}.C.children) {
   if (parentVar) {
     jsFragments.push(`
 
-${selfVar}.C.parent = ${parentVar};
-${parentVar}.C.children[${JSON.stringify(dir)}] = ${selfVar};
+${selfVar}.H.parent = ${parentVar};
+${parentVar}.H.children[${JSON.stringify(dir)}] = ${selfVar};
 Object.setPrototypeOf(${selfVar}, ${parentVar});
 
     `)
@@ -189,7 +189,7 @@ Object.setPrototypeOf(${selfVar}, ${parentVar});
   if (rootVar) {
     jsFragments.push(`
 
-${selfVar}.C.root = ${rootVar};
+${selfVar}.H.root = ${rootVar};
       
       `)
   }

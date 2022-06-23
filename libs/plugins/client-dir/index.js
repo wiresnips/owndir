@@ -29,8 +29,8 @@ TODO:
 
 		for example:
 			- some file is updated in the server
-			- C.directory object is updated to match
-			- C.routes is updated to reflect new file content
+			- H.directory object is updated to match
+			- H.routes is updated to reflect new file content
 			- folder's router is updated to reflect the new routes
 			- client is updated (how?) to reflect the new file content
 	
@@ -43,7 +43,7 @@ export async function (root) {
 
 	// I don't actually know that this _needs_ to be done to the root - seems like everything *should* work at any level?
 	// if this isn't being applied to the root node, bail out now
-	// if (root.C.parent) {
+	// if (root.H.parent) {
 	// 	console.error('Attempted to apply client-dir plugin outside the root. client-dir must be applied in the outermost .central')
 	// 	return;
 	// }
@@ -80,13 +80,13 @@ function decorateClientDirectory (directory, path) {
 	path = path || [];
 
 	_.toPairs(directory.children || {}).forEach(
-		([name, child]) => {
+		([name, dirChild]) => {
 			const path = [...path, name]
-			if (child.isDirectory) {
+			if (dirChild.isDirectory) {
 				return decorateClientDirectory(child, path)
 			}
 
-			child.read = opts => {
+			dirChild.read = opts => {
 				opts = opts || {}
 				opts.read = opts.read || ''
 				return fetch(`/${path.join('/')}?${qs.stringify(opts)}`)
@@ -96,16 +96,16 @@ function decorateClientDirectory (directory, path) {
 }
 
 
-function injectClientDirectory (directory, central) {
-  if (!central) { return; }
+function injectClientDirectory (directory, homestead) {
+  if (!homestead) { return; }
 
-  central.C.directory = directory;
+  homestead.H.directory = directory;
 
   _.toPairs(directory.children || {}).forEach(
-    ([name, childDir]) => {
-    	const childCentral = central.C.children[name];
-    	if (childCentral) {
-    		injectClientDirectory(childDir, childCentral)	
+    ([name, dirChild]) => {
+    	const hsChild = homestead.H.children[name];
+    	if (hsChild) {
+    		injectClientDirectory(dirChild, hsChild);
     	}
     }
   )
@@ -118,7 +118,7 @@ function injectClientDirectory (directory, central) {
 
 
 
-function injectRoutes (node) {
+function injectRoutes (homestead) {
 
 	// I don't want to add the middleware until _after_ the directory has been injected
 	// because I need the directory to actually *be* there before I create the routes
@@ -130,7 +130,7 @@ function injectRoutes (node) {
 	//		https://stackoverflow.com/questions/2449182/getter-setter-on-javascript-array
 	//		https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy
 
-	Object.defineProperty(node.C, "directory", {
+	Object.defineProperty(homestead.H, "directory", {
 		get: function () { return this.directory; }, 
 		set: function (newDir) {
 			if (!this.routes) {
@@ -143,7 +143,7 @@ function injectRoutes (node) {
 		}
 	})
 
-	for (const child of node.children) {
+	for (const child of homestead.H.children) {
 		injectRoutes(child)
 	}
 }

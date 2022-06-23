@@ -7,7 +7,7 @@ Module Structure:
 
 	{
 		// this is where I'm going to keep all of *my* keys
-		C: {
+		H: {
 
 			root: {
 				/* the root module */

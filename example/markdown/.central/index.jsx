@@ -21,7 +21,7 @@ async function content (req) {
 module.exports = {
 	content,
 
-	C: {
+	H: {
 
 		middleware: [
 			["*", 
@@ -42,48 +42,3 @@ module.exports = {
 	}
 }
 
-
-/*
-
-const MarkdownIt = require('markdown-it')
-const md = new MarkdownIt();
-
-async function render (req, res, next) {
-	try {
-		
-		// any of these works to get my hands on the extended properties
-		// const central = req.context['.central']
-		// const central = self['.central']
-		// const central = central
-		const central = module.exports['.central']
-		const directory = central.directory
-
-		const filename = req.path.slice(1)
-		const handle = await directory.children[filename].open()
-		const content = await handle.readFile('utf-8')
-		handle.close()
-
-		res.send(frame(md.render(content)))
-	} catch (err) {
-		console.log(err)
-		next()
-	}
-}
-
-const central = {
-	routes: [
-		['*.md', [['get', render]]]
-	],
-	middleware: [
-		["*", ["all", [(req, res, next) => {
-			console.log('BOOM', req)
-			next()
-		}]]]
-	]
-}
-
-const self = { '.central': central }
-
-module.exports = self
-
-*/

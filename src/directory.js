@@ -102,10 +102,10 @@ async function mapDir (path, parent, root, visited) {
 function inject (directory, central) {
   if (!central) { return; }
 
-  central.C.directory = directory;
+  central.H.directory = directory;
 
   _.toPairs(directory.children || {}).forEach(
-    ([name, childDir]) => inject(childDir, (central.C.children || {})[name])
+    ([name, childDir]) => inject(childDir, (central.H.children || {})[name])
   )
 }
 

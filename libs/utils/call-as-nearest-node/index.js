@@ -7,7 +7,7 @@ module.exports = function (req, node, callFn, ...args) {
 	const path = req.path.split('/').filter(step => step && step.length)
 
 	for (let step of path) {
-		let children = node.C.children
+		let children = node.H.children
 		let child = children && children[step]
 
 		if (!child) {

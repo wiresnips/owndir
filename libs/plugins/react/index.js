@@ -9,7 +9,7 @@ const _ = require('lodash')
 module.exports = function (root) {
 
 	// if this isn't being applied to the root node, bail out now
-	if (root.C.parent) {
+	if (root.H.parent) {
 		console.error('Attempted to apply react-plugin outside the root. react-plugin must be applied in the outermost .central')
 		return;
 	}
@@ -29,7 +29,7 @@ module.exports = function (root) {
 
 
 	// this shit goes FIRST
-	root.C.middleware.unshift(
+	root.H.middleware.unshift(
 		['*', ['all',
 			// shim res.render so we don't have to specify a template 
 			function (req, res, next) {
@@ -66,19 +66,19 @@ module.exports = function (root) {
 	)
 
 	// don't replace anything, but make sure we have a basic app config set up
-	root.C.app = root.C.app || {}
-	root.C.app.engine = root.C.app.engine || {}
-	root.C.app.set = root.C.app.set || {}
+	root.H.app = root.H.app || {}
+	root.H.app.engine = root.H.app.engine || {}
+	root.H.app.set = root.H.app.set || {}
 
 	// and, inject ourselves into the app
-	root.C.app.engine['react-plugin'] = engine
+	root.H.app.engine['react-plugin'] = engine
 
 
 	// this part is less polite, mostly because I'm not sure how it could ever work otherwise -
 	// express can only ever have one template directory, and I need my template to be in it
 	// unless I'm going to copy myself into a user-established directory?
-	root.C.app.set['view engine'] = 'react-plugin'
-	root.C.app.set['views'] = __dirname
+	root.H.app.set['view engine'] = 'react-plugin'
+	root.H.app.set['views'] = __dirname
 	
 }
 
@@ -96,7 +96,7 @@ function nearestNode (req, node) {
 	const path = req.path.split('/').filter(step => step && step.length)
 
 	for (let step of path) {
-		let children = node.C.children
+		let children = node.H.children
 		let child = children && children[step]
 
 		if (!child) {

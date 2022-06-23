@@ -26,9 +26,7 @@ async function html (content) {
 module.exports = {
 	html,
 
-	C: {
-
-//*
+	H: {
 		middleware: [
 			["*", 
 				["all", (req, res, next) => {
@@ -38,9 +36,6 @@ module.exports = {
 				]
 			]
 		],
-//*/
-
-
 	}
 }
 
