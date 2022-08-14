@@ -6,7 +6,7 @@
 // https://github.com/npm/cli/pull/3762
 // https://github.com/npm/cli/releases/tag/v8.0.0
 
-// pfft, whatever MOM
+// pfft, whatever _MOM_
 const Npm = require('../node_modules/npm/lib/npm.js');
 
 // look, I didn't want it to come to this either, but here we are.

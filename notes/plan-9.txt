@@ -1,0 +1,158 @@
+
+
+
+Okay, so I'm noticing a problem in my templating plan -
+
+	I want to just pass the homestead AS the template values (so far so good)
+
+	BUT, I can't build the homestead ALREADY knowing what the directory contents are
+
+
+
+Broadly speaking, I need a way to hydrate my modules with the directory data
+
+	THIS IS ALLOWED TO HAPPEN FIRST!
+
+
+	this is the same stupid problem that I was having all the way back in plan-5 and plan-4, but now I can see a little more of how it fits
+
+
+Okay, so I need to inject the directory data into the fucking module
+that's not the end of the world, even a little bit.
+
+
+
+
+1- I could stick with the hooks, which I already kinda need for other things
+
+	hooks:
+		onCreated
+			object has just been created, but is alone in the world
+
+		onAdopted
+			object has been assigned a parent as a prototype
+
+		onDirectoryInjected
+			object has been injected with a directory
+
+
+2- instead of returning an object, I return a function that takes a directory, and returns an object
+
+	what would this actually look like?
+
+	I guess, it would be, kinda inverting the onAdopted and onDirectoryInjected (?)
+
+	that doesn't sound right - I think I really want it the other way around ...
+
+
+
+
+
+
+the other angle that I need to think about is, how the hell am I actually going to _use_ any of this?
+
+{
+	a: 'foo',
+	b: `a was ${this.a}` // THIS IS NOT HOW JAVASCRIPT WORKS
+}
+
+
+what I _really_ want to look at is, how do CONSTRUCTORS work? 'cause that's what the _fuck_ I'm talking about here, innit?
+
+	Mmmkay, so - let's go all in on OO, because that's apparently what we're building here
+
+	in which case, I can put a bunch of utility methods into the ROOT PROTOTYPE, which is not a bad idea at all
+
+
+
+
+Okay, so let's say that a module is actually something like this:
+
+
+module.exports = function (directory) => {
+	this.H.middleware = []; // ...
+}
+
+OR
+
+module.exports = class {
+	construtor (directory) {
+		this.H.middleware = []; // ...
+	}
+}
+
+
+and THEN, I can wrap this to add the extension ...
+
+
+const Child = require(child_path)
+Child.prototype = Object.create(parent, {H: {}})
+Child.prototype.constructor = Child
+const child = new Child(directory)
+
+	NOTE: this style of inheritance _kinda_ works how I expect, but not exactly:
+
+		Welcome to Node.js v17.8.0.
+		Type ".help" for more information.
+		> const foo = function () { return {foo: 1}}
+		undefined
+		> const barProto = {bar: 1}
+		undefined
+		> foo.prototype = Object.create(barProto)
+		{}
+		> const a1 = new foo()
+		undefined
+		> a1.bar
+		undefined
+		> const baz = function () {}
+		undefined
+		> baz.prototype = Object.create(barProto)
+		{}
+		> const a2 = new baz()
+		undefined
+		> a2.bar
+		1
+
+
+
+
+------------------------------------
+
+
+Alright, let's back up and reconsider
+
+so far, I'm almost exclusively thinking about this from the perspective of router functions,
+because that's something that I actually have a pretty good handle on.
+
+And, we know a couple of things about those functions
+	- they run ON THE SERVER EXCLSIVELY
+	- they do it AFTER the directory has been injected
+
+So, from that perspective, the timing issue is kinda moot anyways.
+
+Once I start bringing in _templates_, though, it comes back - because I want to just pass the module directly to the template, 
+and the _module_ hasn't had a chance to incorporate the directory yet
+
+I think that the obvious answer is to roll in some lifecycle hooks ?
+
+
+
+--------------------------------------
+
+
+Reconsidering again, I submit the following agenda:
+
+	1- this is NOT an execution environment. It's primary purpose is to produce an html representation of a directory structure
+		
+		things like cron jobs, will just not be part of it. 
+			we can still have things like that IN the directory structure, alongside instructions for how to use them, though
+
+		Think about how that would need to integrate in other contexts. Hilariously terrible notion.
+
+	2- we need BUILD support for constructor functions, classes, AND non-constructor functions
+		therefore, we need to incorporate directory into build ... somehow
+
+
+	3- first-class support for templates
+
+	4- ignore client-side rendering for now

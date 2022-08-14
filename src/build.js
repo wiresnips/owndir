@@ -6,53 +6,48 @@ const { resolve, relative, basename, dirname } = require("path")
 
 const pack = require('libnpmpack')
 const install = require('./npm-install')
+const {exists, isDir, mkdir} = require('../libs/utils/fs-utils')
 
 const esbuild = require('esbuild')
-const { NodeModulesPolyfillPlugin } = require('@esbuild-plugins/node-modules-polyfill')
+// const { NodeModulesPolyfillPlugin } = require('@esbuild-plugins/node-modules-polyfill')
 const { filelocPlugin } = require('esbuild-plugin-fileloc')
 
 
-async function exists (path) {
-  return fsp.access(path, fs.constants.R_OK).then(() => path).catch(() => null)
-}
-
-async function isDir (path) {
-  return path && fsp.stat(path).then(dstat => dstat.isDirectory()).catch(err => false);
-}
-
-function mkdir (path) {
-  return (fsp.stat(path)
-    .then(dstat => dstat.isDirectory() || fsp.mkdir(path, {recursive: true}))
-    .catch(() => fsp.mkdir(path, {recursive: true}))
-  )
-}
-
 
 // this is a little hokey, but it should do the trick for the moment
-async function getTarget (path) {
-  // console.log('getTarget', path)
+// for a given folder, return: 1- any .js or .jsx file, 2- any folder which contains: package.json, index.js, or index.jsx
+async function getJsTargets (path) {
+  if (!await isDir(path)) {
+    return []
+  }
 
-  const [target] = (await fsp.readdir(path))
-    .filter(rel => rel.startsWith('.central'))
+  const targets = (await fsp.readdir(path))
     .map(rel => resolve(path, rel))
     .sort();
 
-  if (!await isDir(target)) {
-    return { target, isPackage: false }
-  }
+  targets.map(async (target) => {
+    if (!await isDir(target)) {
+      return target.match(/\.jsx?$/)
+        ? { target, isPackage: false }
+        : nil;
+    }
 
-  const targetContents = await fsp.readdir(target);
-  if (targetContents.includes('package.json')) {
-    return { target, isPackage: true }
-  }
+    const targetContents = await fsp.readdir(target);
+    if (targetContents.includes('package.json')) {
+      return { target, isPackage: true }
+    }
 
-  const innerTarget = targetContents.sort().find(file => file.startsWith('index.js'));
-  return { 
-    target: innerTarget &&  resolve(target, innerTarget), 
-    isPackage: false 
-  };
+    const innerTarget = targetContents.find(file => file.match(/^index\.jsx?$/));
+    if (innerTarget) {
+      return { 
+        target: innerTarget && resolve(target, innerTarget), 
+        isPackage: false 
+      };
+    }
+
+    return nil;
+  }).then(targets => targets.filter(t => !!t))
 }
-
 
 const varName = (() => {
   let count = 0;
@@ -68,10 +63,10 @@ const packageName = (() => {
 })()
 
 
-// promise an object that can be merged into package.json's dependencies
+// promise an object that can be incorporated into package.json's dependencies
 function packNode (root, path) {
   const name = packageName(root, path);
-  const moduleDir = resolve(root, '.central', '.central-build', 'modules');
+  const moduleDir = resolve(root, '.homestead', '.homestead-build', 'modules');
   const saveTo = resolve(moduleDir, `${name}.tgz`);
 
   return pack(path)
@@ -83,7 +78,7 @@ function packNode (root, path) {
 
 
 async function build (src) {
-  const buildDir = resolve(src, '.central', '.central-build')
+  const buildDir = resolve(src, '.homestead', '.homestead-build')
   await mkdir(resolve(buildDir, 'modules')).catch(err => console.error(err));
 
   if (!await exists(buildDir)) {
@@ -91,8 +86,25 @@ async function build (src) {
     return false;  
   }
 
-  let dependencies = {}
-  let nodesJs = [];
+  // lodash is used in the build-server boilerplate
+  let dependencies = {
+    "lodash": "^4.17.0",
+    "mmmagic": "^0.5.3"
+  }
+  let nodesJs = [
+    await fsp.readFile(`${__dirname}/../assets/build-server.js`, 'utf-8'),
+    `const directory = mapDir(${JSON.stringify(src)})`
+  ];
+
+  // return the string needed to require a module
+  async function addReq ({target, isPackage}) {
+    if (!isPackage) {
+      return target;
+    }
+    const [reqName, depPath] = await packNode(src, target);
+    dependencies[reqName] = depPath;
+    return reqName;
+  }
 
   async function buildNode (path, parentVar, rootVar) {
     if (!await isDir(path)) {
@@ -102,22 +114,22 @@ async function build (src) {
     const selfVar = varName();
     rootVar = rootVar || selfVar;
 
-    const relPath = relative(src, path)
-    const { target, isPackage } = await getTarget(path);
+    const relPath = relative(src, path);
+    const nodeReq = await (getJsTargets(path)
+      .then(targets => targets.find(({target}) => relative(path, target).startsWith(".homestead")))
+      .then(addReq)
+    );
 
-    // this would be an excellent place to include some kind of sanity-check
+    const plugins = await getJsTargets(resolve(path, '.homestead', 'plugins'))
+      .then(plugins => Promise.all(plugins.map(async plugin => {
+        plugin.req = await addReq(plugin.target)
+        return plugin
+      })));
 
-    if (!isPackage) {
-      nodesJs.push(...genNodeJs(relPath, target, selfVar, parentVar, rootVar))
-    }
-    else {
-      const [reqName, depPath] = await packNode(src, target);
-      dependencies[reqName] = depPath;
-      nodesJs.push(...genNodeJs(relPath, reqName, selfVar, parentVar, rootVar))
-    }
+    nodesJs.push(...genNodeJs(relPath, nodeReq, selfVar, parentVar, rootVar, plugins))
 
     const children = (await fsp.readdir(path))
-      .filter(rel => !rel.startsWith('.central'))
+      .filter(rel => !rel.startsWith('.homestead'))
       .map(rel => resolve(path, rel));
 
     for (const cpath of children) {
@@ -128,6 +140,7 @@ async function build (src) {
   }
 
   const rootVar = await buildNode(src);
+  nodesJs.push(`activatePlugins(${rootVar})`);
   nodesJs.push(`module.exports = ${rootVar};`);
 
   await fsp.writeFile(resolve(buildDir, 'index.js'), nodesJs.join('\n\n'));
@@ -140,22 +153,12 @@ async function build (src) {
 // thanks, I hate it
 // but, I can figure out a better way later - for now, I need to prove the concept and move on
 
-function genNodeJs (nodePath, reqPath, selfVar, parentVar, rootVar) {
+function genNodeJs (nodePath, reqPath, selfVar, parentVar, rootVar, plugins) {
   const dir = basename(nodePath);
-  const jsFragments = [`console.log(${JSON.stringify(nodePath)});`];
-
-  if (!reqPath) {
-    jsFragments.push(`
-
-const ${selfVar} = {H: {children: {}}};
-    
-    `)
-  } 
-
-  else {
-    jsFragments.push(`
-
-var ${selfVar};
+  const jsFragments = [
+    `console.log(${JSON.stringify(nodePath)});`,
+    `var ${selfVar};`,
+    (reqPath && `
 try {
   ${selfVar} = require(${JSON.stringify(reqPath)})
 } catch (error) {
@@ -164,39 +167,31 @@ try {
     console.error(error)
   }
   ${selfVar} = {}
-}
+}`
+    ),
+    `initHomestead(${selfVar}, ${parentVar || 'null'}, directory.walk(${JSON.stringify(nodePath)}))`
+  ];
 
-if (!${selfVar}.H) {
-  ${selfVar}.H = {children: {}}
-}
-else if (!${selfVar}.H.children) {
-  ${selfVar}.H.children = {}
-}
-
-    `)
-  }
-
-  if (parentVar) {
-    jsFragments.push(`
-
-${selfVar}.H.parent = ${parentVar};
-${parentVar}.H.children[${JSON.stringify(dir)}] = ${selfVar};
-Object.setPrototypeOf(${selfVar}, ${parentVar});
-
-    `)
-  }
-
-  if (rootVar) {
-    jsFragments.push(`
-
-${selfVar}.H.root = ${rootVar};
-      
-      `)
+  if (!_.isEmpty(plugins)) {
+    jsFragments.push(...(plugins.map(plugin => genPluginJs(plugin, selfVar))))
   }
   
-  return jsFragments.map(js => js.trim())
+  return (jsFragments
+    .filter(js => !!js && !_.isEmpty(js))
+    .map(js => js.trim())
+  );
 }
 
+
+function genPluginJs (plugin, nodeVar) {
+  return `
+try {
+  ${nodeVar}.H.plugins.push(require(${JSON.stringify(plugin.req)}))
+} catch (error) {
+  console.log('Error loading plugin: ${plugin.target}')
+  console.error(error)
+}`
+}
 
 
 
@@ -214,16 +209,19 @@ async function bundle (rootDir, buildDir) {
         minify: false,
         plugins: [filelocPlugin({ rootDir })],
     }).then(result => {
-        console.log('lol fuck 1.1', result)
+        console.log('build succeeded?', result)
         result.errors.forEach(error => console.error(error))
         result.warnings.forEach(warning => console.warn(warning))
         return result.outputFiles
     }).catch(err => {
-        console.log('lol fuck 1.2', err)
+        console.log('build failed?', err)
         console.error(err);
         return false;
     })
 
+    return server
+
+/*
     const client = await esbuild.build({
       platform: 'browser',
       entryPoints: [basePath],
@@ -245,8 +243,11 @@ async function bundle (rootDir, buildDir) {
     return (Promise.all([server, client])
       .then(([server, client]) => ({server, client}))
     );
+//*/
+    
 }
 
 
 
 module.exports = build
+

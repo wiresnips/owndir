@@ -44,7 +44,7 @@ export async function (root) {
 	// I don't actually know that this _needs_ to be done to the root - seems like everything *should* work at any level?
 	// if this isn't being applied to the root node, bail out now
 	// if (root.H.parent) {
-	// 	console.error('Attempted to apply client-dir plugin outside the root. client-dir must be applied in the outermost .central')
+	// 	console.error('Attempted to apply client-dir plugin outside the root. client-dir must be applied in the outermost .homestead')
 	// 	return;
 	// }
 
@@ -130,6 +130,12 @@ function injectRoutes (homestead) {
 	//		https://stackoverflow.com/questions/2449182/getter-setter-on-javascript-array
 	//		https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy
 
+
+	// see also:
+	// https://github.com/sindresorhus/on-change
+
+
+	// I DON'T THINK THIS WORKS THE WAY I THOUGHT IT DID
 	Object.defineProperty(homestead.H, "directory", {
 		get: function () { return this.directory; }, 
 		set: function (newDir) {

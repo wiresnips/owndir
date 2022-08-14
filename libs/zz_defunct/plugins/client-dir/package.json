@@ -1,12 +1,14 @@
 {
-  "name": "central-plugin-react",
+  "name": "homestead-plugin-client-dir",
   "version": "0.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {},
   "author": "Ben Ells",
   "license": "",
+
   "dependencies": {
-    "lodash": "^4.17.21"
+    "lodash": "^4.17.21",
+    "qs": "^6.10.5"
   }
 }

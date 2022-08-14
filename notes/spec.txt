@@ -32,9 +32,6 @@ Module Structure:
 				/* the DIRECTORY node */
 			}
 
-
-
-
 			// ROUTING
 			// routes are given in the following structure:
 			//		an ordered list of pairs, 
@@ -73,9 +70,12 @@ Module Structure:
 					ext: someEngine
 				}
 				set: {
-					key: value
+					key: value, // pipe this directly into express
 				}
 			}
+
+			// if we're going to serve the js to the client, where should it live?
+			serveClientJsAt: '' 
 
 		}
 	}

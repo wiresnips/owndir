@@ -35,27 +35,35 @@ args.path = absPath;
 
   await build(args.path);
 
-//*
-  const centralRoot = require(resolve(args.path, '.central', '.central-build', 'server.js'))
-
-  console.log('built central', centralRoot)
+  const serverHomestead = require(resolve(args.path, '.homestead', '.homestead-build', 'server.js'))
+  console.log('built server homestead', serverHomestead)
 
   const dir = await directory.map(args.path)
-  directory.inject(dir, centralRoot)
+  directory.inject(dir, serverHomestead)
 
   const app = express()
-  app.use(router(centralRoot))
+  app.use(router(serverHomestead))
 
-  const appConfig = centralRoot.H.app;
+  /*
+  // I thought that I needed this for templating - now I'm less sure ...
+  const appConfig = serverHomestead.H.app;
   if (!_.isEmpty(appConfig)) {
     _.toPairs(appConfig.engine || {}).forEach(([ext, engine]) => app.engine(ext, engine))
     _.toPairs(appConfig.set || {}).forEach(([key, val]) => app.set(key, val))
   }
 
+  if (serverHomestead.serveClientJsAt) {
+    const serveTo = serverHomestead.serveClientJsAt
+    const serveFrom = resolve(args.path, '.homestead', '.homestead-build', 'client.js')
+    app.get(serveTo, (req, res, next) => res.sendFile(serveFrom))
+  }
+  */
+
   const server = app.listen(args.port, () => {
     console.log(`listening at ${JSON.stringify(server.address(), null, 2)}`)
   })
-//*/
+
+
 
 })()
 

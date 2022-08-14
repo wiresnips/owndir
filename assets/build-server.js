@@ -2,7 +2,6 @@
 const _ = require('lodash')
 const fsp = require('fs/promises')
 const pathUtil = require("path")
-const Router = require('express').Router
 
 // this lib is a wrapper over libmagic, and has inherited some terrible names
 const { Magic: MimeDetector, MAGIC_MIME: MIME_TYPE_ENCODING } = require('mmmagic')
@@ -39,7 +38,7 @@ async function mapDir (path, parent, root, visited) {
   const node = {
     parent,
     root,
-    name,
+    name: parent ? name : "/",
     path: absPath,
     absolutePath: absPath,
     relativePath: root ? pathUtil.relative(root.path, absPath) : '',
@@ -80,11 +79,21 @@ async function mapDir (path, parent, root, visited) {
   else if (node.isDirectory) {
     node.size = 0
     node.children = {}
-    
+    node.walk = (path) => {
+      if (_.isEmpty(path)) {
+        return node
+      }
+      if (_.isString(path)) {
+        path = path.split(pathUtil.sep).filter(step => ste && step.length)
+      }
+      const [step, ...nextSteps] = path
+      const child = node.children[step]
+      return child && child.walk && child.walk(nextSteps)
+    }
 
     await fsp.readdir(node.path).then(relPaths => Promise.all(
       relPaths
-        .filter(relPath => !relPath.startsWith('.central')) // don't recurse into .central dirs
+        // .filter(relPath => !relPath.startsWith('.homestead')) // don't recurse into .homestead dirs
         .map(relPath => pathUtil.resolve(path, relPath))
         .map(absPath => mapDir(absPath, node, root, visited))
         .filter(_.identity)
@@ -99,44 +108,55 @@ async function mapDir (path, parent, root, visited) {
   return node
 }
 
-function inject (directory, central) {
-  if (!central) { return; }
+async function initHomestead (homestead, parent, directory) {
+  if (!homestead) {
+    homestead = {};
+  }
 
-  central.H.directory = directory;
+  if (_.isFunction(homestead)) {
+    if (parent) {
+      homestead.prototype = parent
+    }
+    homestead = await homestead(directory)
+  }
 
-  _.toPairs(directory.children || {}).forEach(
-    ([name, childDir]) => inject(childDir, (central.H.children || {})[name])
-  )
+  if (parent && !isChildOf(homestead, parent)) {
+    Object.setPrototypeOf(homestead, parent)
+  }  
+  
+  // don't allow H to be inherited
+  if (!homestead.hasOwnProperty("H")) {
+    homestead.H = {}
+  }
+
+  if (!homestead.H.hasOwnProperty("directory")) {
+    homestead.H.directory = directory
+  }
+  directory.homestead = homestead
+
+  if (!homestead.H.hasOwnProperty("plugins")) {
+    homestead.H.plugins = []
+  }
+
+  homestead.H.children = {}
+  if (parent) {
+    homestead.H.parent = parent
+    parent.H.children[homestead.H.directory.name] = homestead;
+  }
+
+  return homestead
 }
 
+async function activatePlugins (homestead) {
+  const plugins = homestead?.H?.plugins
+  if (_.isArray(plugins)) {
+    for (let plugin of plugins) {
+      plugin(homestead)
+    }
+  }
 
-module.exports.map = mapDir
-module.exports.inject = inject
-
-
-
-
-
-
-/*
-
-Okay, so what's the dream here?
-
-  I think I want, _somehow_, for 'directory' to be able to output it's own source code in a useful way
-
-  Is that the dream? right now, I walk through the directory gathering useful info, and I inject that into built tree ...
-
-  so, instead, I would be inverting, and the built tree would ... already know this stuff? that seems awfully brittle ...
-
-  Mmmkay, no - that's not what I want to do, actually
-
-But, I _do_ want to get _some_ kind of relationship between build and directory, 
-  because I currently don't have a way to replicate the injection in the client ...
-
-
-So, how do we do that?
-
-  I need some request that a client can make
-
-
-//*/
+  const children = Object.keys(homestead?.H?.children || {})
+  for (let childName of children) {
+    activatePlugins(homestead.H.children[childName])
+  }
+}

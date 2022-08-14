@@ -30,7 +30,8 @@ function shuffle (a) {
 function randItem (...items) {
   if (items.length == 1 && items[0] instanceof Array)
     items = items[0]
-  return items[randInt(items.length)]}  
+  return items[randInt(items.length)]
+}  
 
 function merge (...objects) {
   var res = {}
@@ -38,14 +39,16 @@ function merge (...objects) {
     Object.keys(obj).forEach(key => {
       if (obj[key] != null)
         res[key] = obj[key]})})
-  return res}
+  return res
+}
 
 function takeKeys (m, ...keys) {
   var res = {}
   keys.forEach(key => {
     if (key in m)
       res[key] = m[key]})
-  return res}
+  return res
+}
 
 function times (n, f, ...args) {
   let arr = []
@@ -62,10 +65,12 @@ function repeat (n, x) {
 }
 
 function home (expressRequest) {
-  return expressRequest.protocol + "://" + expressRequest.get("host")}
+  return expressRequest.protocol + "://" + expressRequest.get("host")
+}
 
 function epoch () {
-  return Math.floor(Date.now() / 1000)}
+  return Math.floor(Date.now() / 1000)
+}
 
 
 function isFile (path) {

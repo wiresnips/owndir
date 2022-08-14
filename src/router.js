@@ -5,15 +5,6 @@ function makeRouter (homestead) {
 	const router = Router()
 	const {routes, children, middleware, directory} = homestead.H;
 
-	// this is a good candidate for a middleware plugin
-	router.use((req, res, next) => {
-		const target = homestead.H?.directory?.children?.[req.path.slice(1)]
-		if (target && target.isFile) {
-			req.file = target
-		}
-		next();
-	})
-
 	applyRoutes(homestead, router, middleware)
 
 	_.toPairs(children || {}).forEach(([key, child]) => {
