@@ -28,42 +28,25 @@ args.path = absPath;
 
 (async function () {
   const build = require('./build.js')
-
-  const directory = require('./directory.js')
   const router = require('./router.js')
+  const mapDir = require('./directory.js')
   const express = require('express')
 
+
+  const directory = await mapDir(resolve(args.path));
+  console.log({directory})
+
   await build(args.path);
+  const buildHomestead = require(resolve(args.path, '.homestead', '.homestead-build', 'server.js'))
+  const homestead = await buildHomestead(directory)
 
-  const serverHomestead = require(resolve(args.path, '.homestead', '.homestead-build', 'server.js'))
-  console.log('built server homestead', serverHomestead)
-
-  const dir = await directory.map(args.path)
-  directory.inject(dir, serverHomestead)
+  console.log('built homestead', homestead)
 
   const app = express()
-  app.use(router(serverHomestead))
-
-  /*
-  // I thought that I needed this for templating - now I'm less sure ...
-  const appConfig = serverHomestead.H.app;
-  if (!_.isEmpty(appConfig)) {
-    _.toPairs(appConfig.engine || {}).forEach(([ext, engine]) => app.engine(ext, engine))
-    _.toPairs(appConfig.set || {}).forEach(([key, val]) => app.set(key, val))
-  }
-
-  if (serverHomestead.serveClientJsAt) {
-    const serveTo = serverHomestead.serveClientJsAt
-    const serveFrom = resolve(args.path, '.homestead', '.homestead-build', 'client.js')
-    app.get(serveTo, (req, res, next) => res.sendFile(serveFrom))
-  }
-  */
+  app.use(router(homestead))
 
   const server = app.listen(args.port, () => {
     console.log(`listening at ${JSON.stringify(server.address(), null, 2)}`)
   })
-
-
-
 })()
 

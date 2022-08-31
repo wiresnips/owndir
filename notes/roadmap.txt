@@ -1,4 +1,36 @@
 
+name ideas:
+
+	homestead
+		- competing service
+		- ancaps
+
+	central
+	bradford
+
+	croft
+	planterbox
+	jardinier
+
+	ashram **
+	skete
+
+
+
+
+I need to handle:	
+
+	1- esbuild won't bundle native binaries (fair), but ALSO won't respect external dirs (?)
+
+		can I make a plugin that works around this?
+
+
+
+
+
+
+
+
 
 templating
 ======================
@@ -66,6 +98,13 @@ templating
 
 incorporate plugins into BUILD
 ==============================
+
+	okay, so how does _this_ work?
+
+	for each module
+		- get a list of plugins as build targets
+		- add that list to the master package.json
+		- require each plugin and add it to homestead.H.plugins
 
 
 

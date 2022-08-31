@@ -1,4 +1,4 @@
-
+const fs = require('fs')
 const fsp = require('fs/promises')
 const pathUtil = require("path")
 const { resolve, basename, extname } = require("path")
@@ -23,6 +23,18 @@ function mkdir (path) {
   )
 }
 
+function dirChildren (path) {
+	return (fsp.readdir(path)
+		.then(relPaths => relPaths.map(relPath => resolve(path, relPath)))
+		.catch(error => {
+			// if the error was that the path was not a directory, or that it did not exist, return an empty array
+			if (error.code === "ENOTDIR" || error.code === "ENOENT") {
+				return [];
+			}
+			throw error;
+		})
+	);
+}
 
 async function getText (path, encoding) {
 	if (!(await isFile(path))) {
@@ -60,6 +72,7 @@ module.exports = {
 	isFile,
 	isDir,
 	mkdir,
+	dirChildren,
 	getText,
 	mimeType,
 }

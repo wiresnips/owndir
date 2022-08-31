@@ -18,7 +18,8 @@ module.exports = async function (buildPath) {
 		const npm = new Npm();
 		await npm.load();
 		npm.localPrefix = buildPath
-		return npm.exec('install', []);
+		
+		await npm.exec('install', []);
 	} catch (err) {
 		console.error(err);
 		process.exit(1);

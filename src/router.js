@@ -8,17 +8,16 @@ function makeRouter (homestead) {
 	applyRoutes(homestead, router, middleware)
 
 	_.toPairs(children || {}).forEach(([key, child]) => {
-		console.log('adding router to ', key)
+		console.log('adding router to', key)
 		router.use(`/${key}`, makeRouter(child))
 	})
 
 	applyRoutes(homestead, router, routes)
 
 	// if we are directly targetting a file, pass through to IT'S router last
-	console.log({directory, pairs: _.toPairs(directory || {})})
-	_.toPairs(directory || {}).filter(([key, node]) => node && node.isFile).forEach(([key, node]) => {
-		router.use(`/${key}`, fileRouter(node))
-	})
+	//_.toPairs(directory || {}).filter(([key, node]) => node && node.isFile).forEach(([key, node]) => {
+	//	router.use(`/${key}`, fileRouter(node))
+	//})
 
 	return router
 }
