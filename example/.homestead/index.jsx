@@ -1,28 +1,32 @@
 
 
 import React from 'react'
-import ReactDOMServer from 'react-dom/server';
-
-import lolfuck from 'mmmagic';
-
-async function html (content) {
-  return <html>
-    <head>
-      <meta charset="utf-8"/>
-      <title></title>
-    </head>
-    <body>
-      {content}
-    </body>
-  </html>
-}
+import { renderToString } from 'react-dom/server';
 
 
 export default {
-  html,
 
-  lolfuck,
+  html: async function (req) {
+    console.log("html", this)
 
+    return (
+      <html>
+        <head>
+          <meta charset="utf-8"/>
+          <title>{this.title}</title>
+        </head>
+        <body>
+          Hello, from { this.H?.directory?.absolutePath }
+          { await this.main(req) }
+        </body>
+      </html>
+    );
+  },
+
+  title: 'root homestead',
+  main: (req) => {},
+
+  /*
   H: {
     middleware: [
       ["*", 
@@ -34,10 +38,6 @@ export default {
       ]
     ],
   }
+  //*/
 }
-
-
-
-
-
 

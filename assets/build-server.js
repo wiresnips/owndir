@@ -1,8 +1,8 @@
+import _ from 'lodash';
+import pathUtil from 'path';
 
-const _ = require('lodash')
-const pathUtil = require('path')
+async function initHomestead (directory, homestead, parent, plugins) {
 
-async function initHomestead (directory, homestead, parent) {
   if (_.isFunction(homestead)) {
     if (parent) {
       homestead.prototype = parent;
@@ -21,6 +21,10 @@ async function initHomestead (directory, homestead, parent) {
 
   homestead.H.directory = directory;
   homestead.H.children = {};
+  homestead.H.plugins = plugins;
+
+  homestead.H.middleware = homestead.H.middleware || []
+  homestead.H.routes = homestead.H.routes || [] 
 
   directory.homestead = homestead;
 
@@ -29,25 +33,7 @@ async function initHomestead (directory, homestead, parent) {
     parent.H.children[homestead.H.directory.name] = homestead;
   }
 
-  console.log('==================')
-  console.log(homestead)
-  console.log("")
-
   return homestead;
-}
-
-async function activatePlugins (homestead) {
-  const plugins = homestead?.H?.plugins
-  if (_.isArray(plugins)) {
-    for (let plugin of plugins) {
-      plugin(homestead)
-    }
-  }
-
-  const children = Object.keys(homestead?.H?.children || {})
-  for (let childName of children) {
-    activatePlugins(homestead.H.children[childName])
-  }
 }
 
 const uninitializedTree = {};
@@ -70,14 +56,19 @@ function walk (path) {
 }
 
 function register (path, nodeOrFunc, plugins) {
-  const node = walk(path);
-  node.nodeOrFunc = nodeOrFunc;
-  node.plugins = plugins
+  const uninitializedNode = walk(path);
+  uninitializedNode.nodeOrFunc = nodeOrFunc;
+  uninitializedNode.plugins = plugins
 }
 
 
 async function initializeTree (directory, uninitializedNode, parentHomestead) {
-  const homestead = await initHomestead(directory, uninitializedNode.nodeOrFunc, parentHomestead);
+  const homestead = await initHomestead(
+    directory, 
+    await (uninitializedNode.nodeOrFunc), 
+    parentHomestead,
+    await Promise.all(uninitializedNode.plugins)
+  );
 
   await Promise.all(
     _.toPairs(uninitializedNode.children || {}).map(
@@ -90,6 +81,23 @@ async function initializeTree (directory, uninitializedNode, parentHomestead) {
   return homestead;
 }
 
-module.exports = async function (directory) {
-  return initializeTree(directory, uninitializedTree);
+async function activatePlugins (homestead) {
+  const plugins = homestead?.H?.plugins
+
+  if (_.isArray(plugins)) {
+    for (let plugin of plugins) {
+      await plugin(homestead);
+    }
+  }
+
+  const children = Object.keys(homestead?.H?.children || {})
+  for (let childName of children) {
+    await activatePlugins(homestead.H.children[childName]);
+  }
+}
+
+export async function Homestead (directory) {
+  const homestead = await initializeTree(directory, uninitializedTree);
+  await activatePlugins(homestead);
+  return homestead;
 }

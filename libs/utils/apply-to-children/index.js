@@ -9,7 +9,7 @@ function applyToChildrenAsync (homestead, fn) {
 
 
 function applyToChildrenSync (homestead, fn) {
-	fn(node);
+	fn(homestead);
 	const children = Object.values(homestead.H.children)
 	children.forEach(child => applyToChildrenSync(child, fn))
 }

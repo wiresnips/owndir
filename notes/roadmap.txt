@@ -1,110 +1,44 @@
 
-name ideas:
 
-	homestead
-		- competing service
-		- ancaps
-
-	central
-	bradford
-
-	croft
-	planterbox
-	jardinier
-
-	ashram **
-	skete
+plugins
+=======
+	I need to actually invoke these from build-server.js
 
 
-
-
-I need to handle:	
-
-	1- esbuild won't bundle native binaries (fair), but ALSO won't respect external dirs (?)
-
-		can I make a plugin that works around this?
-
-
-
-
-
-
-
-
-
-templating
-======================
-
-	okay, so JSX vs templates is not as natural a fit as I'd imagined.
-
-	What's the best way to go about this, then?
-
-		well, let's think about this
-		when I push the module into the template, I can run some processing on it first
-
-			for each property, if that property is a function, wrap it in something that checks whether the return value is a react element
-			and if it is, renders out the string.
-
-			no, that's going to get me in trouble as SOON as I try to subdivide components
-
-	Well, let's also notice _this_ - by and large, I expect this shit to be static, right?
-	So, why NOT just generate it at build time?
-
-	thats ... not an insane proposition, is it?
-	Certainly, the whole _point_ of this is to bind tightly to the *file system*,
-	so any kind of state should be represented as files, in the paradigm ...
-
-	that ... doesn't strike me as insane. It' a bit ... opinionated, but I think in a good way.
-
-
-	Okay, so where does _that_ leave JSX, then?
-
-
-    
-    Well ... let's think some more about how we expect templating to work ...
-    	I've been sort of imagining it as heritable, and that _is_ useful,
-
-    	but it would never be, each layer of template building up to the whole
-    		because, what the hell does that even MEAN?
-    		every time a new template is introduced, it's going to obliterate whatever came before
-
-    		accumulation can only be done WITHIN the frame 
-    			I can try to establish a NEW frame, and then accumulate within that, I guess, but I don't think that's useful
-
-    	so, I think that leaves me back at react as the answer - I want to establish a frame at the root, with some sockets that can be filled
-    	and, those sockets can establish sockets of their own, which can be filled by _their_ children ...
-
-    		so far so good - do I have a mechanism to WRAP things?
-    			seems like no, because I've pushed responsibility towards the leaves
-    				in principle, the leave could call the parent's functions, if it wants to
-    				parent could call the child too, I guess, but the child gets first crack at the request
-
-    			unless ... I suppose the parent could use middleware to intercept the request, manually call the child,
-    			and wrap the content that way - feels like a long hike, though
-    				still, I like that it seems theoretically possible
-    				AND, I like that it's kind of a pain in the ass, because that's not an _ordinary_ thing to want to do
-
-    Okay ... so ...
-
-    I think that means, fuck templates?
-    	Long live jsx ... ?
-
-    damn, I think I really like that
-
-    need to trace out EXACTLY what a request looks like,
-    	and establish a default entry-point, I guess
-
-
-
-incorporate plugins into BUILD
+crashes and failed compilation
 ==============================
 
-	okay, so how does _this_ work?
+	I must be able to detect these, right?
 
-	for each module
-		- get a list of plugins as build targets
-		- add that list to the master package.json
-		- require each plugin and add it to homestead.H.plugins
+
+how to deal with filesystem updates?
+====================================
+
+	
+
+why is my generated code out-of-date unless I nuke .homestead-build ?
+=====================================================================
+
+
+Android?
+========
+
+
+plugin distribution mechanism
+=============================
+	a postinstall script that moves the plugin from node_modules up a level
+
+	then, you can `npm install @homestead/fancy-plugin`, and it'll just work, I think ...
+
+	can I get this working cross-platform?
+		the way to do this is, to use javascript instead of bash
+
+		so, let's imagine a package, @homestead/plugin-utils
+		plugins can require it, and it will provide a postinstall.js script
+
+		then, in package.json, you have this:
+			"postinstall": "node node_modules/homestead-plugin-utils/postinstall.js my-plugin"
+
 
 
 
@@ -119,42 +53,17 @@ better management of route priority
 
 
 
-Remote Access
 
-	Actually, I think that we don't _need_ remote access 
-		just run this out of a dropbox folder and put up a local server
+name ideas
+==========
+	homestead
+		- competing service
+		- ancaps
 
-		Or a fuckin' git repo, who cares
+	central
 
-		Point is, I don't have to fuck around with making ONE server public, I can just use existing filesync tools for distribution
+	bradford
 
-
-
-
-
-
-
-client-side rendering ????
-==========================
-
-	expose directory to client
-		- files can serve themselves as a stream
-		- router exposes files as directly as possible
-			GET 	- fetch the file
-			DELETE 	- ooof, yeah I want this to be possible
-			PUT 	- completely replace the file
-			POST 	- append to the end of the file (?) options 
-			PATCH	- oooh, now _this_ I like
-
-			- maybe some way for .central to express limits on what can be done?
-				I think my default stance is "trust", though, right?
-
-			Okay, reconsidering a little 
-				- I can build utilities that make it easy for any given .central to expose that functionality, 
-				- BUT, that's the way to expose files. Full stop.
-
-
-
-
-
-
+	croft
+	planterbox
+	jardinier

@@ -2,6 +2,10 @@ const _ = require('lodash')
 const fs = require('fs')
 const { resolve } = require('path')
 
+const build = require('./build.js')
+const router = require('./router.js')
+const mapDir = require('./directory.js')
+const express = require('express')
 
 var args = (require('yargs/yargs')(process.argv.slice(2))
   .option('p', {
@@ -27,24 +31,14 @@ args.path = absPath;
 
 
 (async function () {
-  const build = require('./build.js')
-  const router = require('./router.js')
-  const mapDir = require('./directory.js')
-  const express = require('express')
-
-
-  const directory = await mapDir(resolve(args.path));
-  console.log({directory})
-
   await build(args.path);
-  const buildHomestead = require(resolve(args.path, '.homestead', '.homestead-build', 'server.js'))
-  const homestead = await buildHomestead(directory)
+  const { Homestead } = require(resolve(args.path, '.homestead', '.homestead-build', 'server.js'));
 
-  console.log('built homestead', homestead)
+  const directory = await mapDir(args.path);
+  const homestead = await Homestead(directory);
 
   const app = express()
   app.use(router(homestead))
-
   const server = app.listen(args.port, () => {
     console.log(`listening at ${JSON.stringify(server.address(), null, 2)}`)
   })

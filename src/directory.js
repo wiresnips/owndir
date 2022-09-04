@@ -79,16 +79,25 @@ module.exports = async function mapDir (path, parent, root, visited) {
   else if (node.isDirectory) {
     node.size = 0
     node.children = {}
-    node.walk = (path) => {
-      if (_.isEmpty(path)) {
-        return node
-      }
+    node.walk = (path, bestEffort) => {
       if (_.isString(path)) {
         path = path.split(pathUtil.sep).filter(step => step && step.length)
       }
-      const [step, ...nextSteps] = path
-      const child = node.children[step]
-      return child && child.walk && child.walk(nextSteps)
+      if (_.isEmpty(path)) {
+        return node
+      }
+      const [step, ...nextSteps] = path;
+      const child = node.children[step];
+
+      const arrived = child && _.isEmpty(nextSteps);
+      const canStep = !arrived && !!child?.walk 
+
+      return (
+        arrived ? child :                 
+        canStep ? child.walk(nextSteps) : 
+        bestEffort ? (child || node) :    
+        null                              
+      )
     }
 
     await fsp.readdir(node.path).then(relPaths => Promise.all(

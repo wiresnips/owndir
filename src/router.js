@@ -8,7 +8,7 @@ function makeRouter (homestead) {
 	applyRoutes(homestead, router, middleware)
 
 	_.toPairs(children || {}).forEach(([key, child]) => {
-		console.log('adding router to', key)
+		// console.log('adding router to', key)
 		router.use(`/${key}`, makeRouter(child))
 	})
 
@@ -27,7 +27,7 @@ function applyRoutes (homestead, router, routes) {
 	if (_.isArray(routes)) {
 		routes.forEach(([path, ...methodHandlers]) => {
 			methodHandlers.forEach(([method, ...handlers]) => {
-				console.log('adding handlers to', path, method, handlers)
+				// console.log(homestead?.H?.directory?.path, path, method, handlers.toString())
 				router[method](path, ...handlers.map(h => h.bind(homestead)))
 			})
 		})	

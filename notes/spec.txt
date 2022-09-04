@@ -46,20 +46,20 @@ Module Structure:
 			// 		- routes are applied AFTER child routes
 
 			middleware: [
-				['*', [
+				['*',
 					['<method (usually "all")>', (req, res, next) => { 
 						/* middleware handler */ 
 						next();
 					}],
-				]],
+				],
 			],
 
 			routes: [
-				['/any/given/path', [
+				['/any/given/path',
 					['<method>': (req, res, next) => { 
 						/* route handler */ 
 					}],
-				]],
+				],
 			],
 
 

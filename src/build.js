@@ -53,25 +53,36 @@ async function moduleSpec (root, absPath) {
 }
 
 
-function packModule (buildDir, spec) {
+async function packModule (buildDir, spec) {
   const {isPackage, root, path} = spec;
   if (isPackage) {
-    console.log('packing', path)
     const crumbs = (relative(root, path)
       .split(pathUtil.sep)
       .map(step => step.slice(0, 1))
       .filter(s => s != '.')
       .join(""));
+
     const filename = `${genSym(crumbs)}.tgz`
     const buildPath = resolve(buildDir, 'modules', filename);
-    spec.dep = `file:${buildPath}`
+    const installPath = resolve(buildDir, 'node_modules', spec.symbol);
 
-    return packLib(path).then(tarball => fsp.writeFile(buildPath, tarball))
+    await fsp.rm(buildPath).catch(() => {});
+    await fsp.rmdir(installPath, {recursive: true}).catch(() => {});
+
+    spec.dep = `file:${buildPath}`;
+    return packLib(path).then(tarball => fsp.writeFile(buildPath, tarball));
   }
 }
 
 
-function requireModuleJs ({symbol, req}, path) { 
+function requireModuleJs ({symbol, req}, path) {
+  if (!req) {
+    return `const ${symbol} = {};`
+  }
+  return `const ${symbol} = import(${JSON.stringify(req)}).then(m => m?.default || m).catch(() => ({}));`
+
+
+/*
   if (!req) {
     return `var ${symbol} = {};`
   }
@@ -84,6 +95,7 @@ try {
   console.log('Error loading', ${JSON.stringify(path)});
   console.error(error);
 }`;
+//*/
 }
 
 
@@ -106,7 +118,7 @@ async function build (src) {
   ];
 
   async function buildNode (absPath) {
-    console.log('buildNode', absPath)
+    // console.log('buildNode', absPath)
 
     if (!await isDir(absPath)) {
       return;
@@ -126,7 +138,7 @@ async function build (src) {
     const pluginDir = resolve(absPath, '.homestead', 'plugins')
     const plugins = await Promise.all(
       (await dirChildren(pluginDir))
-        .map(path => moduleSpec(src, resolve(pluginDir, relPath)))
+        .map(relPath => moduleSpec(src, resolve(pluginDir, relPath)))
      );
 
     const homesteadModuleSpecs = [spec, ...plugins];
@@ -172,7 +184,6 @@ async function bundle (rootDir, buildDir) {
 
     const basePath = resolve(buildDir, 'index.js');
     const serverPath = resolve(buildDir, 'server.js');
-    const clientPath = resolve(buildDir, 'client.js');
 
     const server = await esbuild.build({
         platform: 'node', // 'neutral' ? see: https://esbuild.github.io/api/#platform
