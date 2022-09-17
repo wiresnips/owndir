@@ -8,21 +8,21 @@ const defaultHtml = function (req) {
       <title>{req.path}</title>
     </head>
     <body>
-      <h1>Homestead, react server-side rendering plugin</h1>
+      <h1>OwnDir, react server-side rendering plugin</h1>
       <p>You are seeing this page because no html function has been provided.</p>
     </body>
   </html>
 }
 
-module.exports = function (homestead) {
+module.exports = function (owndir) {
 
-  if (!homestead.html) {
-    homestead.html = defaultHtml
+  if (!owndir.html) {
+    owndir.html = defaultHtml
   }
 
-  homestead.addRoute('get', '*', 
+  owndir.addRoute('get', '*', 
     async function (req, res, next) {
-      const fsNode = this.H.directory.walk(req.path, true)
+      const fsNode = this.O.directory.walk(req.path, true)
 
       console.log('react-ssr-plugin', req.originalUrl, this, fsNode)
 
@@ -31,8 +31,8 @@ module.exports = function (homestead) {
       }
 
       const target = fsNode.isFile
-        ? fsNode.parent.homestead
-        : fsNode.homestead
+        ? fsNode.parent.owndir
+        : fsNode.owndir
 
       console.log('target', target)
 

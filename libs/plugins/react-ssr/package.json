@@ -1,5 +1,5 @@
 {
-  "name": "homestead-plugin-react-ssr",
+  "name": "owndir-plugin-react-ssr",
   "version": "0.0.0",
   "description": "",
   "main": "index.js",

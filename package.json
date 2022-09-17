@@ -1,12 +1,12 @@
 {
-  "name": "homestead",
+  "name": "owndir",
   "version": "0.0.0",
   "description": "",
   "main": "server.js",
   "scripts": {
     "test": "node src/index.js -p 3232 ./example",
     "pretest": "npm run cleanup",
-    "cleanup": "rm -R ./example/.homestead/.homestead-build ; exit 0"
+    "cleanup": "rm -R ./example/.owndir/.owndir-build ; exit 0"
   },
   "author": "Ben Ells",
   "license": "",

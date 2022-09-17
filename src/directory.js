@@ -57,8 +57,8 @@ module.exports = async function mapDir (path, parent, root, visited) {
 
     await fsp.readdir(node.path).then(relPaths => Promise.all(
       relPaths
-        // .filter(relPath => !relPath.startsWith('.homestead')) // don't recurse into .homestead dirs
-        .filter(relPath => !relPath.startsWith('.homestead-build')) // don't recurse into .homestead-build
+        // .filter(relPath => !relPath.startsWith('.owndir')) // don't recurse into .owndir dirs
+        .filter(relPath => !relPath.startsWith('.owndir-build')) // don't recurse into .owndir-build
         .map(relPath => pathUtil.resolve(path, relPath))
         .map(absPath => mapDir(absPath, node, root, visited))
         .filter(_.identity)

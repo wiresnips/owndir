@@ -1,21 +1,21 @@
-module.exports = function (homestead) {
+module.exports = function (owndir) {
 
-	Object.defineProperty(homestead, 'css', {
+	Object.defineProperty(owndir, 'css', {
 		get() {
-			const hsChilden = this.H.directory.children['.homestead']?.children || {}
+			const childen = this.O.directory.children['.owndir']?.children || {}
 			const css_p = (
-				Object.keys(hsChilden).sort()
-					.map(cname => hsChilden[cname])
+				Object.keys(childen).sort()
+					.map(cname => childen[cname])
 					.filter(child => child.isFile && child.name.endsWith('.css'))
 					.map(cssText)
 			);
 
-			const parentCss = this.H.parent?.css || '';
+			const parentCss = this.O.parent?.css || '';
 			return Promise.all(css_p).then(fileContents => [parentCss, ...fileContents].join('\n\n'));
 		}
 	})
 
-	homestead.addRoute('get', '/style.css',
+	owndir.addRoute('get', '/style.css',
 		async function (req, res, next) {
 			const css = await this.css;
 			res.setHeader("content-type", "text/css");

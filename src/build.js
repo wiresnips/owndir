@@ -94,7 +94,7 @@ const ${symbol} = (
 
 
 async function build (src) {
-  const buildDir = resolve(src, '.homestead', '.homestead-build')
+  const buildDir = resolve(src, '.owndir', '.owndir-build')
   await mkdir(resolve(buildDir, 'modules')).catch(err => console.error(err));
 
   if (!await exists(buildDir)) {
@@ -118,25 +118,25 @@ async function build (src) {
       return;
     }
 
-    const homesteadCandidates = ((await fsp.readdir(absPath))
-      .filter(relPath => relPath.startsWith('.homestead'))
+    const owndirCandidates = ((await fsp.readdir(absPath))
+      .filter(relPath => relPath.startsWith('.owndir'))
       .map(relPath => resolve(absPath, relPath))
       .sort((a,b) => a.length - b.length)
     );
 
-    const spec = !_.isEmpty(homesteadCandidates)
-      ? await moduleSpec(src, homesteadCandidates[0])
+    const spec = !_.isEmpty(owndirCandidates)
+      ? await moduleSpec(src, owndirCandidates[0])
       : { symbol: genSym() };
 
 
-    const pluginDir = resolve(absPath, '.homestead', 'plugins')
+    const pluginDir = resolve(absPath, '.owndir', 'plugins')
     const plugins = await Promise.all(
       (await dirChildren(pluginDir))
         .map(relPath => moduleSpec(src, resolve(pluginDir, relPath)))
      );
 
-    const homesteadModuleSpecs = [spec, ...plugins];
-    for (let mod of homesteadModuleSpecs) {
+    const owndirModuleSpecs = [spec, ...plugins];
+    for (let mod of owndirModuleSpecs) {
       if (mod.isPackage) {
         await packModule(buildDir, mod);
       }
@@ -158,7 +158,7 @@ register(
 
     await (fsp.readdir(absPath)
       .then(relPaths => relPaths
-      .filter(rel => !rel.startsWith('.homestead'))
+      .filter(rel => !rel.startsWith('.owndir'))
       .map(rel => buildNode(resolve(absPath, rel)))
       )
       .then(x => Promise.all(x))

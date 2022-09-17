@@ -11,56 +11,56 @@ async function normalizeImport (rawImport) {
 }
 
 
-const baseHomestead = {
+const baseOwnDir = {
   addRoute: function (method, path, ...handlers) {
-    this.H.routes.push([path, [method, ...handlers]]);
+    this.O.routes.push([path, [method, ...handlers]]);
   },
   addMiddleware: function (method, path, ...handlers) {
-    this.H.middleware.push([path, [method, ...handlers]]);
+    this.O.middleware.push([path, [method, ...handlers]]);
   }
 }
 
 
-async function initHomestead (directory, Homestead, parent, plugins) {
+async function initOwnDir (directory, OwnDir, parent, plugins) {
 
-  Homestead.prototype = parent || baseHomestead;
+  OwnDir.prototype = parent || baseOwnDir;
 
-  var homestead; 
+  var owndir; 
   try {
-    homestead = await new Homestead(directory);
+    owndir = await new OwnDir(directory);
   } catch (err) {
     if (err instanceof TypeError && err.message.endsWith('is not a constructor')) {
-      homestead = await Homestead(directory);
+      owndir = await OwnDir(directory);
     }
     else {
       throw err;
     }
   }
 
-  if (Object.getPrototypeOf(Homestead.prototype) !== Homestead.prototype) {
-    Object.setPrototypeOf(homestead, Homestead.prototype);
+  if (Object.getPrototypeOf(OwnDir.prototype) !== OwnDir.prototype) {
+    Object.setPrototypeOf(owndir, OwnDir.prototype);
   } 
   
-  // don't allow H to be inherited
-  if (!homestead.hasOwnProperty("H")) {
-    homestead.H = {};
+  // don't allow O to be inherited
+  if (!owndir.hasOwnProperty("O")) {
+    owndir.O = {};
   }
 
-  homestead.H.directory = directory;
-  homestead.H.children = {};
-  homestead.H.plugins = plugins;
+  owndir.O.directory = directory;
+  owndir.O.children = {};
+  owndir.O.plugins = plugins;
 
-  homestead.H.middleware = homestead.H.middleware || []
-  homestead.H.routes = homestead.H.routes || [] 
+  owndir.O.middleware = owndir.O.middleware || []
+  owndir.O.routes = owndir.O.routes || [] 
 
-  directory.homestead = homestead;
+  directory.owndir = owndir;
 
   if (parent) {
-    homestead.H.parent = parent;
-    parent.H.children[homestead.H.directory.name] = homestead;
+    owndir.O.parent = parent;
+    parent.O.children[owndir.O.directory.name] = owndir;
   }
 
-  return homestead;
+  return owndir;
 }
 
 const uninitializedTree = {};
@@ -89,11 +89,11 @@ function register (path, nodeOrFunc, plugins) {
 }
 
 
-async function initializeTree (directory, uninitializedNode, parentHomestead) {
-  const homestead = await initHomestead(
+async function initializeTree (directory, uninitializedNode, parentOwnDir) {
+  const owndir = await initOwnDir(
     directory, 
     await (uninitializedNode.nodeOrFunc), 
-    parentHomestead,
+    parentOwnDir,
     await Promise.all(uninitializedNode.plugins)
   );
 
@@ -101,30 +101,30 @@ async function initializeTree (directory, uninitializedNode, parentHomestead) {
     _.toPairs(uninitializedNode.children || {}).map(
       ([key, uninitializedChild]) => {
         const childDir = directory.children[key];
-        return initializeTree(childDir, uninitializedChild, homestead)
+        return initializeTree(childDir, uninitializedChild, owndir)
       })
   );
 
-  return homestead;
+  return owndir;
 }
 
-async function activatePlugins (homestead) {
-  const plugins = homestead?.H?.plugins
+async function activatePlugins (owndir) {
+  const plugins = owndir?.O?.plugins
 
   if (_.isArray(plugins)) {
     for (let plugin of plugins) {
-      await plugin(homestead);
+      await plugin(owndir);
     }
   }
 
-  const children = Object.keys(homestead?.H?.children || {})
+  const children = Object.keys(owndir?.O?.children || {})
   for (let childName of children) {
-    await activatePlugins(homestead.H.children[childName]);
+    await activatePlugins(owndir.O.children[childName]);
   }
 }
 
-export async function Homestead (directory) {
-  const homestead = await initializeTree(directory, uninitializedTree);
-  await activatePlugins(homestead);
-  return homestead;
+export async function OwnDir (directory) {
+  const owndir = await initializeTree(directory, uninitializedTree);
+  await activatePlugins(owndir);
+  return owndir;
 }

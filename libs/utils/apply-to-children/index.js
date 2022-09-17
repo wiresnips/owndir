@@ -1,16 +1,16 @@
 
-function applyToChildrenAsync (homestead, fn) {
-	const children = Object.values(homestead.H.children)
+function applyToChildrenAsync (owndir, fn) {
+	const children = Object.values(owndir.O.children)
 	return Promise.all([
-		fn(homestead),
+		fn(owndir),
 		...children.map(child => applyToChildrenAsync(child, fn))
 	]);
 }
 
 
-function applyToChildrenSync (homestead, fn) {
-	fn(homestead);
-	const children = Object.values(homestead.H.children)
+function applyToChildrenSync (owndir, fn) {
+	fn(owndir);
+	const children = Object.values(owndir.O.children)
 	children.forEach(child => applyToChildrenSync(child, fn))
 }
 

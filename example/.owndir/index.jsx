@@ -17,14 +17,14 @@ export default {
           <link rel="stylesheet" type="text/css" href="/style.css" /> 
         </head>
         <body>
-          Hello, from { this.H?.directory?.absolutePath }
+          Hello, from { this.O?.directory?.absolutePath }
           { await this.main(req) }
         </body>
       </html>
     );
   },
 
-  title: 'root homestead',
+  title: 'root OwnDir',
   main: (req) => {},
 }
 

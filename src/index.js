@@ -34,13 +34,13 @@ args.path = absPath;
 
 (async function () {
   await build(args.path);
-  const { Homestead } = require(resolve(args.path, '.homestead', '.homestead-build', 'server.js'));
+  const { OwnDir } = require(resolve(args.path, '.owndir', '.owndir-build', 'server.js'));
 
   const directory = await mapDir(args.path);
-  const homestead = await Homestead(directory);
+  const owndir = await OwnDir(directory);
 
   const app = express()
-  app.use(router(homestead))
+  app.use(router(owndir))
   
   const server = app.listen(args.port, () => {
     console.log(`listening at ${JSON.stringify(server.address(), null, 2)}`)
@@ -48,7 +48,7 @@ args.path = absPath;
 
   chokidar.watch(args.path, {
     // cwd: args.path, // I think I _want_ the absolute path, actually ...
-    ignored: /.*\/.homestead-build(\/.*)?/,
+    ignored: /.*\/.owndir-build(\/.*)?/,
     ignoreInitial: true,
     awaitWriteFinish: true,
   })
@@ -63,5 +63,5 @@ args.path = absPath;
 
 
 
-// require('chokidar').watch("/home/ben/projects/homestead/scratch", {ignoreInitial: true, awaitWriteFinish: true}).on( 'all', (event, path) => console.log(event, path))
+// require('chokidar').watch("/home/ben/projects/owndir/scratch", {ignoreInitial: true, awaitWriteFinish: true}).on( 'all', (event, path) => console.log(event, path))
 

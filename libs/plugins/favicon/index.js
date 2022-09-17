@@ -7,9 +7,9 @@ const favicon = `<svg
 </svg>
 `
 
-module.exports = function (homestead) {
+module.exports = function (owndir) {
 
-  homestead.H.routes.push(
+  owndir.O.routes.push(
     ["/favicon.ico",
       ["get", async function (req, res, next) {
         res.setHeader("content-type", "image/svg+xml")
