@@ -17,7 +17,7 @@ module.exports = {
 		return <ul>{fileNames.map(name => (<li>{name}</li>))}</ul>
 	},
 
-	H: {
+	O: {
 
 		middleware: [
 			["*", 

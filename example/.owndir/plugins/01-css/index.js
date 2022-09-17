@@ -1,4 +1,7 @@
-module.exports = function (owndir) {
+function CssPlugin (owndir) {
+	console.log("CssPlugin", owndir)
+	owndir.propagatePlugin(CssPlugin);
+
 
 	Object.defineProperty(owndir, 'css', {
 		get() {
@@ -23,6 +26,8 @@ module.exports = function (owndir) {
 		}
 	);
 }
+
+module.exports = CssPlugin;
 
 async function cssText (file) {
 	return `/* ${file.path} */\n${ await file.text() }`

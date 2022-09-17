@@ -17,6 +17,11 @@ const baseOwnDir = {
   },
   addMiddleware: function (method, path, ...handlers) {
     this.O.middleware.push([path, [method, ...handlers]]);
+  },
+  propagatePlugin: function (plugin) {
+    for (const child of Object.values(this.O.children)) {
+      child.O.plugins.push(plugin);
+    }
   }
 }
 
