@@ -21,7 +21,7 @@ module.exports = async function (buildPath) {
 		
 		await npm.exec('install', []);
 	} catch (err) {
-		console.error(err);
+		console.error("npm install error", err);
 		process.exit(1);
 	}
 }

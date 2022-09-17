@@ -4,7 +4,7 @@ import { renderToString } from 'react-dom/server';
 const defaultHtml = function (req) {
   return <html>
     <head>
-      <meta charset="utf-8"/>
+      <meta charSet="utf-8"/>
       <title>{req.path}</title>
     </head>
     <body>

@@ -67,7 +67,7 @@ async function packModule (buildDir, spec) {
     const installPath = resolve(buildDir, 'node_modules', spec.symbol);
 
     await fsp.rm(buildPath).catch(() => {});
-    await fsp.rmdir(installPath, {recursive: true}).catch(() => {});
+    await fsp.rm(installPath, {recursive: true}).catch(() => {});
 
     spec.dep = `file:${buildPath}`;
     return packLib(path).then(tarball => fsp.writeFile(buildPath, tarball));
@@ -77,25 +77,19 @@ async function packModule (buildDir, spec) {
 
 function requireModuleJs ({symbol, req}, path) {
   if (!req) {
-    return `const ${symbol} = {};`
+    return `const ${symbol} = function () { };`
   }
-  return `const ${symbol} = import(${JSON.stringify(req)}).then(m => m?.default || m).catch(() => ({}));`
-
-
-/*
-  if (!req) {
-    return `var ${symbol} = {};`
-  }
-
   return `
-var ${symbol} = {};
-try {
-  ${symbol} = require(${JSON.stringify(req)});
-} catch (error) {
-  console.log('Error loading', ${JSON.stringify(path)});
-  console.error(error);
-}`;
-//*/
+const ${symbol} = (
+  import(${JSON.stringify(req)})
+    .then(m => m?.default || m)
+    .then(normalizeImport)
+    .catch((error) => {
+      console.log('error importing', ${JSON.stringify(path)}, error);
+      return {};
+    })
+);
+`;
 }
 
 
@@ -226,7 +220,7 @@ const externalizeBinaries = {
     }
 
     function LOAD_INDEX (path) {
-      const candidates = [resolve(path, 'index.js'), resolve(path, 'index.json'), resolve(path, 'index.node')];
+      const candidates = ['index.js', 'index.json', 'index.node'].map(c => resolve(path, c));
       return Promise.all(candidates.map(pathIfFile)).then(res => res.find(x => !!x))
     } 
 

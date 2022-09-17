@@ -113,7 +113,7 @@ const withTempDir = (prefix, f) => {
     tempDir = dir;
     return f(dir);
   }).finally(() => {
-    fsp.rmdir(tempDir, {recursive: true})
+    fsp.rm(tempDir, {recursive: true})
   })
 }
 

@@ -1,18 +1,47 @@
 import _ from 'lodash';
 import pathUtil from 'path';
 
-async function initHomestead (directory, homestead, parent, plugins) {
 
-  if (_.isFunction(homestead)) {
-    if (parent) {
-      homestead.prototype = parent;
+async function normalizeImport (rawImport) {
+  rawImport = await rawImport;
+  if (_.isFunction(rawImport)) {
+    return rawImport;
+  }
+  return function () { return rawImport };
+}
+
+
+const baseHomestead = {
+  addRoute: function (method, path, ...handlers) {
+    this.H.routes.push([path, [method, ...handlers]]);
+  },
+  addMiddleware: function (method, path, ...handlers) {
+    this.H.middleware.push([path, [method, ...handlers]]);
+  }
+}
+
+
+async function initHomestead (directory, Homestead, parent, plugins) {
+
+  if (parent) {
+    Homestead.prototype = parent || baseHomestead;
+  }
+
+  var homestead; 
+  try {
+    homestead = await new Homestead(directory);
+  } catch (err) {
+    if (err instanceof TypeError && err.message.endsWith('is not a constructor')) {
+      homestead = await Homestead(directory);
     }
-    homestead = await homestead(directory);
+    else {
+      throw err;
+    }
   }
 
   if (parent && Object.getPrototypeOf(homestead) !== parent) {
     Object.setPrototypeOf(homestead, parent);
-  }  
+  } 
   
   // don't allow H to be inherited
   if (!homestead.hasOwnProperty("H")) {
