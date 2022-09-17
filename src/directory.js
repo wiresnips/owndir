@@ -126,7 +126,7 @@ const fsNodeProto = {
 
   onChange: async function (event, path, isNearestFsNode, ...args) {
     const absPath = path
-    const relPath = relative(this.absolutePath, path);
+    const relPath = pathUtil.relative(this.absolutePath, path);
 
     const isThisNode = absPath === this.absolutePath;
     const isDirectParent = !relPath.includes(pathUtil.sep);
@@ -218,7 +218,7 @@ const fsNodeProto = {
   text: async function (encoding) {
     if (this.isFile) {
       encoding = encoding || 'utf-8'
-      const handle = await fsp.open(this.absPath)
+      const handle = await fsp.open(this.absolutePath)
       const content = await handle.readFile(encoding)
       handle.close()
       return content;

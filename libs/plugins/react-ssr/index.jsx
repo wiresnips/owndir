@@ -20,27 +20,25 @@ module.exports = function (homestead) {
     homestead.html = defaultHtml
   }
 
-  homestead.H.routes.push(
-    ["*",
-      ["get", async function (req, res, next) {
-        const fsNode = this.H.directory.walk(req.path, true)
+  homestead.addRoute('get', '*', 
+    async function (req, res, next) {
+      const fsNode = this.H.directory.walk(req.path, true)
 
-        console.log('react-ssr-plugin', req.originalUrl, this, fsNode)
+      console.log('react-ssr-plugin', req.originalUrl, this, fsNode)
 
-        if (!fsNode) {
-          return next();
-        }
+      if (!fsNode) {
+        return next();
+      }
 
-        const target = fsNode.isFile
-          ? fsNode.parent.homestead
-          : fsNode.homestead
+      const target = fsNode.isFile
+        ? fsNode.parent.homestead
+        : fsNode.homestead
 
-        console.log('target', target)
+      console.log('target', target)
 
-        res.send('<!DOCTYPE html>\n' +
-          renderToString(await target.html(req)));
-      }]
-    ]
-  )
+      res.send('<!DOCTYPE html>\n' +
+        renderToString(await target.html(req)));
+    }
+  );
 }
 

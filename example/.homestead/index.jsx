@@ -12,8 +12,9 @@ export default {
     return (
       <html>
         <head>
-          <meta charset="utf-8"/>
+          <meta charSet="utf-8"/>
           <title>{this.title}</title>
+          <link rel="stylesheet" type="text/css" href="/style.css" /> 
         </head>
         <body>
           Hello, from { this.H?.directory?.absolutePath }
@@ -25,19 +26,5 @@ export default {
 
   title: 'root homestead',
   main: (req) => {},
-
-  /*
-  H: {
-    middleware: [
-      ["*", 
-        ["all", (req, res, next) => {
-            console.log('root middleware', req.originalUrl)
-            next()
-          }
-        ]
-      ]
-    ],
-  }
-  //*/
 }
 

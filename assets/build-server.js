@@ -23,9 +23,7 @@ const baseHomestead = {
 
 async function initHomestead (directory, Homestead, parent, plugins) {
 
-  if (parent) {
-    Homestead.prototype = parent || baseHomestead;
-  }
+  Homestead.prototype = parent || baseHomestead;
 
   var homestead; 
   try {
@@ -39,8 +37,8 @@ async function initHomestead (directory, Homestead, parent, plugins) {
     }
   }
 
-  if (parent && Object.getPrototypeOf(homestead) !== parent) {
-    Object.setPrototypeOf(homestead, parent);
+  if (Object.getPrototypeOf(Homestead.prototype) !== Homestead.prototype) {
+    Object.setPrototypeOf(homestead, Homestead.prototype);
   } 
   
   // don't allow H to be inherited
