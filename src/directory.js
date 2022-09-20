@@ -37,6 +37,7 @@ module.exports = async function mapDir (path, parent, root, visited) {
     path: absPath,
     absolutePath: absPath,
     relativePath: root ? pathUtil.relative(root.path, absPath) : '',
+    listeners: [],
     visited
   }
   Object.setPrototypeOf(node, fsNodeProto);
@@ -191,10 +192,6 @@ const fsNodeProto = {
   // this is a simple pass-through of chokidar
   // events are: all, add, addDir, change, unlink, unlinkDir, ready, error
   addListener: function (listener, opts) {
-    if (!this.listeners) {
-      this.listeners = [];
-    }
-
     const { event, match, ignore } = opts || {};
     const matcher = match && anymatch(match)
     const ignorer = ignore && anymatch(ignore)

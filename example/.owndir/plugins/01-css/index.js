@@ -1,7 +1,5 @@
 function CssPlugin (owndir) {
-	console.log("CssPlugin", owndir)
 	owndir.propagatePlugin(CssPlugin);
-
 
 	Object.defineProperty(owndir, 'css', {
 		get() {

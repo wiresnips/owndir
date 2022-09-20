@@ -24,7 +24,7 @@ module.exports = function (owndir) {
     async function (req, res, next) {
       const fsNode = this.O.directory.walk(req.path, true)
 
-      console.log('react-ssr-plugin', req.originalUrl, this, fsNode)
+      // console.log('react-ssr-plugin', req.originalUrl, this, fsNode)
 
       if (!fsNode) {
         return next();
@@ -34,7 +34,7 @@ module.exports = function (owndir) {
         ? fsNode.parent.owndir
         : fsNode.owndir
 
-      console.log('target', target)
+      // console.log('target', target)
 
       res.send('<!DOCTYPE html>\n' +
         renderToString(await target.html(req)));

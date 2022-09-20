@@ -7,7 +7,7 @@ Module Structure:
 
 	{
 		// this is where I'm going to keep all of *my* keys
-		H: {
+		O: {
 
 			root: {
 				/* the root module */
@@ -61,21 +61,6 @@ Module Structure:
 					}],
 				],
 			],
-
-
-			// only applicable to the root node.
-			// used to configure the express Application
-			app: {
-				engine: {
-					ext: someEngine
-				}
-				set: {
-					key: value, // pipe this directly into express
-				}
-			}
-
-			// if we're going to serve the js to the client, where should it live?
-			serveClientJsAt: '' 
 
 		}
 	}

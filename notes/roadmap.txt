@@ -1,74 +1,41 @@
 
+React renderToString strips out event-handlers
+==============================================
+	
+	FUUUUCK MEEEE
+
+	this was _kind of_ an issue anyways, but SHIT - didn't think it was this bad
+	figured I could inject code that ran in the client scope instead of the local
+
+		but NOOoooOOOOOooooOOO
+
+	So, what fucking now, asswipe?
+
+		abandon react ... ?
+
+		embrace CSR ... ?
+
+
+
+
+
+
+how to deal with static assets?
+===============================
+
+	I want some easy way for plugins to declare, and then make use of, static assets
+
+
 
 how to deal with filesystem updates?
 ====================================
 
-	I need a way to recreate the routers
-	------------------------------------
-		the plan here is, get them into a more _structured_ form, and then we can safely manipulate the router's stack
-
-		I need to wrap H.middleware and H.routes, and H.children into routers of their own
-		that way, for myself, I will only have three routes: "middleware", "children", and "routes"
-
-		with this setup, I can re-create the middleware and routes, while leaving the child routes untouched
-
-		wait, shit - that would probably work, except for the fact that the children also need to be recreated, because they can navigate the whole tree
-
-
-	WAIT. SHIT.
-		every child can navigate the whole directory structure
-		that means, whenever ANY file changes, EVERY homestead MUST be rebuilt
-		unless, I can find some way to update the values without torpedoing the references ...
-
-	Okay, let's look at building what we need, from scratch, every time
-		(it's not like server state is worth that much anyways, no-one else can use it)
-
-		So, every homestead gets wrapped into something that BECOMES a constructor function
-		and, those constructor functions get composed ... somehow ...
-
-
-	I think that the game here is, mitigation
-		1- limit what is recreated
-			ie, when there are changes, I only rebuild the PATH along which those changes occurred
-			(technically you CAN depend on sibling folders, but I won't honor it)
-
-			notice that this will STILL nuke the heirarchy of _everything_, because I'll rebuild the root every time
-			so be it, then.
-
-		2- make recreation easier
-			proactively wrap nodes as constructors
-
-			attach the routers directly to homestead.H (?)
-
-			utilities to splice updates into and out of the tree
-
-
-let's refocus the "main tree" on the directory instead of the homestead
-	- don't inject directory into homestead, inject homestead into directory
-	- don't assemble the tree of homestead in build-server, do it as directories are updated
-
-
--------
-
-Okay, I don't hate where this refactor has brought me, but I also kinda just want to say "fuck it"
-it's easy enough to establish a convention that says "if you want to react to changes, don't read the files on construction"
-
-Upside, this means that we ... don't have to care about rebuilding ANYTHING
-
-	and, I can give directory an addListener function, so homesteads that want to can STILL do the thing
-	
-
-
-alright, this is starting to get somewhere
-	1- never rebuild ANYTHING
+	1- never rebuild the modules
 	2- addListener on fsNode so that homesteads can respond to file changes
 	3- how the FUCK do I want to respond to adding/deleting directories wholesale?
 		- nope, just don't ever try to rebuild code 
 			notice that, I don't know when changes in a .homestead directory ARE code-changes
-			could be, a cache being updated, for example
-
-
-
+			could be, eg, a cache being updated
 
 
 
