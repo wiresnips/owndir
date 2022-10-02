@@ -117,6 +117,9 @@ const withTempDir = (prefix, f) => {
   })
 }
 
+function pathSplit (path) {
+  return path.split(pathUtil.sep).filter(step => step && step.length)
+}
 
 
 
@@ -137,5 +140,6 @@ module.exports = {
   partition,
   merge,
   takeKeys,
-  home
+  home,
+  pathSplit
 }

@@ -5,14 +5,18 @@ const chokidar = require('chokidar')
 const express = require('express')
 
 const build = require('./build.js')
-const mapDir = require('./directory.js')
-const router = require('./router.js')
+const mapDir = require('./fsNode/mapDir')
 
 var args = (require('yargs/yargs')(process.argv.slice(2))
   .option('p', {
     alias: 'port',
     default: 0,
     type: 'integer'
+  })
+  .option('h', {
+    alias: 'host',
+    default: '127.0.0.1',
+    type: 'string'
   })
   .argv);
 
@@ -36,13 +40,16 @@ args.path = absPath;
   await build(args.path);
   const { OwnDir } = require(resolve(args.path, '.owndir', '.owndir-build', 'server.js'));
 
-  const directory = await mapDir(args.path);
+  const directory = await mapDir(args.path)
+  directory.permRead.allow("**")
+  directory.permWrite.allow(fsNode => !fsNode.isOwnDir)
+
   const owndir = await OwnDir(directory);
 
   const app = express()
-  app.use(router(owndir))
+  app.use(directory.requestHandler.bind(directory));
   
-  const server = app.listen(args.port, () => {
+  const server = app.listen(args.port, args.host, () => {
     console.log(`listening at ${JSON.stringify(server.address(), null, 2)}`)
   })
 
@@ -58,10 +65,51 @@ args.path = absPath;
     fsNode.onChange(event, path, true);
   });
 
+  
+  // okay, let's test out fsNode.move ...
+  setTimeout(async () => {
+    console.log('testing fsNode.move')
+    let from = directory.walk('move-test/a')
+    let to = directory.walk('move-test/b')
+
+    let mover = from.walk('move-me');
+    if (!mover) {
+      mover = to.walk('move-me')
+      from = directory.walk('move-test/b')
+      to = directory.walk('move-test/a')
+    }
+
+    console.log({
+      mover: mover.relativePath,
+      from: from.relativePath,
+      to: to.relativePath,
+
+      owndir: {
+        targetSaysWhat: mover.owndir.targetSaysWhat,
+        testValue: mover.owndir.testValue
+      },
+
+      perms: {
+        permRead: mover.permRead,
+        permWrite: mover.permWrite
+      },
+
+    })
+
+
+    console.log( await mover.move(from.getWalkTo(to) + '/' + mover.name) )
+
+    console.log({
+        targetSaysWhat: mover.owndir.targetSaysWhat,
+        testValue: mover.owndir.testValue
+      })
+
+  }, 1000)
 
 })()
 
 
 
-// require('chokidar').watch("/home/ben/projects/owndir/scratch", {ignoreInitial: true, awaitWriteFinish: true}).on( 'all', (event, path) => console.log(event, path))
+// require('chokidar').watch("/home/ben/projects/owndir/scratch", {ignoreInitial: true, awaitWriteFinish: true})
+// .on( 'all', (event, path) => console.log(event, path))
 

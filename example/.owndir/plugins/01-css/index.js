@@ -1,6 +1,4 @@
 function CssPlugin (owndir) {
-	owndir.propagatePlugin(CssPlugin);
-
 	Object.defineProperty(owndir, 'css', {
 		get() {
 			const hsChilden = this.O.directory.children['.owndir']?.children || {}
@@ -24,6 +22,7 @@ function CssPlugin (owndir) {
 		}
 	);
 }
+CssPlugin.propagate = true;
 
 module.exports = CssPlugin;
 

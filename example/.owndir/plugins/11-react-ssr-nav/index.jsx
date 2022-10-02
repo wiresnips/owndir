@@ -3,7 +3,7 @@ import React from 'react'
 
 module.exports = function (owndir) {
   owndir.fileNavSidebar = function () {
-    return fileNavSidebarCollapsible(this.O.directory)
+    return fileNavSidebarCollapsible(owndir.O.directory)
   }
 }
 
@@ -36,7 +36,7 @@ function fileNavSidebar (fsNode) {
     return null;
   }
 
-  const children = Object.values(fsNode.children || {}).sort((a, b) => a.name < b.name ? -1 : 1);
+  const children = fsNode.childrenArray
 
   const files = children.filter(c => c.isFile);
   const dirs = children.filter(c => c.isDirectory);

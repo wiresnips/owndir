@@ -1,4 +1,5 @@
 import _ from 'lodash';
+import { Router } from 'express';
 import pathUtil from 'path';
 
 
@@ -12,16 +13,37 @@ async function normalizeImport (rawImport) {
 
 
 const baseOwnDir = {
-  addRoute: function (method, path, ...handlers) {
-    this.O.routes.push([path, [method, ...handlers]]);
-  },
   addMiddleware: function (method, path, ...handlers) {
     this.O.middleware.push([path, [method, ...handlers]]);
   },
-  propagatePlugin: function (plugin) {
-    for (const child of Object.values(this.O.children)) {
-      child.O.plugins.push(plugin);
+  addRoute: function (method, path, ...handlers) {
+    this.O.routes.push([path, [method, ...handlers]]);
+  },
+}
+
+const baseSystemObj = {
+
+  get childrenArray() {
+    return Object.values(this.children || {}).sort((a, b) => a.name < b.name ? -1 : 1)
+  },
+
+  adoptOwnDir: function (child) {
+    const owndir = this.owndir;
+    const name = child.O.directory.name;
+    const existingParent = child.O.parent;
+    if (existingParent) {
+      delete existingParent.O.children[name]
     }
+
+    child.O.parent = owndir;
+    this.children[name] = child;
+
+    if (Object.getPrototypeOf(child) !== owndir) {
+      Object.setPrototypeOf(child, owndir);
+    } 
+
+    // oh right, and also this
+    console.log('HAAHHAHA and don\'t forget that PLUGINS will absolutely not be re-evaluated correctly');
   }
 }
 
@@ -42,27 +64,28 @@ async function initOwnDir (directory, OwnDir, parent, plugins) {
     }
   }
 
-  if (Object.getPrototypeOf(OwnDir.prototype) !== OwnDir.prototype) {
-    Object.setPrototypeOf(owndir, OwnDir.prototype);
-  } 
-  
   // don't allow O to be inherited
   if (!owndir.hasOwnProperty("O")) {
     owndir.O = {};
   }
+  Object.setPrototypeOf(owndir.O, baseSystemObj);
 
+  owndir.O.owndir = owndir;
   owndir.O.directory = directory;
   owndir.O.children = {};
-  owndir.O.plugins = plugins;
-
+  owndir.O.plugins = plugins || [];
   owndir.O.middleware = owndir.O.middleware || []
   owndir.O.routes = owndir.O.routes || [] 
 
   directory.owndir = owndir;
 
   if (parent) {
-    owndir.O.parent = parent;
-    parent.O.children[owndir.O.directory.name] = owndir;
+    parent.O.adoptOwnDir(owndir)
+  } else {
+    // special-case for the root, because bleah
+    if (Object.getPrototypeOf(owndir) !== OwnDir.prototype) {
+      Object.setPrototypeOf(owndir, OwnDir.prototype);
+    } 
   }
 
   return owndir;
@@ -114,17 +137,21 @@ async function initializeTree (directory, uninitializedNode, parentOwnDir) {
 }
 
 async function activatePlugins (owndir) {
-  const plugins = owndir?.O?.plugins
+  const plugins = owndir.O.plugins
+  const children = owndir.O.childrenArray
 
-  if (_.isArray(plugins)) {
-    for (let plugin of plugins) {
-      await plugin(owndir);
+  for (let plugin of plugins) {
+    await plugin(owndir);
+
+    if (plugin.propagate) {
+      for (const child of children) {
+        child.O.plugins.push(plugin);
+      }        
     }
   }
 
-  const children = Object.keys(owndir?.O?.children || {})
-  for (let childName of children) {
-    await activatePlugins(owndir.O.children[childName]);
+  for (const child of children) {
+    await activatePlugins(child);
   }
 }
 
