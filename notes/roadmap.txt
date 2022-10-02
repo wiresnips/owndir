@@ -17,7 +17,85 @@ React renderToString strips out event-handlers
 
 
 
+	Okay, found a way there, but MAN - it is UGLY
+	So, let's roll back and take a serious look at how we could -- now that we have SSR -- find our way to CSR
 
+
+Client-Side Rendering
+=====================
+
+	so, this looks like it's actually not going to be THAT tricky
+		maybe obnoxious, but very achievable
+
+	1- first class support for streaming file access
+		I already laid the bones for this in an earlier attempt
+			see: https://github.com/wiresnips/owndir/commit/6dc8debd729cceca309fe78611928f3eed70880c#diff-908e125e0408b0bd5b0fbcf44a2e21d286bed81e1ebe66329b4fbaa6ae41e7cb
+
+		the biggest missing piece was injecting the directory in the constructor
+
+	2- client-facing wrapper around the output of build that fetches the directory tree 
+		- obviously, without content, but WITH matching methods to load it asynchronously
+
+
+	BUT, supposing I do that - what next?
+		the whole point of going to SPA would be, not having to (and not really being able to) reload on every click
+
+		So, how do I build a non-insane SPA out of this?
+			I can fantasize about wrapping every component in a router that's aware of it's point-of-origin,
+			but I think that's a fool's errand
+
+		I _do_ want component continuity to be non-insane
+			eg, if I collapse a folder in my file-nav, it should stay collapsed, 
+			without the file-nav having to do backflips
+
+			ideally, that means NOT REBUILDING the bloody filenav
+			and probably, what THAT means, is memoizing the damned thing to return the SAME instance on the next call
+			that way, it can remember it's state
+
+			Would that work?
+				I think this is something I get to fuck around with _afterwards_ ...
+
+
+
+
+
+
+	And this brings me back to pushing the Directory interface client-side,
+	which brings me back to wrapping a useful directory interface
+		- read, write, rm, mv, mkdir
+
+	which brings me back to, what the fuck do I do when DIRECTORIES update out from under me?
+	'cause, I've already got some shitty event-listeners in place
+		which are DEFINITELY going to go off, if I use an internal API to _do the thing they're looking for_
+
+	Suppose that I'm going to limit myself to what the filesystem allows
+		- I can still _do the thing_ through the interface that I build, but I wait for the filesystem to update
+
+
+
+	Okay, let's make a command decision here
+
+	I will NOT SUPPORT re-compiling when folders are dynamially restructured on the fly
+		- yet
+
+	it's just too much of a pain in the ass - I can work on that AFTER I have enough of a working prototype
+
+
+	FUUUCK, there's also the issue of permissions
+	if I'm going to create a local endpoint that allows other things to read the files, that would be bad, right?
+
+
+
+Alternative Frameworks
+======================
+
+	I _really_ like the look of solidJS
+	and, I see that there's ways to run Vue through esbuild as well
+
+	Once we're satisfied that React is doing the things that it ought to do, (or that it CAN'T ... ssr script tags)
+	might be worth taking a look at making alternatives possible
+
+	Although, I'm confident that mix-&-match will never be possible, so it'd immediately fragment front-end plugins
 
 
 how to deal with static assets?
