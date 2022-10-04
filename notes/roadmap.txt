@@ -1,88 +1,49 @@
 
-React renderToString strips out event-handlers
-==============================================
-	
-	FUUUUCK MEEEE
+Next Steps
+==========
+	1- build client-facing JS (again)
+		force that shit up to the client, hardcode _everything_
+		we can sort out sane architecture later, we need to prove the point first
 
-	this was _kind of_ an issue anyways, but SHIT - didn't think it was this bad
-	figured I could inject code that ran in the client scope instead of the local
+	2- client-side *directory* support
+		2.1- directory routers need to serve content
+			directory skeleton
+			file access interfaces
+				mediated by permissions
+				read, write, move, delete, makeDir
+		2.2- client loads directory data, spawns client-side owndir
 
-		but NOOoooOOOOOooooOOO
+	3- client-side _routing_
+		this is a *lot* more react-specific, but there's probably adjacent notions in the other reactive frameworks, right?
+			yeah, seems like "routing" is a pretty universal problem to solve
 
-	So, what fucking now, asswipe?
+	4- sync client and server directory object
+		I need to pass chokidar events up to the client
 
-		abandon react ... ?
+	5- fill out the _rest_ of the fsNode interface
 
-		embrace CSR ... ?
-
-
-
-	Okay, found a way there, but MAN - it is UGLY
-	So, let's roll back and take a serious look at how we could -- now that we have SSR -- find our way to CSR
-
-
-Client-Side Rendering
-=====================
-
-	so, this looks like it's actually not going to be THAT tricky
-		maybe obnoxious, but very achievable
-
-	1- first class support for streaming file access
-		I already laid the bones for this in an earlier attempt
-			see: https://github.com/wiresnips/owndir/commit/6dc8debd729cceca309fe78611928f3eed70880c#diff-908e125e0408b0bd5b0fbcf44a2e21d286bed81e1ebe66329b4fbaa6ae41e7cb
-
-		the biggest missing piece was injecting the directory in the constructor
-
-	2- client-facing wrapper around the output of build that fetches the directory tree 
-		- obviously, without content, but WITH matching methods to load it asynchronously
+	6- BYO-build-script
+		I want to support alternate reactive frameworks
+		but, I cannot worry about that yet - just do react for now, we can readjust once we have more working code hammered out
 
 
-	BUT, supposing I do that - what next?
-		the whole point of going to SPA would be, not having to (and not really being able to) reload on every click
 
-		So, how do I build a non-insane SPA out of this?
-			I can fantasize about wrapping every component in a router that's aware of it's point-of-origin,
-			but I think that's a fool's errand
 
-		I _do_ want component continuity to be non-insane
-			eg, if I collapse a folder in my file-nav, it should stay collapsed, 
-			without the file-nav having to do backflips
+Loose Ends
+==========
+	if a folder gets pasted in:
+		I rely on the events being delivered in a top-down order
+			if they were delivered randomly, I would just _die_
+			not sure if I can learn whether or not this is a problem by inspecting chokidar's code?
+				might need to inspect *platform* code, which is ... well it's a lot
 
-			ideally, that means NOT REBUILDING the bloody filenav
-			and probably, what THAT means, is memoizing the damned thing to return the SAME instance on the next call
-			that way, it can remember it's state
-
-			Would that work?
-				I think this is something I get to fuck around with _afterwards_ ...
+		I have no mechanism to cascade the existing owndir
+			probably I just crash? Something to test later
 
 
 
 
 
-
-	And this brings me back to pushing the Directory interface client-side,
-	which brings me back to wrapping a useful directory interface
-		- read, write, rm, mv, mkdir
-
-	which brings me back to, what the fuck do I do when DIRECTORIES update out from under me?
-	'cause, I've already got some shitty event-listeners in place
-		which are DEFINITELY going to go off, if I use an internal API to _do the thing they're looking for_
-
-	Suppose that I'm going to limit myself to what the filesystem allows
-		- I can still _do the thing_ through the interface that I build, but I wait for the filesystem to update
-
-
-
-	Okay, let's make a command decision here
-
-	I will NOT SUPPORT re-compiling when folders are dynamially restructured on the fly
-		- yet
-
-	it's just too much of a pain in the ass - I can work on that AFTER I have enough of a working prototype
-
-
-	FUUUCK, there's also the issue of permissions
-	if I'm going to create a local endpoint that allows other things to read the files, that would be bad, right?
 
 
 
@@ -102,19 +63,6 @@ how to deal with static assets?
 ===============================
 
 	I want some easy way for plugins to declare, and then make use of, static assets
-
-
-
-how to deal with filesystem updates?
-====================================
-
-	1- never rebuild the modules
-	2- addListener on fsNode so that homesteads can respond to file changes
-	3- how the FUCK do I want to respond to adding/deleting directories wholesale?
-		- nope, just don't ever try to rebuild code 
-			notice that, I don't know when changes in a .homestead directory ARE code-changes
-			could be, eg, a cache being updated
-
 
 
 
@@ -162,35 +110,3 @@ plugin distribution mechanism
 			"postinstall": "node node_modules/homestead-plugin-utils/postinstall.js my-plugin"
 
 
-
-
-better management of route priority
-===================================
-
-	if plugins are going to be providing functionality by adding routes (and they are)
-
-	then, I need some way for them to play nicely with each other
-
-	for NOW, I can do this with plugin names (because I am the only one writing anything)
-
-
-
-
-name ideas
-==========
-
-	OwnDir
-		- pronounced "wonder" ?
-
-	homestead
-		- competing service
-		- ancaps, bleah
-
-	central
-		- probably impossible to google
-
-	bradford
-
-	croft
-	planterbox
-	jardinier

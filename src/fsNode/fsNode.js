@@ -99,6 +99,7 @@ const proto = {
         case 'add': 
         case 'addDir':
           // if we added a node that already exists, it was probably done through the "fsNode.move" interface
+          // (and if this node is receiving the event, it already exists)
           return;
       }
     }
@@ -106,8 +107,7 @@ const proto = {
       switch (event) {
         case 'add': 
         case 'addDir':
-          const child = await mapDir(absPath, this, this.root, this.visited);
-          this.children[relPath] = child;
+          this.adoptChild(await mapDir(absPath, this, this.root));
           break;
 
         case 'unlink':
@@ -121,7 +121,13 @@ const proto = {
       }
     }
 
+    // THIS DOES NOT EVEN A LITTLE BIT WORK HOW IT SHOULD
+    // ie, if I paste in a whole-ass directory, unless the events arrive in perfect order
+    // and I don't think I know that they will,
+    // I won't have
+
     if (this.isDirectory) {
+      this.invalidateRouter();
       this.rebuildSize();
     }
 
@@ -183,6 +189,7 @@ const proto = {
     })
 
     child.parent = this;
+    child.root = this.root;
     this.children[child.name] = child;
     this.invalidateRouter();
     this.rebuildSize();
