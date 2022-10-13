@@ -124,7 +124,7 @@ const proto = {
     // THIS DOES NOT EVEN A LITTLE BIT WORK HOW IT SHOULD
     // ie, if I paste in a whole-ass directory, unless the events arrive in perfect order
     // and I don't think I know that they will,
-    // I won't have
+    // I won't necessarily HAVE a "direct parent"
 
     if (this.isDirectory) {
       this.invalidateRouter();
@@ -169,10 +169,6 @@ const proto = {
 
   adoptChild: function (child, name) {
 
-    console.log('fsNode adoptChild', {
-      name, child, parent: this
-    })
-
     if (child.parent) {
       delete child.parent.children[child.name];
       child.parent.invalidateRouter();
@@ -183,10 +179,6 @@ const proto = {
       child.name = name;
       child.invalidateRouter();
     }
-
-    console.log('fsNode adoptChild', {
-      name, child, parent: this
-    })
 
     child.parent = this;
     child.root = this.root;

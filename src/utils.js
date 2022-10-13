@@ -121,6 +121,13 @@ function pathSplit (path) {
   return path.split(pathUtil.sep).filter(step => step && step.length)
 }
 
+// https://github.com/flexdinesh/browser-or-node/blob/master/src/index.js
+const isServerSide = (
+  typeof process !== "undefined" &&
+  process.versions != null &&
+  process.versions.node != null
+);
+
 
 
 module.exports = {
@@ -141,5 +148,6 @@ module.exports = {
   merge,
   takeKeys,
   home,
-  pathSplit
+  pathSplit,
+  isServerSide
 }

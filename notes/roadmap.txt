@@ -1,6 +1,13 @@
 
-Next Steps
-==========
+next steps (small picture)
+==========================
+
+	actually load directory info in the client
+		- I need client.js to handle this
+
+
+Next Steps (med picture)
+========================
 	1- build client-facing JS (again)
 		force that shit up to the client, hardcode _everything_
 		we can sort out sane architecture later, we need to prove the point first

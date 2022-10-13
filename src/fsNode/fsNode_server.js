@@ -2,60 +2,51 @@ const _ = require('lodash')
 const fsp = require('fs/promises')
 const pathUtil = require("path")
 const { pathSplit } = require('../utils.js')
+const { mimeType } = require('../../libs/utils/fs-utils/index.js')
 
 const fsNodeProto = require('./fsNode.js')
-const { Router, routesStr } = require('../router.js')
+const { addFsAccessRoutes } = require('./accessRoutes.js')
+const { Router, routesStr } = require('./router.js')
 
-// this lib is a wrapper over libmagic, and has inherited some terrible names
-const { Magic: MimeDetector, MAGIC_MIME: MIME_TYPE_ENCODING } = require('mmmagic')
-const mime = new MimeDetector(MIME_TYPE_ENCODING)
 
-function mimeType (path) {
-  return new Promise((resolve, reject) => {
-    mime.detectFile(path, (err, contentType) => {
-      if (err) {canWri
-        return reject(err)
-      }
-      const [mimeType, charset] = contentType.split('; charset=')
-      if (charset) {
-        resolve({ mimeType, charset, contentType })
-      }
-      resolve({ contentType })
-    })
-  })
+function fsnErr (error) {
+  return {
+    success: false,
+    error
+  }
 }
-
 
 
 const proto = {
 
-  // legacy shit - obviate with the below functions
-
-  open: function (...args) {
-    if (this.isFile) {
-      return fsp.open(this.absPath, ...args)
-    }
-  },
-
-  text: async function (encoding) {
-    if (this.isFile) {
-      encoding = encoding || 'utf-8'
-      const handle = await fsp.open(this.absolutePath)
-      const content = await handle.readFile(encoding)
-      handle.close()
-      return content;
-    }
-  },
-
-
-
-
-
   // "external" functions - I consider these to be part of my interface
 
-  read: function () {
+  read: function (start, end) {
+    start = start || 0
+    end = end || Infinity
 
+    if (!this.isFile) {
+      return fsnErr(`source ${this.relativePath} is not a file`)
+    }
+    if (!this.canRead()) {
+      return fsnErr(`source ${this.relativePath} cannot be read`)
+    }
+    return (
+      fsp.open(this.absolutePath, 'r')
+        .then(file => file.createReadStream({start, end}))
+    );
   },
+
+  readAll: function () {
+    return this.read().then(async (stream) => {
+      const chunks = []
+      for await (const chunk of stream) {
+          chunks.push(Buffer.from(chunk));
+      }
+      return Buffer.concat(chunks);
+    })
+  },
+
 
   write: function () {
 
@@ -71,10 +62,7 @@ const proto = {
 
   move: function (destPath) {
     if (!this.canWrite()) {
-      return {
-        success: false,
-        error: `source ${this.relativePath} cannot be written`
-      }
+      return fsnErr(`source ${this.relativePath} cannot be written`)
     }
 
     const origPath = this.absolutePath;
@@ -87,17 +75,11 @@ const proto = {
 
     if (!destFsNode) {
       const absTargetPath = pathUtil.resolve(this.absolutePath, ...path)
-      return {
-        success: false,
-        error: `destination '${absTargetPath}' not found`
-      };
+      return fsnErr(`destination '${absTargetPath}' not found`)
     }
 
     if (!destFsNode.canWrite()) {
-      return {
-        success: false,
-        error: `source ${destFsNode.relativePath} cannot be written`
-      }
+      return fsnErr(`source ${destFsNode.relativePath} cannot be written`)
     }
 
     destFsNode.adoptChild(this, newName);
@@ -105,7 +87,7 @@ const proto = {
     return (
       fsp.rename(origPath, this.path)
       .then(res => ({ success: true }))
-      .catch((error) => ({ success: false, error }))
+      .catch(fsnErr)
     );
   },
 
@@ -114,6 +96,17 @@ const proto = {
 
   // "internal" functions - *I* use these, but they're not intended for generalized consumption
 
+  json: function () {
+    return {
+      children: !this.children ? null : _.mapValues(this.children, c => c.json()),
+      // this can _absolutely be optimized down, but there's no reason to futz with that now
+      ...(_.pick(this, [
+        "name", "path", "absolutePath", "relativePath", 
+        "isFile", "isDirectory", "isSymbolicLink", "isOwnDir",
+        "mtime", "ctime", "mode", "mime"
+      ]))
+    }    
+  },
 
 
   loadStat: async function () {
@@ -175,7 +168,11 @@ const proto = {
         this._post_router
       ].filter(x => x)
 
-      this._router = new Router().use(path, ...handlers);
+      this._router = new Router();
+      if (!this.parent) {
+        addFsAccessRoutes(this);
+      }
+      this._router.use(path, ...handlers);
     }
 
     return this._router;

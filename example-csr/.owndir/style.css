@@ -1,0 +1,29 @@
+
+
+/* 
+	file-nav-sidebar 
+	THIS NEEDS TO BE A STATIC ASSET DELIVERED BY THE SIDEBAR ITSELF
+*/
+
+.file-nav-sidebar-children-container {
+	overflow: hidden;
+}
+
+.file-nav-sidebar-children {
+	padding-left: 1em;
+	transition: all 1s;
+	margin-top: 0;
+}
+
+.file-nav-sidebar.hidden-children .file-nav-sidebar-children {
+	margin-top: -10%;
+	opacity: 0; 
+}
+
+.file-nav-sidebar svg {
+	transition: all 0.5s;	
+}
+
+.file-nav-sidebar.hidden-children svg {
+	transform: rotate(-90deg);
+}

@@ -15,7 +15,6 @@ inspirations:
 - https://tiddlywiki.com/
 - https://obsidian.md/
 
-
 remember that these exist:
 - https://github.com/LiquidPlayer/LiquidCore
 - https://syncthing.net/

@@ -59,9 +59,10 @@ function mimeType (path) {
       }
       const [mimeType, charset] = contentType.split('; charset=')
       if (charset) {
-        return { mimeType, charset, contentType }
+        resolve({ mimeType, charset, contentType })
+      } else {
+				resolve({ contentType })
       }
-      return { contentType }
     })
   })
 }

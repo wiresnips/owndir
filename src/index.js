@@ -1,11 +1,15 @@
 const _ = require('lodash')
 const fs = require('fs')
+const fsp = require('fs/promises')
 const { resolve, relative } = require('path')
 const chokidar = require('chokidar')
 const express = require('express')
 
-const build = require('./build.js')
-const mapDir = require('./fsNode/mapDir')
+const { isDir } = require('../libs/utils/fs-utils/index.js')
+
+const build = require('./build/build.js')
+const bundle = require('./build/bundle.js')
+const mapDir = require('./fsNode/mapDir.js')
 
 var args = (require('yargs/yargs')(process.argv.slice(2))
   .option('p', {
@@ -37,16 +41,33 @@ args.path = absPath;
 
 
 (async function () {
+
+  // build the common owndir code
   await build(args.path);
-  const { OwnDir } = require(resolve(args.path, '.owndir', '.owndir-build', 'server.js'));
+
+  // yes, this is stupid. No, I'm not going to improve it right now.
+  const serverBundler = resolve(args.path, '.owndir', 'build', 'server');
+  if (!(await isDir(serverBundler))) {
+    await fsp.cp(resolve(__dirname, '../assets/server-default'), serverBundler, {recursive: true})
+  }
+  const serverJsPath = await bundle(serverBundler);
+
+  const clientBundler = resolve(args.path, '.owndir', 'build', 'client');
+  if (!(await isDir(clientBundler))) {
+    await fsp.cp(resolve(__dirname, '../assets/client-default'), clientBundler, {recursive: true})
+  }
+  const clientJsPath = await bundle(clientBundler);
 
   const directory = await mapDir(args.path)
   directory.permRead.allow("**")
   directory.permWrite.allow(fsNode => !fsNode.isOwnDir)
 
+  const { OwnDir } = require(serverJsPath);
   const owndir = await OwnDir(directory);
 
-  const app = express()
+  const app = express() 
+  // just hardcode this shit for now
+  app.use('/.O/client.js', express.static(clientJsPath));
   app.use(directory.requestHandler.bind(directory));
   
   const server = app.listen(args.port, args.host, () => {
@@ -54,8 +75,7 @@ args.path = absPath;
   })
 
   chokidar.watch(args.path, {
-    // cwd: args.path, // I think I _want_ the absolute path, actually ...
-    ignored: /.*\/.owndir-build(\/.*)?/,
+    // ignored: /.*\/.owndir\/build(\/.*)?/,
     ignoreInitial: true,
     awaitWriteFinish: true,
   })
@@ -64,8 +84,14 @@ args.path = absPath;
     console.log('chokidar', event, path, fsNode?.relativePath);
     fsNode.onChange(event, path, true);
   });
+})()
 
-  
+
+// require('chokidar').watch("/home/ben/projects/owndir/scratch", {ignoreInitial: true, awaitWriteFinish: true})
+// .on( 'all', (event, path) => console.log(event, path))
+
+
+/*  
   // okay, let's test out fsNode.move ...
   setTimeout(async () => {
     console.log('testing fsNode.move')
@@ -105,11 +131,4 @@ args.path = absPath;
       })
 
   }, 1000)
-
-})()
-
-
-
-// require('chokidar').watch("/home/ben/projects/owndir/scratch", {ignoreInitial: true, awaitWriteFinish: true})
-// .on( 'all', (event, path) => console.log(event, path))
-
+  */

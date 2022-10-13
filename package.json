@@ -4,13 +4,14 @@
   "description": "",
   "main": "server.js",
   "scripts": {
-    "test": "node src/index.js -p 3232 ./example",
+    "test": "node src/index.js -p 3232 ./example-csr",
     "pretest": "npm run cleanup",
-    "cleanup": "rm -R ./example/.owndir/.owndir-build ; exit 0"
+    "cleanup": "rm -R ./example-csr/.owndir/build/*; exit 0"
   },
   "author": "Ben Ells",
   "license": "",
   "dependencies": {
+    "@esbuild-plugins/node-globals-polyfill": "^0.1.1",
     "@esbuild-plugins/node-modules-polyfill": "^0.1.4",
     "anymatch": "^3.1.2",
     "chokidar": "^3.5.3",
