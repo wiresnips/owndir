@@ -18,3 +18,5 @@ inspirations:
 remember that these exist:
 - https://github.com/LiquidPlayer/LiquidCore
 - https://syncthing.net/
+- https://github.com/xwmx/nb
+- https://www.onirom.fr/wiki/blog/23-04-2022_Minisleep/

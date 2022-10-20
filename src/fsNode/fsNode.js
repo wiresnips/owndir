@@ -1,8 +1,12 @@
 
 const _ = require('lodash')
-const fsp = require('fs/promises')
 const pathUtil = require("path")
-const { pathSplit } = require('../utils.js')
+
+
+function pathSplit (path) {
+  return path.split(pathUtil.sep).filter(step => step && step.length)
+}
+
 
 const proto = {
 

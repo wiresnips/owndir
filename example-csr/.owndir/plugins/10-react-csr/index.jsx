@@ -11,7 +11,7 @@ const isServerSide = (
 
 module.exports = function (owndir) {
   if (isServerSide) {
-    owndir.addMiddleware('get', '*',
+    owndir.addRoute('get', '*',
       function (req, res, next) {
         // hardcode this shit for now, we'll get back to it later
         res.sendFile(resolve(__dirname, 'index.html'))

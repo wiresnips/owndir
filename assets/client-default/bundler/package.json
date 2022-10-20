@@ -1,6 +1,7 @@
 {
   "dependencies": {
     "esbuild": "^0.15.6",
-    "esbuild-plugin-fileloc": "0.0.6"
+    "@esbuild-plugins/node-globals-polyfill": "^0.1.1",
+    "@esbuild-plugins/node-modules-polyfill": "^0.1.4"
   }
 }

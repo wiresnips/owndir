@@ -27,7 +27,10 @@ function addFsAccessRoutes (fsNode) {
   const router = fsNode._router;
 
   router.all(accessRoutesRx, async (req, res, next) => {
-    const target = fsNode.walk(pathSplit(req.path))
+    const path = pathSplit(req.path)
+    path.pop() // drop off the '.O'
+    const target = fsNode.walk(path)
+
     if (!target) {
       return next();
     }

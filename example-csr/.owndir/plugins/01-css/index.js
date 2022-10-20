@@ -17,7 +17,7 @@ function CssPlugin (owndir) {
 	owndir.addRoute('get', '/style.css',
 		async function (req, res, next) {
 			const css = await this.css;
-			res.setHeader("content-type", "text/css");
+			res.type("text/css");
 			res.send(css);
 		}
 	);
@@ -27,5 +27,5 @@ CssPlugin.propagate = true;
 module.exports = CssPlugin;
 
 async function cssText (file) {
-	return `/* ${file.path} */\n${ await file.text() }`
+	return `/* ${file.path} */\n${ (await file.readAll()).toString() }`
 }

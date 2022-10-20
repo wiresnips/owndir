@@ -2,30 +2,28 @@
 
 import React from 'react'
 import { renderToString } from 'react-dom/server';
-
+import { Helmet } from 'react-helmet'
 
 export default {
 
-  html: async function (req) {
-    return (
-      <html>
-        <head>
-          <meta charSet="utf-8"/>
-          <title>{this.title}</title>
-          <link rel="stylesheet" type="text/css" href="/style.css" /> 
-        </head>
-        <body>
-          Hello, from { this.O?.directory?.absolutePath }
-          { await this.main(req) }
-          { await this.fileNavSidebar() }
-        </body>
-      </html>
-    );
+  body: async function () {
+
+    return <div>
+      <Helmet>
+        <meta charSet="utf-8"/>
+        <title>{this.title}</title>
+        <link rel="stylesheet" type="text/css" href="/style.css" /> 
+      </Helmet>
+
+      Hello, from { this.O?.directory?.absolutePath }
+      { await this.main() }
+      <this.fileNavSidebar />
+    </div>
   },
 
-  title: 'root OwnDir',
-  main: (req) => {},
-}
+  title: "OwnDir CSR root",
 
+  main: () => {},
+}
 
 

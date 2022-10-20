@@ -1,13 +1,10 @@
 const _ = require('lodash')
 const fsp = require('fs/promises')
 const pathUtil = require("path")
-const { pathSplit, isServerSide } = require('../utils.js')
+const { pathSplit } = require('../utils.js')
 
 const Permission = require('./permission.js')
-
-const fsNodeProto = isServerSide
-  ? require('./fsNode_server.js')
-  : require('./fsNode_client.js')
+const fsNodeProto = require('./fsNode_server.js')
 
 module.exports = async function mapDir (path, parent, root, visited) {
   const name = pathSplit(path).pop()

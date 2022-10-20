@@ -100,9 +100,5 @@ Directory Structure:
 		// if a directory, the aggregate size of the contents
 		size: 9001,
 
-		// a shortcut to fs/promises open function, preloaded with the absolute path
-		open: async (...args) => filehandle,
-
-		text: async (encoding?) => "file body, as text"
 
 	}

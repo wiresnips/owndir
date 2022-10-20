@@ -1,38 +1,19 @@
 
-next steps (small picture)
-==========================
-
-	actually load directory info in the client
-		- I need client.js to handle this
-
 
 Next Steps (med picture)
 ========================
-	1- build client-facing JS (again)
-		force that shit up to the client, hardcode _everything_
-		we can sort out sane architecture later, we need to prove the point first
 
-	2- client-side *directory* support
-		2.1- directory routers need to serve content
-			directory skeleton
-			file access interfaces
-				mediated by permissions
-				read, write, move, delete, makeDir
-		2.2- client loads directory data, spawns client-side owndir
-
-	3- client-side _routing_
+	1- client-side _routing_
 		this is a *lot* more react-specific, but there's probably adjacent notions in the other reactive frameworks, right?
 			yeah, seems like "routing" is a pretty universal problem to solve
 
-	4- sync client and server directory object
+	2- client-side *directory* support
+		file access interfaces
+			mediated by permissions
+			read, write, move, delete, makeDir
+
+	3- sync client and server directory object
 		I need to pass chokidar events up to the client
-
-	5- fill out the _rest_ of the fsNode interface
-
-	6- BYO-build-script
-		I want to support alternate reactive frameworks
-		but, I cannot worry about that yet - just do react for now, we can readjust once we have more working code hammered out
-
 
 
 
@@ -47,23 +28,11 @@ Loose Ends
 		I have no mechanism to cascade the existing owndir
 			probably I just crash? Something to test later
 
+	hardcoded client.js path
+
+	better solution to bundling fsNode_client.js
 
 
-
-
-
-
-
-Alternative Frameworks
-======================
-
-	I _really_ like the look of solidJS
-	and, I see that there's ways to run Vue through esbuild as well
-
-	Once we're satisfied that React is doing the things that it ought to do, (or that it CAN'T ... ssr script tags)
-	might be worth taking a look at making alternatives possible
-
-	Although, I'm confident that mix-&-match will never be possible, so it'd immediately fragment front-end plugins
 
 
 how to deal with static assets?
