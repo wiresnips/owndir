@@ -25,7 +25,9 @@ function applyProto (fsNode) {
 
 	// and finally, let's build out our OwnDir
 	const owndir = await OwnDir(directory)
-	ReactDOM.render( await owndir.body(), document.body)
+	const current = owndir.O.directory.walk(window.location.pathname).owndir
+
+	ReactDOM.render( await current.body(), document.body)
 
 	// these work
 	// ReactDOM.render( EatShit2(), document.body)
@@ -48,6 +50,13 @@ function applyProto (fsNode) {
 	// because yeah - my function, WHEN I CALL IT LIKE THAT, is _returning_ a component, but it is not _itself_ a component
 	// and this is riding right up to what the difference there is
 
+	// yeah, alright - if the function is called <LikeThis />, 
+	// it gets chucked into React.createElement
+	// and it gets a context (and it's this is nuked)
+	// and the react stuff all works.
+	// but, if it's just a function that returns a react element, THAT ISN'T a call to React.createElement
+	// there will BE a call, inside, but that wasn't one. 
+	// THAT's what the hooks error meant, "Call Hooks from React function components"
 
 })()
 

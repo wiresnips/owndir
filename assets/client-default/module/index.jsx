@@ -25,7 +25,9 @@ function applyProto (fsNode) {
 
 	// and finally, let's build out our OwnDir
 	const owndir = await OwnDir(directory)
-	ReactDOM.render( await owndir.body(), document.body)
+	const current = owndir.O.directory.walk(window.location.pathname).owndir
+
+	ReactDOM.render( await current.body(), document.body)
 
 	// these work
 	// ReactDOM.render( EatShit2(), document.body)

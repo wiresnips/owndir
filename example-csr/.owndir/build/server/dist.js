@@ -23517,14 +23517,14 @@ ${(await file.readAll()).toString()}`;
   }
 });
 
-// example-csr/.owndir/build/server/module/node_modules/sym_3/index.jsx
-var require_sym_3 = __commonJS({
-  "example-csr/.owndir/build/server/module/node_modules/sym_3/index.jsx"(exports2, module2) {
+// example-csr/.owndir/build/server/module/node_modules/sym_2/index.jsx
+var require_sym_2 = __commonJS({
+  "example-csr/.owndir/build/server/module/node_modules/sym_2/index.jsx"(exports2, module2) {
     var __fileloc = {
-      filename: "/home/ben/projects/owndir/example-csr/.owndir/build/server/module/node_modules/sym_3/index.jsx",
-      dirname: "/home/ben/projects/owndir/example-csr/.owndir/build/server/module/node_modules/sym_3",
-      relativefilename: ".owndir/build/server/module/node_modules/sym_3/index.jsx",
-      relativedirname: ".owndir/build/server/module/node_modules/sym_3"
+      filename: "/home/ben/projects/owndir/example-csr/.owndir/build/server/module/node_modules/sym_2/index.jsx",
+      dirname: "/home/ben/projects/owndir/example-csr/.owndir/build/server/module/node_modules/sym_2",
+      relativefilename: ".owndir/build/server/module/node_modules/sym_2/index.jsx",
+      relativedirname: ".owndir/build/server/module/node_modules/sym_2"
     };
     var React4 = require_react();
     var { resolve } = require("path");
@@ -34961,7 +34961,7 @@ async function OwnDir(directory) {
   await activatePlugins(owndir);
   return owndir;
 }
-var import_lodash, import_path2, baseOwnDir, baseSystemObj, uninitializedTree, sym_0, sym_1, sym_2, sym_3, sym_4, sym_8, sym_9, sym_10, sym_11, sym_14, sym_15, sym_16, sym_17, sym_12;
+var import_lodash, import_path2, baseOwnDir, baseSystemObj, uninitializedTree, sym_0, sym_3, sym_1, sym_2, sym_4, sym_8, sym_9, sym_10, sym_11, sym_14, sym_15, sym_16, sym_17, sym_12;
 var init_owndir = __esm({
   "example-csr/.owndir/build/server/module/node_modules/owndir/index.js"() {
     import_lodash = __toESM(require_lodash());
@@ -34998,15 +34998,15 @@ var init_owndir = __esm({
       console.log("error importing", "", error);
       return {};
     });
-    sym_1 = Promise.resolve().then(() => __toESM(require_unicode_favicon())).then((m) => m?.default || m).then(normalizeImport).catch((error) => {
+    sym_3 = Promise.resolve().then(() => __toESM(require_unicode_favicon())).then((m) => m?.default || m).then(normalizeImport).catch((error) => {
       console.log("error importing", "", error);
       return {};
     });
-    sym_2 = Promise.resolve().then(() => __toESM(require_css())).then((m) => m?.default || m).then(normalizeImport).catch((error) => {
+    sym_1 = Promise.resolve().then(() => __toESM(require_css())).then((m) => m?.default || m).then(normalizeImport).catch((error) => {
       console.log("error importing", "", error);
       return {};
     });
-    sym_3 = Promise.resolve().then(() => __toESM(require_sym_3())).then((m) => m?.default || m).then(normalizeImport).catch((error) => {
+    sym_2 = Promise.resolve().then(() => __toESM(require_sym_2())).then((m) => m?.default || m).then(normalizeImport).catch((error) => {
       console.log("error importing", "", error);
       return {};
     });
@@ -35017,7 +35017,7 @@ var init_owndir = __esm({
     register(
       "",
       sym_0,
-      [sym_1, sym_2, sym_3, sym_4]
+      [sym_3, sym_1, sym_2, sym_4]
     );
     sym_8 = function() {
     };

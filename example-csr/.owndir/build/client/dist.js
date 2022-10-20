@@ -40964,9 +40964,9 @@ ${(await file.readAll()).toString()}`;
     }
   });
 
-  // example-csr/.owndir/build/client/module/node_modules/sym_3/index.jsx
-  var require_sym_3 = __commonJS({
-    "example-csr/.owndir/build/client/module/node_modules/sym_3/index.jsx"(exports, module) {
+  // example-csr/.owndir/build/client/module/node_modules/sym_2/index.jsx
+  var require_sym_2 = __commonJS({
+    "example-csr/.owndir/build/client/module/node_modules/sym_2/index.jsx"(exports, module) {
       init_virtual_process_polyfill();
       var React6 = require_react();
       var { resolve: resolve2 } = require_path();
@@ -50532,7 +50532,7 @@ ${(await file.readAll()).toString()}`;
     await activatePlugins(owndir);
     return owndir;
   }
-  var import_lodash, baseOwnDir, baseSystemObj, uninitializedTree, sym_0, sym_1, sym_2, sym_3, sym_4, sym_8, sym_9, sym_10, sym_11, sym_14, sym_15, sym_16, sym_17, sym_12;
+  var import_lodash, baseOwnDir, baseSystemObj, uninitializedTree, sym_0, sym_3, sym_1, sym_2, sym_4, sym_8, sym_9, sym_10, sym_11, sym_14, sym_15, sym_16, sym_17, sym_12;
   var init_owndir = __esm({
     "example-csr/.owndir/build/client/module/node_modules/owndir/index.js"() {
       init_virtual_process_polyfill();
@@ -50570,15 +50570,15 @@ ${(await file.readAll()).toString()}`;
         console.log("error importing", "", error);
         return {};
       });
-      sym_1 = Promise.resolve().then(() => __toESM(require_unicode_favicon())).then((m) => m?.default || m).then(normalizeImport).catch((error) => {
+      sym_3 = Promise.resolve().then(() => __toESM(require_unicode_favicon())).then((m) => m?.default || m).then(normalizeImport).catch((error) => {
         console.log("error importing", "", error);
         return {};
       });
-      sym_2 = Promise.resolve().then(() => __toESM(require_css())).then((m) => m?.default || m).then(normalizeImport).catch((error) => {
+      sym_1 = Promise.resolve().then(() => __toESM(require_css())).then((m) => m?.default || m).then(normalizeImport).catch((error) => {
         console.log("error importing", "", error);
         return {};
       });
-      sym_3 = Promise.resolve().then(() => __toESM(require_sym_3())).then((m) => m?.default || m).then(normalizeImport).catch((error) => {
+      sym_2 = Promise.resolve().then(() => __toESM(require_sym_2())).then((m) => m?.default || m).then(normalizeImport).catch((error) => {
         console.log("error importing", "", error);
         return {};
       });
@@ -50589,7 +50589,7 @@ ${(await file.readAll()).toString()}`;
       register(
         "",
         sym_0,
-        [sym_1, sym_2, sym_3, sym_4]
+        [sym_3, sym_1, sym_2, sym_4]
       );
       sym_8 = function() {
       };
@@ -56286,7 +56286,8 @@ ${(await file.readAll()).toString()}`;
     const directory = await fetch("/.O").then((res) => res.json());
     applyProto(directory);
     const owndir = await OwnDir2(directory);
-    import_react_dom.default.render(await owndir.body(), document.body);
+    const current = owndir.O.directory.walk(window.location.pathname).owndir;
+    import_react_dom.default.render(await current.body(), document.body);
   })();
 })();
 /*
