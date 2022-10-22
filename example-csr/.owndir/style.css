@@ -27,3 +27,10 @@
 .file-nav-sidebar.hidden-children svg {
 	transform: rotate(-90deg);
 }
+
+
+/* and this is just for science */
+
+* {
+	background-color: lavender;
+}

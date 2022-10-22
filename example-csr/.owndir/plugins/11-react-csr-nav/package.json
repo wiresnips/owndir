@@ -6,7 +6,8 @@
   "author": "Ben Ells",
   "license": "",
   "dependencies": {
-    "react": "^18.1.0"
+    "react": "^18.1.0",
+    "react-router-dom": "^6.4.2"
   },
   "scripts": {
   }

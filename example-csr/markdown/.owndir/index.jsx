@@ -3,6 +3,7 @@ import ReactMarkdown from 'react-markdown';
 
 
 module.exports = {
+	/*
 	main: async function (req) {
 		const fsNode = this.O.directory.root.walk(req.path);
 		if (!fsNode) {
@@ -16,6 +17,7 @@ module.exports = {
 		const fileNames = Object.keys(children).sort();
 		return <ul>{fileNames.map(name => (<li>{name}</li>))}</ul>
 	},
+	*/
 
 	O: {
 

@@ -8,9 +8,9 @@ function CssPlugin (owndir) {
 					.filter(child => child.isFile && child.name.endsWith('.css'))
 					.map(cssText)
 			);
+			css_p.unshift(this.O.parent?.css || '')
 
-			const parentCss = this.O.parent?.css || '';
-			return Promise.all(css_p).then(fileContents => [parentCss, ...fileContents].join('\n\n'));
+			return Promise.all(css_p).then(fileContents => fileContents.join('\n\n'));
 		}
 	})
 

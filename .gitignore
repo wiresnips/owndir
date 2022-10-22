@@ -13,5 +13,3 @@ pom.xml.asc
 /node_modules
 **/node_modules
 **.csv
-/example-csr/.owndir/build/owndir
-/example-ssr/.owndir/build/owndir

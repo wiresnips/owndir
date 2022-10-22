@@ -1,18 +1,36 @@
 const { OwnDir } = require('owndir');
 import React from 'react';
 import ReactDOM from 'react-dom';
+import {BrowserRouter, Routes, Route} from 'react-router-dom';
 
 // hardcode the FUCK out of this until we figure out how to package it less stupidly
 const fsNodeProto = require('/home/ben/projects/owndir/src/fsNode/fsNode_client.js')
+const Permission = require('/home/ben/projects/owndir/src/fsNode/permission.js')
 
-function applyProto (fsNode) {
+function applyFsNodeProto (fsNode, parent) {
+  fsNode.root = parent?.root || fsNode
+  fsNode.parent = parent
+  fsNode.listeners = []
+  fsNode.permRead = new Permission('permRead', fsNode);
+  fsNode.permWrite = new Permission('permWrite', fsNode);
+  
   Object.setPrototypeOf(fsNode, fsNodeProto);
+
   if (fsNode.children) {
 	  for (const child of Object.values(fsNode.children)) {
-	  	applyProto(child)
+	  	applyFsNodeProto(child, fsNode)
 	  }
 	}
 }
+
+async function routes (owndir) {
+	const path = "/" + owndir.O.directory.relativePath
+	const childRoutes = await Promise.all(owndir.O.childrenArray.flatMap(routes))
+	childRoutes.unshift(<Route key={path} path={path} element={ await owndir.frame() } />);
+	return childRoutes
+}
+
+
 
 (async function () {
 
@@ -21,13 +39,20 @@ function applyProto (fsNode) {
 	const directory = await fetch('/.O').then(res => res.json())
 
 	// now, I need to actually turn it _into_ a directory, which is _annoying_ to say the least
-	applyProto(directory);
+	applyFsNodeProto(directory);
 
 	// and finally, let's build out our OwnDir
 	const owndir = await OwnDir(directory)
-	const current = owndir.O.directory.walk(window.location.pathname).owndir
+	window.owndir = owndir
 
-	ReactDOM.render( await current.body(), document.body)
+	ReactDOM.render( 
+		<BrowserRouter>
+			<Routes>
+				{await routes(owndir)}
+			</Routes>
+		</BrowserRouter>,
+		document.getElementById('csr-plugin-root-element')
+	);
 
 	// these work
 	// ReactDOM.render( EatShit2(), document.body)
@@ -47,7 +72,7 @@ function applyProto (fsNode) {
 	// React.createElement is expecting to be passed a CONSTRUCTOR, right?
 	// it must be doing some kind of jiggering internally that I've skipped
 
-	// because yeah - my function, WHEN I CALL IT LIKE THAT, is _returning_ a component, but it is not _itself_ a component
+	// because yeah - my function, WHEN I CALL IT "NORMALLY", is _returning_ a component, but it is not _itself_ a component
 	// and this is riding right up to what the difference there is
 
 	// yeah, alright - if the function is called <LikeThis />, 

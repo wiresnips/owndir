@@ -1,5 +1,6 @@
 
 import React from 'react'
+import { Link } from 'react-router-dom'
 
 module.exports = function (owndir) {
   owndir.fileNavSidebar = function () {
@@ -25,7 +26,7 @@ function fileNavSidebar (fsNode) {
         <Arrow className='file-nav-sidebar-arrow' onClick={
           () => setHideChildren(v => !v)
         }/>}
-      <a href={`/${fsNode.relativePath}`}>{fsNode.name}</a>
+      <Link to={`/${fsNode.relativePath}`}>{fsNode.name}</Link>
     </div>
 
     {!isDirectory ? null :

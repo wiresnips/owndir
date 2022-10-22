@@ -8,9 +8,20 @@ const isServerSide = (
   process.versions.node != null
 );
 
+const defaultFrame = function () {
+  return <>
+      <h1>OwnDir, react client-side rendering plugin</h1>
+      <p>You are seeing this page because no frame function has been provided.</p>
+  </>
+}
 
 module.exports = function (owndir) {
   if (isServerSide) {
+
+    if (!owndir.frame) {
+      owndir.frame = defaultFrame
+    }
+
     owndir.addRoute('get', '*',
       function (req, res, next) {
         // hardcode this shit for now, we'll get back to it later
