@@ -1,10 +1,11 @@
 
 // a build is _basically_ like a plugin, with it's own dependencies
 // so, I need to run "npm install" on the build, then I need to `require` the resulting package,
-// and finally, I need to actually _run_ the build, and return the filepach of the resulting bundle
+// and finally, I need to actually _run_ the build, and return the filepath of the resulting bundle
 
 // all of this is PAINFULLY naive, which is just fine for now
 
+const fsp = require('fs/promises')
 const { resolve } = require('path')
 const { isDir } = require('../../libs/utils/fs-utils/index.js')
 const install = require('./npm-install.js')
@@ -28,6 +29,15 @@ async function bundle (target) {
 	// since this is brought by the .owndir, we can't rely on everything being present
 	await install(bundlerDir)
 	const bundler = await require(bundlerDir)
+
+	// before we build the final package, remove any existing owndir installation,
+	// because I'm a fucking idiot, and don't know how to force-install programmatically
+	await fsp.rm(resolve(moduleDir, "node_modules", "owndir"), {recursive: true}).catch((err) => {
+
+		console.log('failed to delete', resolve(moduleDir, "node_modules", "owndir"))
+		console.log(err)
+
+	})
 
 	// our module is expected to depend on the target directory's built owndir module,
 	// at <the-owndir-root>/.owndir/build/owndir/owndir.tgz (or, relatively, ../../owndir/owndir.tgz)

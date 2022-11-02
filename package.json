@@ -5,7 +5,7 @@
   "main": "server.js",
   "scripts": {
     "test": "node src/index.js -p 3232 ./example-csr",
-    "pretest": "npm run cleanup",
+    "__pretest": "npm run cleanup",
     "cleanup": "rm -R ./example-csr/.owndir/build/*; exit 0"
   },
   "author": "Ben Ells",

@@ -10,8 +10,8 @@ const { pathSplit } = require('../utils.js')
         this is your "normal" routing, "/foo/bar/baz.txt"
         the owndirs along the path apply middleware, etc
         this could be ... anything, really
-    - fsNode acess, last step is a single period
-        /foo/bar/baz.txt/.
+    - fsNode acess, last step is '@'
+        /foo/bar/baz.txt/@
         this is your "file-system" access
         provides direct access to the fsNode api
         pre-empts owndir routing
@@ -21,7 +21,7 @@ const { pathSplit } = require('../utils.js')
 
 */ 
 
-const accessRoutesRx = /.*\/\.O$/
+const accessRoutesRx = /.*\/@$/
 
 function addFsAccessRoutes (fsNode) {
   const router = fsNode._router;
@@ -35,28 +35,35 @@ function addFsAccessRoutes (fsNode) {
       return next();
     }
     if (!target.canRead()) {
-      return res.status(401).end()
+      return res.status(403).end()
     }
 
     const { call } = req.query
     if (_.isEmpty(call)) {
-      return res.json(fsNode.json());
+      return res.json(target.desc());
     }
 
     // read write move mkdir delete
 
     if (call === "read") {
-      if (target.isFile) {
-        console.log('sending', target.path, target.mime)
-        res.setHeader("content-type", target.mime.contentType);
-        return target.read().then(stream => stream.pipe(res))
-      } else {
-        return res.json(fsNode.json());
+      if (!target.isFile) {
+        return res.json(target.desc());
       }
+      console.log('sending', target.path, target.mime)
+      const start = req.query.start || 0
+      const end = req.query.end || Infinity
+      res.setHeader("content-type", target.mime.contentType);
+      return target.read(start, end).then(streamOrErr => {
+        if (streamOrErr.error) {
+          res.status(streamOrErr.status).json(streamOrErr)
+        } else {
+          streamOrErr.pipe(res)
+        }
+      })
     }
 
     if (!target.canWrite()) {
-      return res.status(401).end()
+      return res.status(403).end()
     }
 
     if (call === "write") {}

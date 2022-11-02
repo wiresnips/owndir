@@ -2,11 +2,13 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 
+
 module.exports = function (owndir) {
   owndir.fileNavSidebar = function () {
     return fileNavSidebar(owndir.O.directory)
   }
 }
+
 
 function fileNavSidebar (fsNode) {
   const { isDirectory, name } = fsNode;
@@ -57,3 +59,4 @@ function Arrow (attrs) {
   </svg>
 }
 
+// */

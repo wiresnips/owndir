@@ -1,18 +1,42 @@
 
+build times have exploded
+=========================
+
+	looks like this is because packLib is packaging _everything_, 
+	including node_modules folders and such
+	this is especially bad at the root
+
+	Okay, but what the _fuck_ can I do about that? 
+		Is there some way that I can mask those files off from pacote?
+
+		I can use the "files" entry in the root package.json, seems to be working ...
+
+
+
+why is my generated code out-of-date unless I nuke .owndir/build ?
+=====================================================================
+
+	HA! it's coming from npm's cache
+	which is stored as opaque data in ~/.npm/_cacache
+		because of _course_ it is
+
+	solution was to learn a little more about how to configure the npm install
+		- set package-lock to false
+		- set prefer-online to true
+
+		this way, we check the cache against the source, 
+		and ignore the hash that the package-lock.json may or may not remember
+
 
 Next Steps (med picture)
 ========================
 
-	1- client-side _routing_
-		this is a *lot* more react-specific, but there's probably adjacent notions in the other reactive frameworks, right?
-			yeah, seems like "routing" is a pretty universal problem to solve
-
-	2- client-side *directory* support
+	1- client-side *directory* support
 		file access interfaces
 			mediated by permissions
 			read, write, move, delete, makeDir
 
-	3- sync client and server directory object
+	2- sync client and server directory object
 		I need to pass chokidar events up to the client
 
 
@@ -42,6 +66,27 @@ how to deal with static assets?
 
 
 
+actually working with react is proving unexpectedly painful
+===========================================================
+
+	I think, what I'm learning is that I can't just expect things to _work_ on arbitrary terms
+
+	SSR is different from CSR, (and probably React is different from SolidJs),
+	and I can't expect things that work well in one to carry across smoothly to another
+		and, crucially, it looks like I'm not going to be able to paper over the difference with the build
+
+		So, let's think about what adaptations will be required:
+
+			React-SSR
+				- some utility-functions to smuggle in event handlers, maybe
+
+			React-CSR
+				- don't make your components async by default
+
+		Alright, that's actually a reasonable answer. I don't _love_ it, but it makes perfect sense.
+
+
+
 
 
 HTML diff and patch
@@ -60,10 +105,8 @@ crashes and failed compilation
 
 	I must be able to detect these, right?
 
+	Maybe I need to start fucking around with Babel directly
 	
-
-why is my generated code out-of-date unless I nuke .homestead-build ?
-=====================================================================
 
 
 Android?

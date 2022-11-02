@@ -14,12 +14,12 @@ const { exists, isDir, mkdir, dirChildren } = require('../../libs/utils/fs-utils
 
 
 const genSym = (() => {
-  let count = 0;
+  let count = 0 // Date.now();
   return (prefix) => `${prefix || 'sym'}_${count++}`
 })()
 
 
-// return a shitty bundle of info that I can use to bundle a module
+// return a shitty blob of info that I can use to bundle a module
 
 async function moduleSpec (root, absPath) {
   const pathIsDir = await isDir(absPath);
@@ -69,6 +69,10 @@ async function packModule (buildDir, spec) {
     await fsp.rm(installPath, {recursive: true}).catch(() => {});
 
     spec.dep = `file:${buildPath}`;
+
+
+    console.log("packModule", spec);
+
     return packLib(path).then(tarball => fsp.writeFile(buildPath, tarball));
   }
 }
@@ -166,8 +170,20 @@ register(
 
   await buildNode(src);
 
-  await fsp.writeFile(resolve(buildDir, 'index.js'), jsFragments.join('\n\n'));
-  await fsp.writeFile(resolve(buildDir, 'package.json'), JSON.stringify({ dependencies }, null, 2));
+  await fsp.writeFile(
+    resolve(buildDir, 'index.js'), 
+    jsFragments.join('\n\n')
+  );
+
+  const packageJson = {
+    dependencies,
+    files: ["index.js"],
+  }
+
+  await fsp.writeFile(
+    resolve(buildDir, 'package.json'), 
+    JSON.stringify(packageJson, null, 2)
+  );
 
   return packLib(buildDir).then(tarball => fsp.writeFile(resolve(buildDir, 'owndir.tgz'), tarball));
 }

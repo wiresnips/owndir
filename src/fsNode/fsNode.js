@@ -7,6 +7,22 @@ function pathSplit (path) {
   return path.split(pathUtil.sep).filter(step => step && step.length)
 }
 
+const decoder = (function () {
+  const decoders = {}
+
+  return function (encoding) {
+    encoding = encoding || 'utf-8'
+
+    let decoder = decoders[encoding]
+    if (!decoder) {
+      decoder = new TextDecoder(encoding)
+      decoders[encoding] = decoder
+    }
+
+    return decoder;
+  }
+})()
+
 
 const proto = {
 
@@ -64,6 +80,11 @@ const proto = {
 
   canWrite: function () {
     return this.permRead.isAllowed() && this.permWrite.isAllowed();
+  },
+
+
+  text: function (encoding) {
+    return this.readAll().then(buffer => decoder(encoding).decode(buffer))
   },
 
 

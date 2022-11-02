@@ -7,7 +7,7 @@ import {resolve} from 'path'
 
 export default {
 
-  frame: async function () {
+  frame: function () {
     const dir = this.O?.directory
 
     return <div>
@@ -17,9 +17,16 @@ export default {
         <link rel="stylesheet" type="text/css" href={resolve('/', dir?.relativePath, 'style.css')} /> 
       </Helmet>
 
-      Hello, from { dir?.absolutePath }
-      { await this.main() }
-      <this.fileNavSidebar />
+      <div>
+        { this.fileNav() }
+      </div>
+
+      <div>
+        Hello, from { dir?.absolutePath }
+        { this.main() }
+      </div>
+
+
     </div>
   },
 

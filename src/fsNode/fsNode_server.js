@@ -1,6 +1,8 @@
 const _ = require('lodash')
 const fsp = require('fs/promises')
+const { ReadableStream } = require('node:stream/web');
 const pathUtil = require("path")
+
 const { pathSplit } = require('../utils.js')
 const { mimeType } = require('../../libs/utils/fs-utils/index.js')
 
@@ -9,9 +11,10 @@ const { addFsAccessRoutes } = require('./accessRoutes.js')
 const { Router, routesStr } = require('./router.js')
 
 
-function fsnErr (error) {
+function fsnErr (error, status) {
   return {
     success: false,
+    status: status || 500,
     error
   }
 }
@@ -26,27 +29,31 @@ const proto = {
     end = end || Infinity
 
     if (!this.isFile) {
-      return fsnErr(`source ${this.relativePath} is not a file`)
+      return fsnErr(`source ${this.relativePath} is not a file`, 404)
     }
     if (!this.canRead()) {
-      return fsnErr(`source ${this.relativePath} cannot be read`)
+      return fsnErr(`source ${this.relativePath} cannot be read`, 403)
     }
     return (
       fsp.open(this.absolutePath, 'r')
         .then(file => file.createReadStream({start, end}))
+        .then(ReadableStream.toWeb)
     );
   },
 
   readAll: function () {
-    return this.read().then(async (stream) => {
+    return this.read().then(async (streamOrErr) => {
+      if (streamOrErr.error) {
+        return streamOrErr
+      }
+
       const chunks = []
-      for await (const chunk of stream) {
+      for await (const chunk of streamOrErr) {
           chunks.push(Buffer.from(chunk));
       }
       return Buffer.concat(chunks);
     })
   },
-
 
   write: function () {
 
@@ -62,7 +69,7 @@ const proto = {
 
   move: function (destPath) {
     if (!this.canWrite()) {
-      return fsnErr(`source ${this.relativePath} cannot be written`)
+      return fsnErr(`source ${this.relativePath} cannot be written`, 403)
     }
 
     const origPath = this.absolutePath;
@@ -75,11 +82,11 @@ const proto = {
 
     if (!destFsNode) {
       const absTargetPath = pathUtil.resolve(this.absolutePath, ...path)
-      return fsnErr(`destination '${absTargetPath}' not found`)
+      return fsnErr(`destination '${absTargetPath}' not found`, 404)
     }
 
     if (!destFsNode.canWrite()) {
-      return fsnErr(`source ${destFsNode.relativePath} cannot be written`)
+      return fsnErr(`source ${destFsNode.relativePath} cannot be written`, 403)
     }
 
     destFsNode.adoptChild(this, newName);
@@ -96,9 +103,9 @@ const proto = {
 
   // "internal" functions - *I* use these, but they're not intended for generalized consumption
 
-  json: function () {
+  desc: function () {
     return {
-      children: !this.children ? null : _.mapValues(this.children, c => c.json()),
+      children: !this.children ? null : _.mapValues(this.children, c => c.desc()),
       // this can _absolutely be optimized down, but there's no reason to futz with that now
       ...(_.pick(this, [
         "name", "path", "absolutePath", "relativePath", 

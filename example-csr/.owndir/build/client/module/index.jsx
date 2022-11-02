@@ -1,13 +1,13 @@
 const { OwnDir } = require('owndir');
 import React from 'react';
 import ReactDOM from 'react-dom';
-import {BrowserRouter, Routes, Route} from 'react-router-dom';
+import { BrowserRouter, useLocation, useParams } from 'react-router-dom';
 
 // hardcode the FUCK out of this until we figure out how to package it less stupidly
 const fsNodeProto = require('/home/ben/projects/owndir/src/fsNode/fsNode_client.js')
 const Permission = require('/home/ben/projects/owndir/src/fsNode/permission.js')
 
-function applyFsNodeProto (fsNode, parent) {
+function fsNodeFromDesc (fsNode, parent) {
   fsNode.root = parent?.root || fsNode
   fsNode.parent = parent
   fsNode.listeners = []
@@ -18,28 +18,20 @@ function applyFsNodeProto (fsNode, parent) {
 
   if (fsNode.children) {
 	  for (const child of Object.values(fsNode.children)) {
-	  	applyFsNodeProto(child, fsNode)
+	  	fsNodeFromDesc(child, fsNode)
 	  }
 	}
 }
-
-async function routes (owndir) {
-	const path = "/" + owndir.O.directory.relativePath
-	const childRoutes = await Promise.all(owndir.O.childrenArray.flatMap(routes))
-	childRoutes.unshift(<Route key={path} path={path} element={ await owndir.frame() } />);
-	return childRoutes
-}
-
 
 
 (async function () {
 
 	// what does _this_ need to do?
 	// first, I need to pull the directory
-	const directory = await fetch('/.O').then(res => res.json())
+	const directory = await fetch('/@').then(res => res.json())
 
 	// now, I need to actually turn it _into_ a directory, which is _annoying_ to say the least
-	applyFsNodeProto(directory);
+	fsNodeFromDesc(directory);
 
 	// and finally, let's build out our OwnDir
 	const owndir = await OwnDir(directory)
@@ -47,68 +39,22 @@ async function routes (owndir) {
 
 	ReactDOM.render( 
 		<BrowserRouter>
-			<Routes>
-				{await routes(owndir)}
-			</Routes>
+			<OwndirRouter owndir={owndir} />
 		</BrowserRouter>,
 		document.getElementById('csr-plugin-root-element')
 	);
-
-	// these work
-	// ReactDOM.render( EatShit2(), document.body)
-	// ReactDOM.render( <EatShit />, document.body)
-
-	// but THIS does not
-	// ReactDOM.render( EatShit(), document.body)
-
-	// therefore, what I'm bumping into is specifically a fact about HOOKS,
-	// which think I've broken their rules - guess I gotta go read that code?
-	// I really don't like the idea of threading this needle, but maybe I can learn something useful
-
-	// I think, though, that React doesn't want to be used they way I'm trying to use it
-	// this sure SEEMS like it ought to have been possible, after all
-
-	// OOOOOooohhhh ... yeah, okay
-	// React.createElement is expecting to be passed a CONSTRUCTOR, right?
-	// it must be doing some kind of jiggering internally that I've skipped
-
-	// because yeah - my function, WHEN I CALL IT "NORMALLY", is _returning_ a component, but it is not _itself_ a component
-	// and this is riding right up to what the difference there is
-
-	// yeah, alright - if the function is called <LikeThis />, 
-	// it gets chucked into React.createElement
-	// and it gets a context (and it's this is nuked)
-	// and the react stuff all works.
-	// but, if it's just a function that returns a react element, THAT ISN'T a call to React.createElement
-	// there will BE a call, inside, but that wasn't one. 
-	// THAT's what the hooks error meant, "Call Hooks from React function components"
-
 })()
 
-//*
-function EatShit() {
-  // Declare a new state variable, which we'll call "count"  
-  const [count, setCount] = React.useState(0);
-  return (
-    <div>
-      <p>You clicked {count} times</p>
-      <button onClick={() => setCount(count + 1)}>
-        Click me
-      </button>
-    </div>
-  );
-}
 
-function EatShit2() {
-  // Declare a new state variable, which we'll call "count"  
-  // const [count, setCount] = React.useState(0);
-  return (
-    <div>
-      <button onClick={() => alert('fuck')}>
-        Click me
-      </button>
-    </div>
-  );
-}
+function OwndirRouter ({ owndir }) {
+	const { pathname } = useLocation();
+	const params = useParams();
 
-//*/
+	console.log({pathname})
+
+	// yeah okay, this is a long incantation
+	const fsNode = owndir.O.directory.walk(pathname, true);
+	const target = fsNode.isDirectory ? fsNode.owndir : fsNode.parent.owndir;
+
+	return target.frame();
+}

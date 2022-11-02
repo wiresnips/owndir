@@ -1,4 +1,4 @@
 owndir/**
-*/dist.js
-package-lock.json
+/*/dist.js
+/*/*/package-lock.json
 

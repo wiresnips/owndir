@@ -52,6 +52,9 @@ args.path = absPath;
   }
   const serverJsPath = await bundle(serverBundler);
 
+  console.log("serverJsPath", serverJsPath)
+
+
   const clientBundler = resolve(args.path, '.owndir', 'build', 'client');
   if (!(await isDir(clientBundler))) {
     await fsp.cp(resolve(__dirname, '../assets/client-default'), clientBundler, {recursive: true})
@@ -67,7 +70,7 @@ args.path = absPath;
 
   const app = express() 
   // just hardcode this shit for now
-  app.use('/.O/client.js', express.static(clientJsPath));
+  app.use('/@/client.js', express.static(clientJsPath));
   app.use(directory.requestHandler.bind(directory));
   
   const server = app.listen(args.port, args.host, () => {
