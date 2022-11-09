@@ -5,14 +5,8 @@ import ReactMarkdown from 'react-markdown';
 module.exports = {
 	//*
 	main: function () {
-		const localPrefix = '/' + this.O.directory.relativePath;
+		const localPrefix = this.O.directory.relativePath;
 		const path = window.location.pathname.slice(localPrefix.length);
-
-		console.log({
-			path,
-			localPrefix,
-			this: this
-		})
 
 		const fsNode = this.O.directory.walk(path);
 		if (fsNode?.isFile) {

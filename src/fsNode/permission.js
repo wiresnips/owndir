@@ -38,7 +38,7 @@ Permission.prototype = {
       }
     }
 
-    return !!this.fsNode.parent?.[this.name].isAllowed()
+    return !!this.fsNode.parent?.[this.name].isAllowed(target)
   },
 
   allow: function (...args) {

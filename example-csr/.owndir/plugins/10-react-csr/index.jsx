@@ -25,9 +25,7 @@ module.exports = function (owndir) {
     owndir.addRoute('get', '*',
       function (req, res, next) {
         // hardcode this shit for now, we'll get back to it later
-
-        res.send('awww yisss')
-        // res.sendFile(resolve(__dirname, 'index.html'))
+        res.sendFile(resolve(__dirname, 'index.html'))
       }
     );
   }

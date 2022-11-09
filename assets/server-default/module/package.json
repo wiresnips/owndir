@@ -1,5 +1,5 @@
 {
 	"dependencies": {
-		"owndir": "file:../../owndir/owndir.tgz"
+		"owndir.bundle": "file:../../owndir/owndir.tgz"
 	}
 }

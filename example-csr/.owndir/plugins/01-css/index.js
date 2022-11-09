@@ -14,7 +14,7 @@ function CssPlugin (owndir) {
 		}
 	})
 
-	owndir.addRoute('get', '/style.css',
+	owndir.addRoute('get', '/@/style.css',
 		async function (req, res, next) {
 			const css = await this.css;
 			res.type("text/css");

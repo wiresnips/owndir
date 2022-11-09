@@ -22,7 +22,7 @@ module.exports = function (owndir) {
 
   owndir.addRoute('get', '*', 
     async function (req, res, next) {
-      const fsNode = this.O.directory.walk(req.path, true)
+      const fsNode = this.O.directory.walk(req.path, {bestEffort: true})
 
       // console.log('react-ssr-plugin', req.originalUrl, this, fsNode)
 

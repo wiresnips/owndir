@@ -22,13 +22,12 @@ module.exports = async function mapDir (path, parent, root, visited) {
     name,
     path: absPath,
     absolutePath: absPath,
-    relativePath: root ? pathUtil.relative(root.path, absPath) : '',
+    relativePath: '/' + (root ? pathUtil.relative(root.path, absPath) : ''),
     isOwnDir: !!(name.startsWith('.owndir') || parent?.isOwnDir),
     listeners: []
   }
   Object.setPrototypeOf(node, fsNodeProto);
 
-  // this is a good start - maybe we need to differentiate between client and server, too?
   node.permRead = new Permission('permRead', node);
   node.permWrite = new Permission('permWrite', node);
 
@@ -52,15 +51,19 @@ module.exports = async function mapDir (path, parent, root, visited) {
         .filter(relPath => !node.isOwnDir || !(relPath === 'build')) // don't recurse into .owndir/build
         .filter(relPath => relPath !== 'node_modules') // don't recurse into node_modules
         .map(relPath => pathUtil.resolve(path, relPath))
-        .map(absPath => {
-          return mapDir(absPath, node, root, visited)
+        .map(absPath => mapDir(absPath, node, root, visited))
+    )})
+    .then(children => children.filter(_.identity))
+    .then(children => {
+      try {
+        children.forEach(child => {
+          node.size = node.size + child.size
+          node.children[child.name] = child
         })
-        .filter(_.identity)
-    )}).then(children => {
-      children.forEach(child => {
-        node.size = node.size + child.size
-        node.children[child.name] = child
-      })
+      } catch (err) {
+        console.log({err, node, children})
+        throw err
+      }
     })
   }
 

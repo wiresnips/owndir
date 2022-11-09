@@ -70,9 +70,6 @@ async function packModule (buildDir, spec) {
 
     spec.dep = `file:${buildPath}`;
 
-
-    console.log("packModule", spec);
-
     return packLib(path).then(tarball => fsp.writeFile(buildPath, tarball));
   }
 }
@@ -176,6 +173,7 @@ register(
   );
 
   const packageJson = {
+    name: "owndir.bundle",
     dependencies,
     files: ["index.js"],
   }

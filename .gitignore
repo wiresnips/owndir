@@ -13,3 +13,4 @@ pom.xml.asc
 /node_modules
 **/node_modules
 **.csv
+**.acct

@@ -1,2 +1,2 @@
 // the default server is just a straight pass-through
-module.exports = require('owndir');
+module.exports = require('owndir.bundle');

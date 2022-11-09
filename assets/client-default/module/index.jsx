@@ -1,4 +1,4 @@
-const { OwnDir } = require('owndir');
+const { OwnDir } = require('owndir.bundle');
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { BrowserRouter, useLocation, useParams } from 'react-router-dom';
@@ -53,7 +53,7 @@ function OwndirRouter ({ owndir }) {
 	console.log({pathname})
 
 	// yeah okay, this is a long incantation
-	const fsNode = owndir.O.directory.walk(pathname, true);
+	const fsNode = owndir.O.directory.walk(pathname, {bestEffort: true});
 	const target = fsNode.isDirectory ? fsNode.owndir : fsNode.parent.owndir;
 
 	return target.frame();

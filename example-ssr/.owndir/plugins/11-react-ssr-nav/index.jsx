@@ -45,7 +45,7 @@ function fileNavSidebar (fsNode) {
     <div className='file-nav-sidebar-name'>
       {!isDirectory ? null : 
         <Arrow className='file-nav-sidebar-arrow' />}
-      <a href={`/${fsNode.relativePath}`}>{fsNode.name}</a>
+      <a href={fsNode.relativePath}>{fsNode.name}</a>
     </div>
 
     {!isDirectory ? null :

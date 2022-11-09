@@ -28,7 +28,7 @@ function fileNavSidebar (fsNode) {
         <Arrow className='file-nav-sidebar-arrow' onClick={
           () => setHideChildren(v => !v)
         }/>}
-      <Link to={`/${fsNode.relativePath}`}>{fsNode.name}</Link>
+      <Link to={fsNode.relativePath}>{fsNode.name}</Link>
     </div>
 
     {!isDirectory ? null :

@@ -1,48 +1,117 @@
 
-build times have exploded
-=========================
+mapDir, permissiongs, fsNode_server test rig
+============================================
 
-	looks like this is because packLib is packaging _everything_, 
-	including node_modules folders and such
-	this is especially bad at the root
-
-	Okay, but what the _fuck_ can I do about that? 
-		Is there some way that I can mask those files off from pacote?
-
-		I can use the "files" entry in the root package.json, seems to be working ...
+	let's validate _this_ shit
 
 
+Rethinking Fundamentals
+=======================
+	it might be time to move back away from constructor functions
 
-why is my generated code out-of-date unless I nuke .owndir/build ?
-=====================================================================
+		would actually neaten a lot of fiddly bits that've cropped up recently
+			ie, relocating existing owndirs in the tree, becomes possible again
 
-	HA! it's coming from npm's cache
-	which is stored as opaque data in ~/.npm/_cacache
-		because of _course_ it is
+		Also, now that I've ironed out my build system, and my ABSENCE of a templating system,
+		the lifecycle question (which the constructors were meant to answer) has entirely dissolved.
 
-	solution was to learn a little more about how to configure the npm install
-		- set package-lock to false
-		- set prefer-online to true
+			I think the only thing that really came out of that was the "addRoute" function,
+			and that works _just_ as well as an import. I still need a setup to handle my own imports,
+			but that's neither here nor there.
 
-		this way, we check the cache against the source, 
-		and ignore the hash that the package-lock.json may or may not remember
+			well .. there's also the question of when to set directory permissions
+			that might be the REAL thing that came out of that, actually ...
+				no reason that can't be handled just like routes, though
+
+		I don't need to do this now, though
+		this will be relevant when I get around to re-evaluating fsNode listeners
 
 
-Next Steps (med picture)
-========================
+There's a lot to do, but I need to keep myself coming back to it
+So, let's ask a very simple question - what do I WANT to do next?
 
-	1- client-side *directory* support
-		file access interfaces
-			mediated by permissions
-			read, write, move, delete, makeDir
 
-	2- sync client and server directory object
-		I need to pass chokidar events up to the client
+What do I want to do next?
+==========================
+
+	kinda want to lay out some of my own landing page, maybe?
+
+	Yeah, let's shelve the tree-layout for now
+		(I don't really feel like cloning obsidian today)
+
+	Instead, I can just fuck around a little with the bankey type stuff,
+		this cuts back towards the original goal
+
+
+----------
+
+I don't think I can seriously work on any of that yet
+I've got a thirty-fucking-second build time, every time I make changes, because I'm uselessly redownloading packages
+
+
+	okay - this is because owndir disagrees with what's in the cache, but it's also not updating package-lock ... ?
+	I still don't feel like I understand this - shouldn't that be a one-time cost as I stomp the out-of-sync packages?
+
+
+	BUT! I can force a re-sync by running `cleanup`, so that's at least _something_
+		let's see if we can learn more next time we drift out of sync with the rest of the world
+
+-----------
+
+
+Reminders
+=========
+	
+	I don't have to optimize the availability of actions that I don't really care about
+
+		consider `fsNode.move`
+			this is a VERY limited, compared to `mv`
+			for example, consider moving all pngs into a folder
+				`mv *.png my-pngs`
+			there's no one-call way to do this with fsNode
+				`fsNode.childrenArray.filter(c => c.name.endsWith('.png')).forEach(c => c.move('../my-pngs'))`
+
+		And, _maybe_ that matters, right?
+			there's actually a questionable decision here, where things done _to_ a path, must be done _from_ the path
+			I might actually reconsider this whole aspect of the interface
+
+		OWNDIR IS NOT A SHELL. OWNDIR IS NOT A FILE MANAGER
+			I want it to be _possible_ to manage files, because those _capabilities_ matter
+			but they matter for other reasons.
+		
+		this "weakness" (difference?) in my interface, while it's worth thinking about.
+		is absolutely NOT worth dwelling on (at least right now)
+
+
+		I'm probably going to end up applying a similar sort of logic to event-listeners
+			although, I think I might care a little more about those
+
+
+
+auth layer in front
+===================
+	currently, directory access routes preempt owndir routes
+	therefore, it's impossible to create a gatekeeper from inside the system
+
+	this is easy enough to solve by adding another routing layer in front of directories
+
+
+File Change Events
+==================
+
+	these are just kinda fuckey no matter how I slice it
+		REALLY not happy with the handwave I have in the direction of listeners
+
+	needs a built-in client-side solution
+
 
 
 
 Loose Ends
 ==========
+
+	fsNode functions should never leave the fsNode tree
+
 	if a folder gets pasted in:
 		I rely on the events being delivered in a top-down order
 			if they were delivered randomly, I would just _die_
@@ -54,15 +123,52 @@ Loose Ends
 
 	hardcoded client.js path
 
-	better solution to bundling fsNode_client.js
+	solution to bundling fsNode_client.js
+		once I get around to experimenting with a plugin-distribution mechanism, 
+		maybe this will get folded into that?
+
+	there might be some shenanigans WRT windows vs posix paths, ie foo/bar/baz vs foo\bar\baz
+		because a lot of this shit runs server-side AND client-side, consider normalizing paths to posix
+		this might entail replacing `require('path')` with `require('path').posix` everywhere
 
 
+Permissions
+===========
+	these probably just don't work at all
+		needs RIGOROUS validation
+
+	currently, permissions hinge around fsNodes, and not paths
+		- this means that I can use predicate functions (instead of just paths!)
+		- if a file doesn't exist yet, I cannot ask whether or not I have write permission
+
+	IF A FILE DOES NOT YET EXIST, I CANNOT ASK WHETHER IT CAN BE CREATED
+		it was worth repeating this one, at volume
+		this one NEEDS a solution
+
+	AoE permission checks are _terrible_
+		children's permissions preempt their parent, ie:
+			parent: ["children are read-only"]
+				child: ["you can write me"] <= READ AND WRITE
+		
+		if children don't specify anything, parent rules come into play, ie:
+			parent: ["children are read-only"]
+				child: [] 					<= READ ONLY
+
+		suppose we want to delete a directory
+		to do that, we need write-permission on EVERY DESCENDANT of the directory
+		but, because parent rules can target particular children, each child has to check individually with it's parents
+			(AND MAYBE THIS IS THE PROBLEM)
+
+		imagine we delete a directory that contains foo/node_modules (likely containing thousands of files)
+			every single child needs to check individually whether or not _it_ can be written, AND whether or not it's PARENT says it can be written
+
+		which is absurd, right? that's clearly stupid
+
+		On the _other_ hand, maybe it's okay for this to be costly, right?
+			If large scans are infrequent, they might be appropriate.
+			Under what circumstances will bulk permissions be required?
 
 
-how to deal with static assets?
-===============================
-
-	I want some easy way for plugins to declare, and then make use of, static assets
 
 
 
@@ -85,19 +191,16 @@ actually working with react is proving unexpectedly painful
 
 		Alright, that's actually a reasonable answer. I don't _love_ it, but it makes perfect sense.
 
+		For now, just focus in on React-CSR
+			I'm happy enough with the _reach_ of the build system, so we can prove out alternatives later
 
 
+how to deal with static assets?
+===============================
 
+	I want some easy way for plugins to declare, and then make use of, static assets
 
-HTML diff and patch
-===================
-
-	this seems like it should be a solved problem, right?
-	there must be some existing solution to merge a DOM node into an existing DOM node
-
-	checkout jQuery.load(), this is like 90% of what I care about
-	and it's deliciously braindead
-
+	this might also need to adapt, depending on 
 
 
 crashes and failed compilation
@@ -107,10 +210,6 @@ crashes and failed compilation
 
 	Maybe I need to start fucking around with Babel directly
 	
-
-
-Android?
-========
 
 
 plugin distribution mechanism
@@ -129,3 +228,19 @@ plugin distribution mechanism
 			"postinstall": "node node_modules/homestead-plugin-utils/postinstall.js my-plugin"
 
 
+
+Android?
+========
+
+
+
+HTML diff and patch for SSR bundles
+===================================
+
+	this seems like it should be a solved problem, right?
+	there must be some existing solution to merge a DOM node into an existing DOM node
+
+	checkout jQuery.load(), this is like 90% of what I care about
+	and it's deliciously braindead
+
+		https://api.jquery.com/load/

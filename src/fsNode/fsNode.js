@@ -3,6 +3,9 @@ const _ = require('lodash')
 const pathUtil = require("path")
 
 
+
+
+
 function pathSplit (path) {
   return path.split(pathUtil.sep).filter(step => step && step.length)
 }
@@ -30,7 +33,11 @@ const proto = {
     return Object.values(this.children || {}).sort((a, b) => a.name < b.name ? -1 : 1)
   },
 
-  walk: function (path, bestEffort) {
+  walk: function (path, opts) {
+    // if it's an absolute path, walk from the root
+    if (_.first(path) === '/' && this.parent) {
+      return this.root.walk(path, opts)
+    }
 
     if (_.isString(path)) {
       path = pathSplit(path)
@@ -38,6 +45,9 @@ const proto = {
     if (_.isEmpty(path)) {
       return this
     }
+
+    opts = opts || {}
+
     const [step, ...nextSteps] = path;
     const nextNode =
       step === '.' ? this : 
@@ -50,11 +60,12 @@ const proto = {
     return (
       arrived ? nextNode :   
       canStep ? nextNode.walk(nextSteps) : 
-      bestEffort ? (nextNode || this) :    
+      opts.bestEffort ? (nextNode || this) :    
       null                              
     )
   },
 
+  // can't really remember why I thought _this_ deserved to be here
   getWalkTo: function (fsNode) {
     const path = pathSplit(this.relativePath)
     const targetPath = pathSplit(fsNode.relativePath)
@@ -82,6 +93,17 @@ const proto = {
     return this.permRead.isAllowed() && this.permWrite.isAllowed();
   },
 
+  // AoE permissions are an algorithmic trainwreck
+  canReadAll: function () {
+    return this.permRead.isAllowed() && this.childrenArray.every(child => child.canReadAll())
+  },
+  canWriteAll: function () {
+    return this.canWrite() && this.childrenArray.every(child => child.canWriteAll())
+  },
+
+  dir: function () {
+    return this.isDirectory ? this : this.parent;
+  },
 
   text: function (encoding) {
     return this.readAll().then(buffer => decoder(encoding).decode(buffer))
@@ -200,7 +222,9 @@ const proto = {
       child.parent.rebuildSize();
     }
 
-    if (name) {
+    // this feels like a trap waiting to be sprung
+    // but I prefer it to allowing a child to be named ''
+    if (!_.isEmpty(name)) {
       child.name = name;
       child.invalidateRouter();
     }

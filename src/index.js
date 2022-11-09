@@ -65,10 +65,12 @@ args.path = absPath;
   directory.permRead.allow("**")
   directory.permWrite.allow(fsNode => !fsNode.isOwnDir)
 
+
   const { OwnDir } = require(serverJsPath);
   const owndir = await OwnDir(directory);
 
   const app = express() 
+
   // just hardcode this shit for now
   app.use('/@/client.js', express.static(clientJsPath));
   app.use(directory.requestHandler.bind(directory));
@@ -77,61 +79,20 @@ args.path = absPath;
     console.log(`listening at ${JSON.stringify(server.address(), null, 2)}`)
   })
 
+  /*
+  // I _do_ still want some kind of an event-listener setup, that's for sure
+  // but, I really need to think over how it's gonna work. Don't expect it to
+  // be as all-encompassing as what I've done here
+
   chokidar.watch(args.path, {
-    // ignored: /.*\/.owndir\/build(\/.*)?/,
+    ignored: /.*\/.owndir\/build(\/.*)?/,
     ignoreInitial: true,
     awaitWriteFinish: true,
   })
   .on('all', (event, path) => {
-    const fsNode = directory.walk(path, true);
+    const fsNode = directory.walk(path, {bestEffort: true});
     console.log('chokidar', event, path, fsNode?.relativePath);
     fsNode.onChange(event, path, true);
   });
+  //*/
 })()
-
-
-// require('chokidar').watch("/home/ben/projects/owndir/scratch", {ignoreInitial: true, awaitWriteFinish: true})
-// .on( 'all', (event, path) => console.log(event, path))
-
-
-/*  
-  // okay, let's test out fsNode.move ...
-  setTimeout(async () => {
-    console.log('testing fsNode.move')
-    let from = directory.walk('move-test/a')
-    let to = directory.walk('move-test/b')
-
-    let mover = from.walk('move-me');
-    if (!mover) {
-      mover = to.walk('move-me')
-      from = directory.walk('move-test/b')
-      to = directory.walk('move-test/a')
-    }
-
-    console.log({
-      mover: mover.relativePath,
-      from: from.relativePath,
-      to: to.relativePath,
-
-      owndir: {
-        targetSaysWhat: mover.owndir.targetSaysWhat,
-        testValue: mover.owndir.testValue
-      },
-
-      perms: {
-        permRead: mover.permRead,
-        permWrite: mover.permWrite
-      },
-
-    })
-
-
-    console.log( await mover.move(from.getWalkTo(to) + '/' + mover.name) )
-
-    console.log({
-        targetSaysWhat: mover.owndir.targetSaysWhat,
-        testValue: mover.owndir.testValue
-      })
-
-  }, 1000)
-  */

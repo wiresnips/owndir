@@ -1,9 +1,11 @@
 
 
 import React from 'react'
-import { renderToString } from 'react-dom/server';
 import { Helmet } from 'react-helmet'
-import {resolve} from 'path'
+
+import CssBaseline from '@mui/material/CssBaseline';
+import Box from '@mui/material/Box';
+import Container from '@mui/material/Container';
 
 export default {
 
@@ -14,18 +16,14 @@ export default {
       <Helmet>
         <meta charSet="utf-8"/>
         <title>{this.title}</title>
-        <link rel="stylesheet" type="text/css" href={resolve('/', dir?.relativePath, 'style.css')} /> 
+        <link rel="stylesheet" type="text/css" href={`${dir?.relativePath}/@/style.css`} /> 
       </Helmet>
 
-      <div>
-        { this.fileNav() }
-      </div>
+      <CssBaseline />
 
-      <div>
-        Hello, from { dir?.absolutePath }
-        { this.main() }
-      </div>
-
+      <Box display='flex' flexDirection='row'>
+        <this.sideNav />
+      </Box>
 
     </div>
   },

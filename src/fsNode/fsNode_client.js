@@ -20,7 +20,7 @@ function queryStr (m) {
 const proto = {
   read: function (start, end) {
     const params = queryStr({call: 'read', start, end})
-    const path = `/${this.relativePath}/@?${params}`
+    const path = `${this.relativePath}/@?${params}`
     return fetch(path).then(res => {
       if (res.status === 200) {
         return res.body
@@ -34,7 +34,7 @@ const proto = {
 
   readAll: function () {
     const params = queryStr({call: 'read'})
-    const path = `/${this.relativePath}/@?${params}`
+    const path = `${this.relativePath}/@?${params}`
     return fetch(path).then(res => {
       if (res.status === 200) {
         return res.arrayBuffer()

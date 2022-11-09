@@ -72,7 +72,7 @@ Directory Structure:
 		name: 'the name of the file or dir',
 		path: '/the/absolute/path/to/the/file/or/dir',
 		absolutePath: '/the/absolute/path/to/the/file/or/dir', // synonym to 'path'
-		relativePath: 'path/to/the/node/from/the/root',
+		relativePath: '/path/to/the/node/from/the/root',
 
 		root: {
 			/* the root node (of the central server), not the filesystem */
