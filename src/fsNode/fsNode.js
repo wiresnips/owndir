@@ -1,7 +1,9 @@
 
 const _ = require('lodash')
 const pathUtil = require("path")
+const anymatch = require('anymatch')
 
+const { status, fsnErr } = require('./errors.js')
 
 
 
@@ -34,6 +36,8 @@ const proto = {
   },
 
   walk: function (path, opts) {
+    opts = Object.assign({ bestEffort: false }, opts)
+
     // if it's an absolute path, walk from the root
     if (_.first(path) === '/' && this.parent) {
       return this.root.walk(path, opts)
@@ -46,13 +50,11 @@ const proto = {
       return this
     }
 
-    opts = opts || {}
-
     const [step, ...nextSteps] = path;
     const nextNode =
       step === '.' ? this : 
       step === '..' ? this.parent :
-      this.children[step];
+      this.children?.[step];
 
     const arrived = nextNode && _.isEmpty(nextSteps);
     const canStep = !arrived && !!nextNode?.walk 
@@ -106,9 +108,13 @@ const proto = {
   },
 
   text: function (encoding) {
-    return this.readAll().then(buffer => decoder(encoding).decode(buffer))
+    return this.readAll()
+      .then(bufferOrErr => {
+        return bufferOrErr.error
+          ? bufferOrErr
+          : decoder(encoding).decode(bufferOrErr)
+      })
   },
-
 
   // this is a simple pass-through of chokidar
   // events are: all, add, addDir, change, unlink, unlinkDir, ready, error
@@ -216,6 +222,8 @@ const proto = {
 
   adoptChild: function (child, name) {
 
+    console.log('adoptChild', child.relativePath, name)
+
     if (child.parent) {
       delete child.parent.children[child.name];
       child.parent.invalidateRouter();
@@ -237,19 +245,14 @@ const proto = {
 
     child.rebuildPaths();
 
-    this.owndir.O.adoptOwnDir(child.owndir);
+    this.owndir?.O.adoptOwnDir(child.owndir);
   },
 
   rebuildPaths: function () {
     this.path = pathUtil.resolve(this.parent.path, this.name);
     this.absolutePath = this.path;
     this.relativePath = pathUtil.relative(this.root.path, this.path);
-
-    if (this.children) {
-      for (const child of this.childrenArray) {
-        child.rebuildPaths();
-      }
-    }    
+    this.childrenArray.forEach(child => child.rebuildPaths());
   },
 
   // on the server-side, force the router to be regenerated

@@ -10,23 +10,10 @@ const { mimeType, mkdir } = require('../../libs/utils/fs-utils/index.js')
 const fsNodeProto = require('./fsNode.js')
 const { addFsAccessRoutes } = require('./accessRoutes.js')
 const { Router, routesStr } = require('./router.js')
-const mapDir = require('./mapDir.js')
+const { status, fsnErr } = require('./errors.js')
 
-const status = {
-  badRequest: 400,
-  forbidden: 403,
-  notFound: 404,
-  conflict: 409,
-  serverError: 500
-}
-
-function fsnErr (error, statusCode) {
-  return {
-    success: false,
-    status: statusCode || status.serverError
-    error
-  }
-}
+// stupid circular dep, fix THIS shit
+const md = require('./mapDir.js')
 
 
 const proto = {
@@ -66,56 +53,108 @@ const proto = {
     .catch(fsnErr)
   },
 
-  write: function (path, data, opts) {
+  write: async function (filename, data, opts) {
 
-    // because path is optional and data is not, we have to check whether arg2 can be data
-    const dataArgAligned = (
-      _.isString(data) || 
-      _.isBuffer(data) || 
-      data instanceof stream.Readable
-    );
+    /* valid arg configurations:
+      isDirectory:
+        write(filename, data, opts)
+        write(filename, data)
+        write(filename) // creates empty file
 
-    // if data is not aligned, shunt the args over by one
-    // because path was implicit, so it's actually data
-    if (!dataArgAligned) {
-      opts = data;
-      data = path;
-      path = '';
+      isFile:
+        write(data, opts)
+        write(data) 
+    */
+
+    if (this.isDirectory && this.children[filename]) {
+      return this.children[filename].write(data, opts)
+    }
+
+    if (this.isFile) {
+      opts = data
+      data = filename
+      filename = ''
     }
 
     // okay, we've found our args - now normalize them
-    path = path || ''
-    opts = Object.assign({flags: 'w', start: 0}, opts)
+    filename = filename || ''
+    opts = Object.assign({flags: 'w'}, opts)
 
-    // by rights, this should be us, but there's no reason I can think of to _insist_
-    const nearestFsNode = this.walk(path, {bestEffort: true});
-    if (!nearestFsNode.canWrite()) {
-      return fsnErr(`${nearestFsNode.relativePath} cannot be written`, status.forbidden)
+    if (!this.canWrite()) {
+      return fsnErr(`${this.relativePath} cannot be written`, status.forbidden)
     }
 
-    const absPath = pathUtil.resolve(nearestFsNode.absolutePath, path);
-    if (!absPath.startsWith(this.root.absolutePath)) {
-      return fsnErr(`${path} cannot be written`, status.forbidden)
+    const absPath = pathUtil.resolve(this.absolutePath, filename)
+    if (!absPath.startsWith(this.absolutePath)) {
+      return fsnErr(`${filename} is not a child of ${this.relativePath}. Aborted.`, status.forbidden)
     }
 
-    const src = stream.Readable.from(data)
-    const dest = fsp.open(absPath, opts.flags).createWriteStream({start: opts.start})
+    const file = await fsp.open(absPath, opts.flags)
+    const dest = file.createWriteStream({start: opts.start})
+    const src = data && stream.Readable.from(data)
+
+    const self = this;
+    const writingNewFile = filename.length && !this.children[filename];
 
     return new Promise((resolve, reject) => {
-      src.on('error', error => {
-        reject(fsnErr(`error in read stream: ${error}`));
-      })
-      dest.on('error', error => {
-        reject(fsnErr(`error in write stream: ${error}`));
-      })
+      dest.on('error', error => reject(fsnErr(`error in write stream: ${error}`)));
+      dest.on('finish', async () => {
+        if (writingNewFile) {
+          const newFsNode = await md.mapDir(absPath, self, self.root);
+          self.adoptChild(newFsNode);
+        }
+        resolve({success: true})
+      });
 
-      dest.on('finish', () => resolve({ success: true }))
+      if (src) {
+        src.on('error', error => reject(fsnErr(`error in read stream: ${error}`)));
+        src.pipe(dest);
+      }
+      else {
+        dest.close();
+      }
     })
+  },
+
+  touch: async function (filename) {
+    if (!this.canWrite()) {
+      return fsnErr(`${this.relativePath} cannot be written`, status.forbidden)
+    }
+
+    if (this.isFile) {
+      const t = new Date();
+      return fsp.utimes(this.absolutePath, t, t).catch(fsnErr)
+    } 
+
+    const absPath = pathUtil.resolve(this.absolutePath, filename)
+    if (filename.includes(pathUtil.sep) || 
+       !path.startsWith(this.absolutePath)) 
+    {
+      return fsnErr(`touch takes a direct filename, but "${filename}" does not indicate a child of ${this.relativePath}`)
+    }
+
+    const child = this.children[filename]    
+    if (!child) {
+      return this.write(filename, null, { flags: 'a' })
+        .then(resOrErr => {
+          if (!resOrErr.error) {
+            const newFsNode = await md.mapDir(absPath, this, this.root);
+            this.adoptChild(newFsNode);      
+          }
+          return resOrErr;
+        })
+    }
+
+    if (child.isDirectory) {
+      return fsnErr(`${path} is a directory. Aborting.`)
+    }
+
+      return child.touch()
   },
 
   makeDir: async function (path) {
 
-    const absPath = pathUtil.resolve(this.absolutePath, destPath);
+    const absPath = pathUtil.resolve(this.absolutePath, path);
     if (!absPath.startsWith(this.root.absolutePath)) {
       return fsnErr(`${path} cannot be written`, status.forbidden)
     }
@@ -135,14 +174,16 @@ const proto = {
         : fsnErr(mkdErr); 
     }
 
-    newFsNode = await mapDir(absPath, nearestFsNode, this.root);
+    newFsNode = await md.mapDir(absPath, nearestFsNode, this.root);
     nearestFsNode.adoptChild(newFsNode)
 
     return this.walk(path);
   },
 
-  move: function (destPath) {
+  move: async function (destPath, opts) {
     /*
+      if destPath is an fsNode, use it's relativePath
+
       if destPath points exactly at a directory
         - no name-change occurs
         - make destPath our parent
@@ -153,32 +194,45 @@ const proto = {
 
       otherwise, error out
     */
+    opts = Object.assign({overwrite: false}, opts)
 
     if (!this.canWrite()) {
       return fsnErr(`source ${this.relativePath} cannot be written`, status.forbidden)
     }
 
-    const absDestPath = pathUtil.resolve(this.absolutePath, destPath);
+    if (fsNodeProto.isPrototypeOf(destPath)) {
+      destPath = destPath.relativePath
+    }
+
+    const origPath = this.absolutePath;
+    const absDestPath = pathUtil.resolve(this.absolutePath, '..', destPath);
+    const relDestPath = pathUtil.resolve(this.relativePath, '..', destPath);
+
     if (!absDestPath.startsWith(this.root.absolutePath)) {
       return fsnErr(`destination ${destFsNode.relativePath} cannot be written`, status.forbidden)
     }
 
-    const destFsNode = this.walk(destPath, {bestEffort: true});
+    let destFsNode = this.root.walk(relDestPath, {bestEffort: true});
+
     if (destFsNode.isFile) {
-      return fsnErr(`existing file found at ${destPath}`, status.conflict)
+      if (!opts.overwrite) {
+        return fsnErr(`existing file found at ${destPath}`, status.conflict)
+      }
+      if (!destFsNode.canWrite()) {
+        return fsnErr(`destination ${destFsNode.relativePath} cannot be written`, status.forbidden)
+      }
+      destFsNode = destFsNode.parent;
     }
     if (!destFsNode.canWrite()) {
       return fsnErr(`destination ${destFsNode.relativePath} cannot be written`, status.forbidden)
     }
 
-    const normDestPath = pathUtil.resolve(this.relativePath, destPath);
-
     // the portion of the resolved destination path that does not already exist
-    const novelPath = pathUtil.relative(destFsNode.relativePath, normDestPath);    
+    const novelPath = pathUtil.relative(destFsNode.relativePath, relDestPath);    
 
     // if we would have to create new directories to complete this move, error out
     if (novelPath.includes(pathUtil.sep)) {
-      return fsnErr(`destination '${pathUtil.dirname(normDestPath)}' not found`, status.notFound)
+      return fsnErr(`destination '${pathUtil.dirname(relDestPath)}' not found`, status.notFound)
     }
 
     // we're moving into destFsNode without renaming

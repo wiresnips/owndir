@@ -9,7 +9,7 @@ const { isDir } = require('../libs/utils/fs-utils/index.js')
 
 const build = require('./build/build.js')
 const bundle = require('./build/bundle.js')
-const mapDir = require('./fsNode/mapDir.js')
+const { mapDir } = require('./fsNode/mapDir.js')
 
 var args = (require('yargs/yargs')(process.argv.slice(2))
   .option('p', {

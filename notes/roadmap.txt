@@ -1,8 +1,7 @@
 
-mapDir, permissiongs, fsNode_server test rig
+mapDir, permissions, fsNode_server test rig
 ============================================
 
-	let's validate _this_ shit
 
 
 Rethinking Fundamentals
@@ -75,13 +74,12 @@ Reminders
 			there's actually a questionable decision here, where things done _to_ a path, must be done _from_ the path
 			I might actually reconsider this whole aspect of the interface
 
-		OWNDIR IS NOT A SHELL. OWNDIR IS NOT A FILE MANAGER
+		OWNDIR IS NOT A SHELL. OWNDIR IS NOT A FILE MANAGER.
 			I want it to be _possible_ to manage files, because those _capabilities_ matter
-			but they matter for other reasons.
+			but they are not (yet) important in and of themselves
 		
 		this "weakness" (difference?) in my interface, while it's worth thinking about.
-		is absolutely NOT worth dwelling on (at least right now)
-
+		is absolutely NOT worth dwelling on (yet)
 
 		I'm probably going to end up applying a similar sort of logic to event-listeners
 			although, I think I might care a little more about those
@@ -104,32 +102,6 @@ File Change Events
 
 	needs a built-in client-side solution
 
-
-
-
-Loose Ends
-==========
-
-	fsNode functions should never leave the fsNode tree
-
-	if a folder gets pasted in:
-		I rely on the events being delivered in a top-down order
-			if they were delivered randomly, I would just _die_
-			not sure if I can learn whether or not this is a problem by inspecting chokidar's code?
-				might need to inspect *platform* code, which is ... well it's a lot
-
-		I have no mechanism to cascade the existing owndir
-			probably I just crash? Something to test later
-
-	hardcoded client.js path
-
-	solution to bundling fsNode_client.js
-		once I get around to experimenting with a plugin-distribution mechanism, 
-		maybe this will get folded into that?
-
-	there might be some shenanigans WRT windows vs posix paths, ie foo/bar/baz vs foo\bar\baz
-		because a lot of this shit runs server-side AND client-side, consider normalizing paths to posix
-		this might entail replacing `require('path')` with `require('path').posix` everywhere
 
 
 Permissions
@@ -168,6 +140,34 @@ Permissions
 			If large scans are infrequent, they might be appropriate.
 			Under what circumstances will bulk permissions be required?
 
+
+
+
+Loose Ends
+==========
+
+	fsNode functions should never leave the fsNode tree
+
+	if a folder gets pasted in:
+		I rely on the events being delivered in a top-down order
+			if they were delivered randomly, I would just _die_
+			not sure if I can learn whether or not this is a problem by inspecting chokidar's code?
+				might need to inspect *platform* code, which is ... well it's a lot
+
+		I have no mechanism to cascade the existing owndir
+			probably I just crash? Something to test later
+
+	hardcoded client.js path
+
+	solution to bundling fsNode_client.js
+		once I get around to experimenting with a plugin-distribution mechanism, 
+		maybe this will get folded into that?
+
+	there might be some shenanigans WRT windows vs posix paths, ie foo/bar/baz vs foo\bar\baz
+		because a lot of this shit runs server-side AND client-side, consider normalizing paths to posix
+		this might entail replacing `require('path')` with `require('path').posix` everywhere
+
+	fsNode.write args are a trainwreck
 
 
 

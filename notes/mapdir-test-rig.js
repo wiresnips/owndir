@@ -1,7 +1,7 @@
 
 // remember to re-enable scanning of node_modules first for a fair test
 
-const mapDir = require('/home/ben/projects/owndir/src/fsNode/mapDir.js')
+const { mapDir } = require('/home/ben/projects/owndir/src/fsNode/mapDir.js')
 
 async function bench () {
 	console.log('starting')

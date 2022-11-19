@@ -6,7 +6,7 @@ const { pathSplit } = require('../utils.js')
 const Permission = require('./permission.js')
 const fsNodeProto = require('./fsNode_server.js')
 
-module.exports = async function mapDir (path, parent, root, visited) {
+async function mapDir (path, parent, root, visited) {
   const name = pathSplit(path).pop()
   const absPath = pathUtil.resolve(path)
 
@@ -69,3 +69,6 @@ module.exports = async function mapDir (path, parent, root, visited) {
 
   return node
 }
+
+
+module.exports.mapDir = mapDir;

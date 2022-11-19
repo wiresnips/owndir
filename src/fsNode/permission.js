@@ -9,10 +9,9 @@ function Permission (name, fsNode) {
 }
 
 function pathsPredicate (perm, paths) {
-   const absPath = perm.fsNode.absolutePath;
-   const match = anymatch(paths.map(path => resolve(absPath, path)))
-   return (testFsNode) => match(testFsNode.absolutePath)
-  
+  const absPath = perm.fsNode.absolutePath;
+  const match = anymatch(paths.map(path => resolve(absPath, path)), null, {dot: true})
+  return (testFsNode) => match(testFsNode.absolutePath)  
 }
 
 Permission.prototype = {
