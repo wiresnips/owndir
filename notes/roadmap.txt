@@ -1,6 +1,86 @@
 
+Let's think a little about build and sync
+=========================================
+	
+	I am not (any time soon) going to worry about re-bundling when code changes.
+	this is an edge that I do not care about
+
+	when a folder is added, it should be granted a new OwnDir
+		- this should be a clone of the parent
+		- including plugins
+
+	I notice that I'm not actually making much use of hte irectory-based constructors
+		Can I make any big wins, if I ditch them entirely?
+
+
+
 mapDir, permissions, fsNode_server test rig
 ============================================
+
+
+
+
+webDAV
+======
+	what the fuck is this? I went looking for things like this before, but didn't find them.
+	well, there it is.
+
+	Do I want it?
+	Interface sure _looks_ like what I'm building, doesn't it?
+
+	Does this kind of interop actually _help_ me?
+	what does it buy?
+
+		- interoperability with existing systems
+			- I can use this to write out files ELSEWHERE
+				might actually be useful ...
+			- external systems can read and write me
+				- I think this is a downside?
+
+		- probably just a better API than I've built?
+
+		- how do permissions work?
+			looks like this is a fact about the specific backend, rather than a fact about the protocol
+			which, yeah, that makes sense
+			So, I CAN have permissions, but I also have to actually do it.
+			AND, it'll require me to integrate with a specific webDAV server
+			or, I guess, implement my own ...
+
+	I think this is mostly orthogonal to me?
+	but, my better judgement is whispering that I should integrate it anyways ...
+
+	the neat thing is, the API that I've mapped is a fairly good match
+		- this is pretty validating; I'm probably not that off where I need to be
+		- maybe this means I should switch over? Or that I should switch over SOMETIME?
+		- or, maybe it just means that I can pump it the other way later
+
+Basic summary of my thoughts:
+	- webDAV is NOT a drop-in solution
+		need to get a client, need to get a server, need to integrate BOTH of them
+		need to reconcile auth and permissions, lots of open questions
+		need to reconsider the fundamental nature of fsNode
+		would still want to put an interface over it
+
+	- but also, the interface is _very_ close, capability-wise
+		If saying no is a mistake, I think it's a _recoverable_ mistake
+		should also be able to go the other direction, offer webDAV integration with a plugin
+
+	- the interesting-sounding extensions of webDAV are just "pass this shitty fileformat using the protocol"
+		calDAV: calendar events, cardDAV: contacts - these clearly aren't meant to be human-friendly
+		it's still data under your control, so it meets the spirit
+		but it doesn't allow the naked text to BE the interface, in the way I really want
+			so, I probably wouldn't personally use it directly
+
+	- I also kinda don't want to prioritize third-party access
+		it'd be nice for letting things integrate, but that needs to be done MINDFULLY
+		like, if I just "implement calDAV", so that google calendar can export events to me,
+			WHERE DO THEY END UP?
+		obviously, that's a question that the integration has to answer,
+			BUT, the answer doesn't belong at this level
+			any stupid calendar thing that I end up building, will exist outside of my filesystem interface
+
+With all of that, I think I'm NOT going to integrate webDAV at this point.
+
 
 
 
@@ -47,10 +127,8 @@ What do I want to do next?
 I don't think I can seriously work on any of that yet
 I've got a thirty-fucking-second build time, every time I make changes, because I'm uselessly redownloading packages
 
-
 	okay - this is because owndir disagrees with what's in the cache, but it's also not updating package-lock ... ?
 	I still don't feel like I understand this - shouldn't that be a one-time cost as I stomp the out-of-sync packages?
-
 
 	BUT! I can force a re-sync by running `cleanup`, so that's at least _something_
 		let's see if we can learn more next time we drift out of sync with the rest of the world

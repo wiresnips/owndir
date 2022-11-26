@@ -5,12 +5,15 @@ const anymatch = require('anymatch')
 
 const { status, fsnErr } = require('./errors.js')
 
-
-
-
 function pathSplit (path) {
   return path.split(pathUtil.sep).filter(step => step && step.length)
 }
+
+const DESC_ATTRS = [
+    "name", "path", "absolutePath", "relativePath", 
+    "isFile", "isDirectory", "isSymbolicLink", "isOwnDir",
+    "mtime", "ctime", "mode", "mime"
+]
 
 const decoder = (function () {
   const decoders = {}
@@ -61,7 +64,7 @@ const proto = {
 
     return (
       arrived ? nextNode :   
-      canStep ? nextNode.walk(nextSteps) : 
+      canStep ? nextNode.walk(nextSteps, opts) : 
       opts.bestEffort ? (nextNode || this) :    
       null                              
     )
@@ -108,117 +111,19 @@ const proto = {
   },
 
   text: function (encoding) {
-    return this.readAll()
-      .then(bufferOrErr => {
-        return bufferOrErr.error
-          ? bufferOrErr
-          : decoder(encoding).decode(bufferOrErr)
-      })
+    return this.readAll().then(buffer => decoder(encoding).decode(buffer))
   },
 
-  // this is a simple pass-through of chokidar
-  // events are: all, add, addDir, change, unlink, unlinkDir, ready, error
-  addListener: function (listener, opts) {
-    const { event, match, ignore } = opts || {};
-    const matcher = match && anymatch(match)
-    const ignorer = ignore && anymatch(ignore)
-    const onEvent = event && event !== 'all'
-
-    listener.bind(this);
-    this.listeners.push([listener, onEvent, matcher, ignorer]);
+  desc: function () {
+    return {
+      children: !this.children ? null : _.mapValues(this.children, c => c.desc()),
+      // this can _absolutely be optimized down, but there's no reason to futz with that now
+      ...(_.pick(this, DESC_ATTRS))
+    }    
   },
-
-
-
-
-  onChange: async function (event, path, isNearestFsNode, ...args) {
-    const absPath = path
-    const relPath = pathUtil.relative(this.absolutePath, path);
-
-    const isThisNode = absPath === this.absolutePath;
-    const isDirectParent = !relPath.includes(pathUtil.sep);
-
-    if (isThisNode) {
-      switch (event) {
-        case 'change': 
-          await this.loadStat();
-          break;
-
-        // our parent can handle this
-        case 'unlink': 
-        case 'unlinkDir':
-          break; 
-
-        case 'add': 
-        case 'addDir':
-          // if we added a node that already exists, it was probably done through the "fsNode.move" interface
-          // (and if this node is receiving the event, it already exists)
-          return;
-      }
-    }
-    else if (isDirectParent) {
-      switch (event) {
-        case 'add': 
-        case 'addDir':
-          this.adoptChild(await mapDir(absPath, this, this.root));
-          break;
-
-        case 'unlink':
-        case 'unlinkDir':
-          delete this.children[relPath];
-          break;
-
-        case 'change': 
-          console.log(`event ${event} at ${path}, but it's a folder?`); 
-          return;
-      }
-    }
-
-    // THIS DOES NOT EVEN A LITTLE BIT WORK HOW IT SHOULD
-    // ie, if I paste in a whole-ass directory, unless the events arrive in perfect order
-    // and I don't think I know that they will,
-    // I won't necessarily HAVE a "direct parent"
-
-    if (this.isDirectory) {
-      this.invalidateRouter();
-      this.rebuildSize();
-    }
-
-    // 2- fire off any listeners
-    for (const [listener, onEvent, match, ignore] of this.listeners) {
-      if ((match && !match(relPath)) ||
-          (ignore && ignore(relPath)) ||
-          (onEvent && event !== onEvent)) 
-      {
-        continue;
-      }
-      listener(event, relPath, ...args);
-    }
-
-    // 3 - propagate the event upwards
-    if (this.parent) {
-      this.parent.onChange(event, path, false, ...args);
-    }
-  },
-
-
 
 
   // these only really make sense for directories
-
-  rebuildSize: function () {
-    if (!this.isDirectory) {
-      return;
-    }
-    
-    const newSize = Object.values(this.children || {}).reduce((size, child) => size + child.size, 0);
-    if (newSize === this.size) {
-      return;
-    }
-
-    this.size = newSize;
-    this.parent?.rebuildSize();
-  },
 
   adoptChild: function (child, name) {
 
@@ -245,7 +150,9 @@ const proto = {
 
     child.rebuildPaths();
 
-    this.owndir?.O.adoptOwnDir(child.owndir);
+    if (this.owndir && child.owndir) {
+      this.owndir.O.adoptOwnDir(child.owndir);
+    }
   },
 
   rebuildPaths: function () {
@@ -253,6 +160,20 @@ const proto = {
     this.absolutePath = this.path;
     this.relativePath = pathUtil.relative(this.root.path, this.path);
     this.childrenArray.forEach(child => child.rebuildPaths());
+  },
+
+  rebuildSize: function () {
+    if (!this.isDirectory) {
+      return;
+    }
+    
+    const newSize = Object.values(this.children || {}).reduce((size, child) => size + child.size, 0);
+    if (newSize === this.size) {
+      return;
+    }
+
+    this.size = newSize;
+    this.parent?.rebuildSize();
   },
 
   // on the server-side, force the router to be regenerated
@@ -264,4 +185,3 @@ const proto = {
 
 
 module.exports = proto;
-

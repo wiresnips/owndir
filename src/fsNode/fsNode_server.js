@@ -7,7 +7,7 @@ const pathUtil = require("path")
 const { pathSplit } = require('../utils.js')
 const { mimeType, mkdir } = require('../../libs/utils/fs-utils/index.js')
 
-const fsNodeProto = require('./fsNode.js')
+const FsNodeProto = require('./fsNode.js')
 const { addFsAccessRoutes } = require('./accessRoutes.js')
 const { Router, routesStr } = require('./router.js')
 const { status, fsnErr } = require('./errors.js')
@@ -25,35 +25,33 @@ const proto = {
     end = end || Infinity
 
     if (!this.isFile) {
-      return fsnErr(`source ${this.relativePath} is not a file`, status.notFound)
+      throw fsnErr(`source ${this.relativePath} is not a file`, status.notFound)
     }
     if (!this.canRead()) {
-      return fsnErr(`source ${this.relativePath} cannot be read`, status.forbidden)
+      throw fsnErr(`source ${this.relativePath} cannot be read`, status.forbidden)
     }
     return (
       fsp.open(this.absolutePath, 'r')
         .then(file => file.createReadStream({start, end}))
         .then(ReadableStream.toWeb)
-        .catch(fsnErr)
+        .catch(err => { throw fsnErr(err) })
     );
   },
 
   readAll: function () {
-    return this.read().then(async (streamOrErr) => {
-      if (streamOrErr.error) {
-        return streamOrErr
-      }
-
+    return this.read().then(async (stream) => {
       const chunks = []
-      for await (const chunk of streamOrErr) {
+      for await (const chunk of stream) {
           chunks.push(Buffer.from(chunk));
       }
       return Buffer.concat(chunks);
     })
-    .catch(fsnErr)
+    .catch(err => { throw fsnErr(err) })  
   },
 
   write: async function (filename, data, opts) {
+    console.log("write", {filename, data, opts})
+
 
     /* valid arg configurations:
       isDirectory:
@@ -62,6 +60,7 @@ const proto = {
         write(filename) // creates empty file
 
       isFile:
+        write(filename, data, opts) // only if filename is empty
         write(data, opts)
         write(data) 
     */
@@ -70,7 +69,7 @@ const proto = {
       return this.children[filename].write(data, opts)
     }
 
-    if (this.isFile) {
+    if (this.isFile && !_.isEmpty(filename)) {
       opts = data
       data = filename
       filename = ''
@@ -81,12 +80,12 @@ const proto = {
     opts = Object.assign({flags: 'w'}, opts)
 
     if (!this.canWrite()) {
-      return fsnErr(`${this.relativePath} cannot be written`, status.forbidden)
+      throw fsnErr(`${this.relativePath} cannot be written`, status.forbidden)
     }
 
     const absPath = pathUtil.resolve(this.absolutePath, filename)
     if (!absPath.startsWith(this.absolutePath)) {
-      return fsnErr(`${filename} is not a child of ${this.relativePath}. Aborted.`, status.forbidden)
+      throw fsnErr(`${filename} is not a child of ${this.relativePath}. Aborted.`, status.forbidden)
     }
 
     const file = await fsp.open(absPath, opts.flags)
@@ -118,35 +117,32 @@ const proto = {
 
   touch: async function (filename) {
     if (!this.canWrite()) {
-      return fsnErr(`${this.relativePath} cannot be written`, status.forbidden)
+      throw fsnErr(`${this.relativePath} cannot be written`, status.forbidden)
     }
 
     if (this.isFile) {
       const t = new Date();
-      return fsp.utimes(this.absolutePath, t, t).catch(fsnErr)
+      return fsp.utimes(this.absolutePath, t, t).catch(err => { throw fsnErr(err) })
     } 
 
     const absPath = pathUtil.resolve(this.absolutePath, filename)
     if (filename.includes(pathUtil.sep) || 
-       !path.startsWith(this.absolutePath)) 
+       !absPath.startsWith(this.absolutePath)) 
     {
-      return fsnErr(`touch takes a direct filename, but "${filename}" does not indicate a child of ${this.relativePath}`)
+      throw fsnErr(`touch takes a direct filename, but "${filename}" does not indicate a child of ${this.relativePath}`)
     }
 
-    const child = this.children[filename]    
+    const child = this.children[filename]
+    const self = this
     if (!child) {
       return this.write(filename, null, { flags: 'a' })
-        .then(resOrErr => {
-          if (!resOrErr.error) {
-            const newFsNode = await md.mapDir(absPath, this, this.root);
-            this.adoptChild(newFsNode);      
-          }
-          return resOrErr;
-        })
+        .then(res => md.mapDir(absPath, self, self.root))
+        .then(child => self.adoptChild(child))
+        .catch(err => { throw fsnErr(err); })
     }
 
     if (child.isDirectory) {
-      return fsnErr(`${path} is a directory. Aborting.`)
+      throw fsnErr(`${path} is a directory. Aborting.`)
     }
 
       return child.touch()
@@ -156,13 +152,13 @@ const proto = {
 
     const absPath = pathUtil.resolve(this.absolutePath, path);
     if (!absPath.startsWith(this.root.absolutePath)) {
-      return fsnErr(`${path} cannot be written`, status.forbidden)
+      throw fsnErr(`${path} cannot be written`, status.forbidden)
     }
 
     // by rights, this should be us, but there's no reason I can think of to _insist_
     const nearestFsNode = this.walk(path, {bestEffort: true});
     if (!nearestFsNode.canWrite()) {
-      return fsnErr(`source ${nearestFsNode.relativePath} cannot be written`, status.forbidden)
+      throw fsnErr(`source ${nearestFsNode.relativePath} cannot be written`, status.forbidden)
     }
 
     const mkdErr = mkdir(absPath).catch(_.identity)
@@ -197,10 +193,10 @@ const proto = {
     opts = Object.assign({overwrite: false}, opts)
 
     if (!this.canWrite()) {
-      return fsnErr(`source ${this.relativePath} cannot be written`, status.forbidden)
+      throw fsnErr(`source ${this.relativePath} cannot be written`, status.forbidden)
     }
 
-    if (fsNodeProto.isPrototypeOf(destPath)) {
+    if (FsNodeProto.isPrototypeOf(destPath)) {
       destPath = destPath.relativePath
     }
 
@@ -209,22 +205,24 @@ const proto = {
     const relDestPath = pathUtil.resolve(this.relativePath, '..', destPath);
 
     if (!absDestPath.startsWith(this.root.absolutePath)) {
-      return fsnErr(`destination ${destFsNode.relativePath} cannot be written`, status.forbidden)
+      throw fsnErr(`destination ${destFsNode.relativePath} cannot be written`, status.forbidden)
     }
+
+    console.log("move", this.relativePath, relDestPath)
 
     let destFsNode = this.root.walk(relDestPath, {bestEffort: true});
 
     if (destFsNode.isFile) {
       if (!opts.overwrite) {
-        return fsnErr(`existing file found at ${destPath}`, status.conflict)
+        throw fsnErr(`existing file found at ${destPath}`, status.conflict)
       }
       if (!destFsNode.canWrite()) {
-        return fsnErr(`destination ${destFsNode.relativePath} cannot be written`, status.forbidden)
+        throw fsnErr(`destination ${destFsNode.relativePath} cannot be written`, status.forbidden)
       }
       destFsNode = destFsNode.parent;
     }
     if (!destFsNode.canWrite()) {
-      return fsnErr(`destination ${destFsNode.relativePath} cannot be written`, status.forbidden)
+      throw fsnErr(`destination ${destFsNode.relativePath} cannot be written`, status.forbidden)
     }
 
     // the portion of the resolved destination path that does not already exist
@@ -232,12 +230,12 @@ const proto = {
 
     // if we would have to create new directories to complete this move, error out
     if (novelPath.includes(pathUtil.sep)) {
-      return fsnErr(`destination '${pathUtil.dirname(relDestPath)}' not found`, status.notFound)
+      throw fsnErr(`destination '${pathUtil.dirname(relDestPath)}' not found`, status.notFound)
     }
 
     // we're moving into destFsNode without renaming
     if (_.isEmpty(novelPath)) {
-      destFsNode.adoptChild(this)  
+      destFsNode.adoptChild(this)
     }
     // moving into destFsNode, renaming on the way
     else {
@@ -249,7 +247,7 @@ const proto = {
     return (
       fsp.rename(origPath, this.path)
       .then(res => ({ success: true }))
-      .catch(fsnErr)
+      .catch(err => { throw fsnErr(err) })
     );
   },
 
@@ -266,7 +264,7 @@ const proto = {
     */
 
     if (!this.canWriteAll()) {
-      return fsnErr(`something at ${this.relativePath} cannot be deleted (write disallowed). `, status.forbidden);
+      throw fsnErr(`something at ${this.relativePath} cannot be deleted (write disallowed). `, status.forbidden);
     }
 
     fsp.rm(this.absolutePath, { recursive: true, maxRetries: 10 })
@@ -283,23 +281,11 @@ const proto = {
         }
         return { success: true }
       })
-      .catch(fsnErr)
+      .catch(err => { throw fsnErr(err) })
   },
 
 
   // "internal" functions - *I* use these, but they're not intended for generalized consumption
-
-  desc: function () {
-    return {
-      children: !this.children ? null : _.mapValues(this.children, c => c.desc()),
-      // this can _absolutely be optimized down, but there's no reason to futz with that now
-      ...(_.pick(this, [
-        "name", "path", "absolutePath", "relativePath", 
-        "isFile", "isDirectory", "isSymbolicLink", "isOwnDir",
-        "mtime", "ctime", "mode", "mime"
-      ]))
-    }    
-  },
 
   loadStat: async function () {
     const stat = await fsp.stat(this.absolutePath).catch(err => null)
@@ -371,7 +357,7 @@ const proto = {
   },
 
 }
-Object.setPrototypeOf(proto, fsNodeProto);
+Object.setPrototypeOf(proto, FsNodeProto);
 
 module.exports = proto;
 

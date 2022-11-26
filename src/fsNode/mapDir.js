@@ -4,7 +4,7 @@ const pathUtil = require("path")
 const { pathSplit } = require('../utils.js')
 
 const Permission = require('./permission.js')
-const fsNodeProto = require('./fsNode_server.js')
+const FsNodeProto = require('./fsNode_server.js')
 
 async function mapDir (path, parent, root, visited) {
   const name = pathSplit(path).pop()
@@ -26,7 +26,7 @@ async function mapDir (path, parent, root, visited) {
     isOwnDir: !!(name.startsWith('.owndir') || parent?.isOwnDir),
     listeners: []
   }
-  Object.setPrototypeOf(node, fsNodeProto);
+  Object.setPrototypeOf(node, FsNodeProto);
 
   node.permRead = new Permission('permRead', node);
   node.permWrite = new Permission('permWrite', node);

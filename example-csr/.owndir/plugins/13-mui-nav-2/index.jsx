@@ -19,18 +19,23 @@ import ListItemText from '@mui/material/ListItemText';
   }
 */
 
+const drawerStyle = {
+    '& .MuiDrawer-paper': {
+      position: 'relative'
+  },
+}
 
 export default function (owndir) {
   const entries = gatherNavEntries(owndir);
 
-  owndir.sideNav = function () {
+  owndir.sideNav = function ({width}) {
     const navigate = useNavigate();
 
-    return <Drawer variant="permanent" anchor="left">
+    return <Drawer variant="permanent" anchor="left" sx={drawerStyle}>
       <List>
         {entries.map(({path, label, icon}) => {
           const Icon = icon; // react is weird about components with lower-case names
-          return <ListItem key={path} disablePadding>
+          return <ListItem key={path}>
             <ListItemButton onClick={() => navigate(path)}>
               <ListItemIcon>{Icon ? <Icon /> : null }</ListItemIcon>
               <ListItemText primary={label} />

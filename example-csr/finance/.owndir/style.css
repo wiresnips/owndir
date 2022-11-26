@@ -1,0 +1,35 @@
+.tx-table {
+  width:  unset;
+}
+
+.tx-table th:nth-child(2), 
+.tx-table th:nth-child(3) {
+  text-align: right;
+}
+
+.tx-table .money {
+  font-weight: bolder;
+  text-align: right;
+  font-family: monospace;
+}
+
+.tx-table .money.deposit {
+  color: forestgreen;
+}
+
+.tx-table .summary {
+  vertical-align: top;
+  height: 5em;
+}
+
+.tx-table tbody:nth-child(odd) {
+  background-color: aliceblue;
+}
+
+.tx-table .error {
+  background-color: lavenderblush;
+}
+
+.MuiChip-label {
+  height: 50%;
+}

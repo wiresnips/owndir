@@ -79,20 +79,4 @@ args.path = absPath;
     console.log(`listening at ${JSON.stringify(server.address(), null, 2)}`)
   })
 
-  /*
-  // I _do_ still want some kind of an event-listener setup, that's for sure
-  // but, I really need to think over how it's gonna work. Don't expect it to
-  // be as all-encompassing as what I've done here
-
-  chokidar.watch(args.path, {
-    ignored: /.*\/.owndir\/build(\/.*)?/,
-    ignoreInitial: true,
-    awaitWriteFinish: true,
-  })
-  .on('all', (event, path) => {
-    const fsNode = directory.walk(path, {bestEffort: true});
-    console.log('chokidar', event, path, fsNode?.relativePath);
-    fsNode.onChange(event, path, true);
-  });
-  //*/
 })()

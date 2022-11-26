@@ -23,6 +23,9 @@ export default {
 
       <Box display='flex' flexDirection='row'>
         <this.sideNav />
+        <Box>
+          {this.main()}
+        </Box>
       </Box>
 
     </div>

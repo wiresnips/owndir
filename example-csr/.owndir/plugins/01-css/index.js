@@ -27,5 +27,5 @@ CssPlugin.propagate = true;
 module.exports = CssPlugin;
 
 async function cssText (file) {
-	return `/* ${file.path} */\n${ (await file.readAll()).toString() }`
+	return `/* ${file.path} */\n${ (await file.text()).toString() }`
 }

@@ -4,7 +4,7 @@ import ReactDOM from 'react-dom';
 import { BrowserRouter, useLocation, useParams } from 'react-router-dom';
 
 // hardcode the FUCK out of this until we figure out how to package it less stupidly
-const fsNodeProto = require('/home/ben/projects/owndir/src/fsNode/fsNode_client.js')
+const FsNodeProto = require('/home/ben/projects/owndir/src/fsNode/fsNode_client.js')
 const Permission = require('/home/ben/projects/owndir/src/fsNode/permission.js')
 
 function fsNodeFromDesc (fsNode, parent) {
@@ -14,7 +14,7 @@ function fsNodeFromDesc (fsNode, parent) {
   fsNode.permRead = new Permission('permRead', fsNode);
   fsNode.permWrite = new Permission('permWrite', fsNode);
   
-  Object.setPrototypeOf(fsNode, fsNodeProto);
+  Object.setPrototypeOf(fsNode, FsNodeProto);
 
   if (fsNode.children) {
 	  for (const child of Object.values(fsNode.children)) {
