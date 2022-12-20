@@ -6,7 +6,7 @@ const Acct = require('./account.js');
 (async function () {
 	const dir = await mapDir('/home/ben/projects/owndir/example-csr/finance');
 	dir.permRead.allow("**")
-	dir.permWrite.allow(fsNode => !fsNode.isOwnDir)
+	dir.permRead.disAllow('.owndir/**')
 	
 	await dir.touch('td.acct');
 

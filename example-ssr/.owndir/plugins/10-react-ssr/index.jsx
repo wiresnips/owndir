@@ -20,7 +20,9 @@ module.exports = function (owndir) {
     owndir.html = defaultHtml
   }
 
-  owndir.addRoute('get', '*', 
+  throw "owndir.addRoute and FsNode.walk('path', {bestEffort: true}) are both deprecated";
+
+  owndir.O.routes.push(['*', ['get',
     async function (req, res, next) {
       const fsNode = this.O.directory.walk(req.path, {bestEffort: true})
 
@@ -39,7 +41,7 @@ module.exports = function (owndir) {
       res.send('<!DOCTYPE html>\n' +
         renderToString(await target.html(req)));
     }
-  );
+  ]]);
 
 }
 

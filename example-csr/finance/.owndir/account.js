@@ -87,32 +87,22 @@ function parseAccountCsv (csv) {
   )
 }
 
-async function doneFile (fsNode) {
-  let file = fsNode.children['.done']
-  if (!file) {
-    await fsNode.write(".done")
-    file = fsNode.children['.done']
-  }
-  return file;
-}
-
-async function newRawFiles (fsNode) {
+async function newRawFiles (rawFolder) {
   const knownFiles = (
-    await doneFile(fsNode)
-            .then(done => done.text())
-            .then(text => text.split("\n"))
+    await rawFolder.walk('.done').touch()
+      .then(done => done.text())
+      .then(text => text.split("\n"))
   );
   const isTarget = fsn => (
-    fsn.isFile && 
     fsn.name.toLowerCase().endsWith('.csv') && 
     !knownFiles.includes(fsn.name)
   );
 
-  return fsNode.childrenArray.filter(isTarget)
+  return rawFolder.files().then(files => files.filter(isTarget))
 }
 
-async function newRawTransactionLists (fsNode) {
-  const files = await newRawFiles(fsNode);
+async function newRawTransactionLists (rawFolder) {
+  const files = await newRawFiles(rawFolder);
   return (Promise.all(files.map(f => f.text().then(parseRawCsv)))
     // if we're going to work through more than one, we should do them "in order"
     .then(txLists => _.sortBy(txLists, txs => _.last(txs)?.date))
@@ -259,7 +249,8 @@ function padTransactionRows (rows) {
 
 
 async function loadAccount (fsNode) {
-  if (!fsNode.isFile) {
+  const { isFile } = await fsNode.info();
+  if (!isFile) {
     throw 'loadAccount must be called on a file, not a directory'
   } 
 
@@ -286,21 +277,6 @@ const AccountProto = {
 
   get errors () {
     return this.transactions.filter(tx => tx.error);
-  },
-
-  rawDir: async function () {
-    let dir = this.fsNode.parent.children[this.name];
-    if (!dir) {
-      await this.fsNode.parent.makeDir(this.name);
-      dir = this.fsNode.parent.children[this.name];
-    }
-
-    if (!dir?.isDirectory) {
-      const absPath = resolve(this.fsNode.parent.absolutePath, this.name)
-      throw `error: unable to find or make 'raw' directory at ${absPath}`
-    }
-
-    return dir;
   },
 
   toString: function () {
@@ -337,8 +313,10 @@ const AccountProto = {
     return this;
   },
 
+
   loadNewTransactions: async function () {
-    const newTransactionLists = await this.rawDir().then(newRawTransactionLists);
+    const rawDir = this.fsNode.walk(`../${this.name}`);
+    const newTransactionLists = await newRawTransactionLists(rawDir);
     this.transactions = newTransactionLists.reduce(
       (knownTxs, newTxs) => mergeTransactions(knownTxs, newTxs),
       this.transactions
@@ -349,8 +327,8 @@ const AccountProto = {
   },
 
   markAllRawAsDone: async function () {
-    const dir = await this.rawDir();
-    const rawFiles = await newRawFiles(dir);
+    const rawDir = this.fsNode.walk(`../${this.name}`);
+    const rawFiles = await newRawFiles(rawDir);
 
     const newNames = await Promise.all(rawFiles.map(async (file) => {
       const transactions = await file.text().then(text => parseRawCsv(text));
@@ -366,19 +344,20 @@ const AccountProto = {
         _.last(transactions).date.toFormat('yyyy-MM-dd')
       );
 
+      const takenNames = await rawDir.children().then(children => children.map(child => child.name))
+
       // if we haven't already, rename the file with the date to which it is current
       if (!file.name.startsWith(name)) {
         let filename = `${name}.csv`
 
         // is our name already taken? let's append a suffix
-        if (dir.children[filename]) {
-          let n = 1;
-          while (dir.children[`${name}-${n}.csv`]) { n++ }
-          filename = `${name}-${n}.csv`
+        let n = 1;
+        while (takenNames.includes(filename)) {
+          filename = `${name}-${n++}.csv`
         }
 
         if (filename !== file.name) {
-          console.log('move', await file.move(filename));
+          file = file.move(filename)
         }
       }
 
@@ -387,7 +366,7 @@ const AccountProto = {
 
 
 
-    const done = await doneFile(dir);
+    const done = rawDir.walk('.done');
     const updatedList = _.uniq(
       (await done.text()).split("\n").concat(newNames)
     ).filter(f => !_.isEmpty(f)).join("\n");

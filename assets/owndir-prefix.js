@@ -7,164 +7,75 @@
   No, I am not ashamed of myself.
 */
 
+import { resolve, relative, dirname } from 'path';
 
-import _ from 'lodash';
-import pathUtil from 'path';
+const modules = {};
 
-async function normalizeImport (rawImport) {
-  rawImport = await rawImport;
-  if (_.isFunction(rawImport)) {
-    return rawImport;
-  }
-  return function () { return rawImport };
-}
+function addModule (path, mod, plugins) {
+  path = resolve('/', path)
+  mod = mod || {}
+  plugins = plugins || []
 
-
-const baseOwnDir = {
-  addMiddleware: function (method, path, ...handlers) {
-    this.O.middleware.push([path, [method, ...handlers]]);
-  },
-  addRoute: function (method, path, ...handlers) {
-    this.O.routes.push([path, [method, ...handlers]]);
-  },
-}
-
-const baseSystemObj = {
-
-  get childrenArray() {
-    return Object.values(this.children || {}).sort((a, b) => a.name < b.name ? -1 : 1)
-  },
-
-  adoptOwnDir: function (child) {
-    const owndir = this.owndir;
-    const name = child.O.directory.name;
-    const existingParent = child.O.parent;
-    if (existingParent) {
-      delete existingParent.O.children[name]
-        
-      // oh right, and also this
-      console.log('HAAHHAHA and don\'t forget that PLUGINS will absolutely not be re-evaluated correctly');
-    }
-
-    child.O.parent = owndir;
-    this.children[name] = child;
-
-    if (Object.getPrototypeOf(child) !== owndir) {
-      Object.setPrototypeOf(child, owndir);
-    } 
-  }
-}
-
-
-async function initOwnDir (directory, OwnDir, parent, plugins) {
-
-  OwnDir.prototype = parent || baseOwnDir;
-
-  var owndir; 
-  try {
-    owndir = await new OwnDir(directory);
-  } catch (err) {
-    if (err instanceof TypeError && err.message.endsWith('is not a constructor')) {
-      owndir = await OwnDir(directory);
-    }
-    else {
-      throw err;
-    }
-  }
-
-  // don't allow O to be inherited
-  if (!owndir.hasOwnProperty("O")) {
-    owndir.O = {};
-  }
-  Object.setPrototypeOf(owndir.O, baseSystemObj);
-
-  owndir.O.owndir = owndir;
-  owndir.O.directory = directory;
-  owndir.O.children = {};
-  owndir.O.plugins = plugins || [];
-  owndir.O.middleware = owndir.O.middleware || []
-  owndir.O.routes = owndir.O.routes || [] 
-
-  directory.owndir = owndir;
-
+  const parent = modules[dirname(path)];
   if (parent) {
-    parent.O.adoptOwnDir(owndir)
-  } else {
-    // special-case for the root, because bleah
-    if (Object.getPrototypeOf(owndir) !== OwnDir.prototype) {
-      Object.setPrototypeOf(owndir, OwnDir.prototype);
-    } 
+    Object.setPrototypeOf(mod, parent);
+    plugins = parent.O.plugins.filter(p => p.propagate).concat(plugins);
+    parent.O.children.push(mod)
+    parent.O.children.sort((a, b) => a.O.path > b.O.path ? 1 : -1);
   }
 
-  return owndir;
+  // don't allow the module to inherit O
+  if (!mod.hasOwnProperty("O")) {
+    mod.O = {};
+  }
+  mod.O.middleware = mod.O.middleware || [];
+  mod.O.routes = mod.O.routes || [];
+  mod.O.plugins = plugins;
+  mod.O.path = path;
+  mod.O.parent = parent;
+  mod.O.children = [];
+  mod.O.module = mod;
+
+
+  for (const plugin of plugins) {
+    plugin(mod);
+  }
+
+  modules[path] = mod;
 }
 
-const uninitializedTree = {};
 
-function walk (path) {
-  let node = uninitializedTree;
+export function OwnDir (path) {
+  path = resolve('/', path)
 
-  path = path.split(pathUtil.sep).filter(step => step && step.length)
-  for (let step of path) {
-    if (!node.children) {
-      node.children = {};
+  // const mod = modules[path]
+  const mod = modules[path]; // Object.create(modules[path]) 
+  if (mod) {
+    return mod;
+  }
+
+  // if we didn't find the module, we need to create it
+  // recurse backwards through the path, to ensure that ancestors are generated root-to-leaf
+  OwnDir(dirname(path)); 
+  // having ensured our ancestry is in place, add ourselves 
+  addModule(path, {}, []); 
+
+  // return modules[path]
+  return modules[path]; // Object.create(modules[path])
+}
+
+// this feels stupid
+OwnDir.injectFsInterface = function (FsInterface) {
+  const mod = modules['/'];
+  Object.setPrototypeOf(mod, {
+    get directory() {
+      return FsInterface(this.O.path)
     }
-    if (!node.children[step]) {
-      node.children[step] = {}
-    }
-    node = node.children[step]
-  }
-
-  return node;
-}
-
-function register (path, nodeOrFunc, plugins) {
-  const uninitializedNode = walk(path);
-  uninitializedNode.nodeOrFunc = nodeOrFunc;
-  uninitializedNode.plugins = plugins
+  });  
 }
 
 
-async function initializeTree (directory, uninitializedNode, parentOwnDir) {
-  const owndir = await initOwnDir(
-    directory, 
-    await (uninitializedNode.nodeOrFunc), 
-    parentOwnDir,
-    await Promise.all(uninitializedNode.plugins)
-  );
 
-  await Promise.all(
-    _.toPairs(uninitializedNode.children || {}).map(
-      ([key, uninitializedChild]) => {
-        const childDir = directory.children[key];
-        return initializeTree(childDir, uninitializedChild, owndir)
-      })
-  );
 
-  return owndir;
-}
 
-async function activatePlugins (owndir) {
-  const plugins = owndir.O.plugins
-  const children = owndir.O.childrenArray
 
-  for (let plugin of plugins) {
-    await plugin(owndir);
-
-    if (plugin.propagate) {
-      for (const child of children) {
-        child.O.plugins.push(plugin);
-      }        
-    }
-  }
-
-  for (const child of children) {
-    await activatePlugins(child);
-  }
-}
-
-export async function OwnDir (directory) {
-  const owndir = await initializeTree(directory, uninitializedTree);
-  await activatePlugins(owndir);
-  return owndir;
-}

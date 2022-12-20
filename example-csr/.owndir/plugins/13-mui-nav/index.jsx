@@ -26,9 +26,9 @@ const drawerStyle = {
 }
 
 export default function (owndir) {
-  const entries = gatherNavEntries(owndir);
 
   owndir.sideNav = function ({width}) {
+    const entries = gatherNavEntries(owndir);
     const navigate = useNavigate();
 
     return <Drawer variant="permanent" anchor="left" sx={drawerStyle}>
@@ -47,19 +47,19 @@ export default function (owndir) {
   }
 }
 
-function nodeEntry (node) {
-  if (!node.hasOwnProperty("navEntry")) {
+function nodeEntry (owndir) {
+  if (!owndir.hasOwnProperty("navEntry")) {
     return null;
   }
-  const entry = { ...node.navEntry };
+  const entry = { ...owndir.navEntry };
   if (!entry.label) {
-    entry.label = node.O.directory.name
+    entry.label = owndir.directory.name
   }
   if (!entry.hasOwnProperty('position')) {
     entry.position = Infinity
   }
 
-  entry.path = node.O.directory.relativePath
+  entry.path = owndir.O.path
   return entry;
 }
 
@@ -67,12 +67,13 @@ function nodeEntry (node) {
 function gatherNavEntries (owndir) {
   const entries = [];
 
-  function gather (node) {
-    const entry = nodeEntry(node);
+  function gather (owndir) {
+    const entry = nodeEntry(owndir);
     if (entry) { 
       entries.push(entry) 
     }
-    node.O.childrenArray.forEach(child => gather(child))
+
+    owndir.O.children.forEach(child => gather(child))
   }
 
   gather(owndir);

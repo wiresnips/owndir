@@ -9,7 +9,8 @@ const { isDir } = require('../libs/utils/fs-utils/index.js')
 
 const build = require('./build/build.js')
 const bundle = require('./build/bundle.js')
-const { mapDir } = require('./fsNode/mapDir.js')
+const fsInterface = require('./fsNode/interface_server.js')
+const { router } = require('./fsNode/router')
 
 var args = (require('yargs/yargs')(process.argv.slice(2))
   .option('p', {
@@ -42,38 +43,33 @@ args.path = absPath;
 
 (async function () {
 
-  // build the common owndir code
+  // build the common owndir code into <args.path>/.owndir/build/owndir
   await build(args.path);
 
   // yes, this is stupid. No, I'm not going to improve it right now.
   const serverBundler = resolve(args.path, '.owndir', 'build', 'server');
   if (!(await isDir(serverBundler))) {
-    await fsp.cp(resolve(__dirname, '../assets/server-default'), serverBundler, {recursive: true})
+    await fsp.cp(resolve(__dirname, '../assets/server-default'), serverBundler, {recursive: true});
   }
   const serverJsPath = await bundle(serverBundler);
 
-  console.log("serverJsPath", serverJsPath)
-
-
   const clientBundler = resolve(args.path, '.owndir', 'build', 'client');
   if (!(await isDir(clientBundler))) {
-    await fsp.cp(resolve(__dirname, '../assets/client-default'), clientBundler, {recursive: true})
+    await fsp.cp(resolve(__dirname, '../assets/client-default'), clientBundler, {recursive: true});
   }
   const clientJsPath = await bundle(clientBundler);
 
-  const directory = await mapDir(args.path)
-  directory.permRead.allow("**")
-  directory.permWrite.allow(fsNode => !fsNode.isOwnDir)
-
 
   const { OwnDir } = require(serverJsPath);
-  const owndir = await OwnDir(directory);
+  const FsInterface = fsInterface.init(args.path, OwnDir);
+  OwnDir.injectFsInterface(FsInterface);
 
   const app = express() 
 
   // just hardcode this shit for now
   app.use('/@/client.js', express.static(clientJsPath));
-  app.use(directory.requestHandler.bind(directory));
+
+  app.use(router(FsInterface('/')));
   
   const server = app.listen(args.port, args.host, () => {
     console.log(`listening at ${JSON.stringify(server.address(), null, 2)}`)

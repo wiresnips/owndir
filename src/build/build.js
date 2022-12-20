@@ -53,7 +53,7 @@ async function moduleSpec (root, absPath) {
 
 
 async function packModule (buildDir, spec) {
-  const {isPackage, root, path} = spec;
+  const { isPackage, root, path } = spec;
   if (isPackage) {
     const crumbs = (relative(root, path)
       .split(pathUtil.sep)
@@ -69,27 +69,29 @@ async function packModule (buildDir, spec) {
     await fsp.rm(installPath, {recursive: true}).catch(() => {});
 
     spec.dep = `file:${buildPath}`;
-
+    
     return packLib(path).then(tarball => fsp.writeFile(buildPath, tarball));
   }
 }
 
 
 function requireModuleJs ({symbol, req}, path) {
-  if (!req) {
-    return `const ${symbol} = function () { };`
-  }
+  return req
+    ? `import { default as ${symbol} } from ${JSON.stringify(req)}`
+    : `const ${symbol} = {};`
+
+/*
   return `
 const ${symbol} = (
   import(${JSON.stringify(req)})
     .then(m => m?.default || m)
-    .then(normalizeImport)
     .catch((error) => {
       console.log('error importing', ${JSON.stringify(path)}, error);
       return {};
     })
 );
 `;
+*/
 }
 
 
@@ -112,6 +114,7 @@ async function build (src) {
   ];
 
   async function buildNode (absPath) {
+    const relPath = relative(src, absPath)
     // console.log('buildNode', absPath)
 
     if (!await isDir(absPath)) {
@@ -124,37 +127,34 @@ async function build (src) {
       .sort((a,b) => a.length - b.length)
     );
 
-    const spec = !_.isEmpty(owndirCandidates)
-      ? await moduleSpec(src, owndirCandidates[0])
-      : { symbol: genSym() };
+    if (!_.isEmpty(owndirCandidates)) {
+      const spec = await moduleSpec(src, owndirCandidates[0])
 
+      const pluginDir = resolve(absPath, '.owndir', 'plugins')
+      const plugins = await Promise.all(
+        (await dirChildren(pluginDir))
+          .map(relPath => moduleSpec(src, resolve(pluginDir, relPath)))
+       );
 
-    const pluginDir = resolve(absPath, '.owndir', 'plugins')
-    const plugins = await Promise.all(
-      (await dirChildren(pluginDir))
-        .map(relPath => moduleSpec(src, resolve(pluginDir, relPath)))
-     );
+      const owndirModuleSpecs = [spec, ...plugins];
+      for (let mod of owndirModuleSpecs) {
+        if (mod.isPackage) {
+          await packModule(buildDir, mod);
+        }
+        if (mod.dep) {
+          dependencies[mod.symbol] = mod.dep;
+        }
 
-    const owndirModuleSpecs = [spec, ...plugins];
-    for (let mod of owndirModuleSpecs) {
-      if (mod.isPackage) {
-        await packModule(buildDir, mod);
+        jsFragments.push(requireModuleJs(mod, relPath));
       }
-      if (mod.dep) {
-        dependencies[mod.symbol] = mod.dep;
-      }
 
-      const localPath = relative(src, absPath)
-      jsFragments.push(requireModuleJs(mod, localPath));
-    }
-
-    jsFragments.push(`
-register(
-  ${JSON.stringify(relative(src, absPath))}, 
+      jsFragments.push(`
+addModule(
+  ${JSON.stringify(relPath)}, 
   ${spec.symbol}, 
   [${plugins.map(plugin => plugin.symbol).join(', ')}]
-)`);
-
+)`    );
+    }
 
     await (fsp.readdir(absPath)
       .then(relPaths => relPaths

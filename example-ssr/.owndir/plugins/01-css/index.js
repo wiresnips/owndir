@@ -1,7 +1,10 @@
 function CssPlugin (owndir) {
 	Object.defineProperty(owndir, 'css', {
 		get() {
-			const hsChilden = this.O.directory.children['.owndir']?.children || {}
+
+			throw "lol fuck, none of THIS works anymore - directory.children is completely revamped"
+
+			const hsChilden = this.directory.children['.owndir']?.children || {}
 			const css_p = (
 				Object.keys(hsChilden).sort()
 					.map(cname => hsChilden[cname])
@@ -14,13 +17,13 @@ function CssPlugin (owndir) {
 		}
 	})
 
-	owndir.addRoute('get', '/style.css',
+	owndir.O.routes.push(['/style.css', ['get',
 		async function (req, res, next) {
 			const css = await this.css;
 			res.type("text/css");
 			res.send(css);
 		}
-	);
+	]]);
 }
 CssPlugin.propagate = true;
 

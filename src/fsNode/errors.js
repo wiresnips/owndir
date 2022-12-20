@@ -21,15 +21,14 @@ function fsnErr (error, statusCode) {
   }
 
   console.error(error);
-
-  const errObj = Object.create(FsnErrorProto)
-  Object.assign(errObj, {
+  const errObj = {
     success: false,
     status: statusCode || status.serverError,
     error: error || true
-  })
+  }
+  Object.setPrototypeOf(errObj, FsnErrorProto)
 
-  return Promise.resolve(errObj)
+  return Promise.reject(errObj)
 }
 
 module.exports = {

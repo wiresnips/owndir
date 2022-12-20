@@ -8,7 +8,6 @@ const favicon = `<svg
 `
 
 module.exports = function (owndir) {
-
   owndir.O.routes.push(
     ["/favicon.ico",
       ["get", async function (req, res, next) {

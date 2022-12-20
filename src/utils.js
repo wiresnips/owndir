@@ -90,23 +90,23 @@ function isDirectory (path) {
 }
 
 const withNonTempDir = (prefix, f) => {
-    if (prefix && !f) {
-      f = prefix
-      prefix = ''
-    }
-    return fsp.mkdtemp(pathUtil.resolve(os.tmpdir(), prefix || ''))
-    .then((dir) => {
-      // console.log(`rm -r ${dir}`)
-      tempDir = `${dir}`;
-      return f(dir)
-    })
+  if (prefix && !f) {
+    f = prefix
+    prefix = ''
+  }
+  return fsp.mkdtemp(pathUtil.resolve(os.tmpdir(), prefix || ''))
+  .then((dir) => {
+    // console.log(`rm -r ${dir}`)
+    tempDir = `${dir}`;
+    return f(dir)
+  })
 }
 
 const withTempDir = (prefix, f) => {
-    if (prefix && !f) {
-      f = prefix
-      prefix = ''
-    }
+  if (prefix && !f) {
+    f = prefix
+    prefix = ''
+  }
 
   let tempDir = null;
   return withNonTempDir(prefix, (dir) => {

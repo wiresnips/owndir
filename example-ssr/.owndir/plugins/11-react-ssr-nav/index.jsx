@@ -3,7 +3,7 @@ import React from 'react'
 
 module.exports = function (owndir) {
   owndir.fileNavSidebar = function () {
-    return fileNavSidebarCollapsible(owndir.O.directory)
+    return fileNavSidebarCollapsible(owndir.directory)
   }
 }
 

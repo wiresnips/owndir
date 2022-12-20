@@ -8,7 +8,7 @@ export default {
   title: "Banking",
 
   main: function () {
-    return <AccountTables fsNode={this.O.directory} />
+    return <AccountTables fsNode={this.directory} />
   }
 }
 
@@ -86,10 +86,11 @@ function AccountTables ({ fsNode }) {
 
   useEffect(() => {
     const isAcct = fsn => fsn.name.toLowerCase().endsWith('.acct')
-    fsNode.childrenArray.filter(isAcct).forEach(fsn => 
-      Acct.loadAccount(fsn)
-      .then(account => account.processFiles())
-      .then(setAccount))
+    fsNode.children().then(children => 
+        children.filter(isAcct)
+                .forEach(file => Acct.loadAccount(file)
+                                     .then(account => account.processFiles())
+                                     .then(setAccount)))
   }, [])
 
   return <>

@@ -10,13 +10,13 @@ import Container from '@mui/material/Container';
 export default {
 
   frame: function () {
-    const dir = this.O?.directory
+    const dir = this.directory
 
     return <div>
       <Helmet>
         <meta charSet="utf-8"/>
         <title>{this.title}</title>
-        <link rel="stylesheet" type="text/css" href={`${dir?.relativePath}/@/style.css`} /> 
+        <link rel="stylesheet" type="text/css" href={`${dir.path}/style.css`} /> 
       </Helmet>
 
       <CssBaseline />

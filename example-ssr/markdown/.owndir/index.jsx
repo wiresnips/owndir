@@ -4,7 +4,7 @@ import ReactMarkdown from 'react-markdown';
 
 module.exports = {
 	main: async function (req) {
-		const fsNode = this.O.directory.root.walk(req.path);
+		const fsNode = this.directory.root.walk(req.path);
 		if (!fsNode) {
 			return null;
 		}
@@ -12,6 +12,7 @@ module.exports = {
 			return <ReactMarkdown>{await fsNode.text()}</ReactMarkdown>
 		}
 
+		throw "lol, this is wildly outdated"
 		const {children} = this.O.directory;
 		const fileNames = Object.keys(children).sort();
 		return <ul>{fileNames.map(name => (<li>{name}</li>))}</ul>
