@@ -11,6 +11,16 @@ function signature (spec) {
 
 function specRouter (spec, owndir) {
   const router = Router();
+  router.all('*', async (req, res, next) => {
+    const info = await owndir.directory.info();
+    if (info) {
+      info.isDirectory
+        ? process.chdir(owndir.directory.absolutePath)
+        : process.chdir(owndir.directory.parent.absolutePath);        
+    }
+    next();
+  })
+  
   spec.forEach(([path, ...methodHandlers]) => {
     methodHandlers.forEach(([method, ...handlers]) => {
       router[method](path, ...handlers.map(h => h.bind(owndir)))

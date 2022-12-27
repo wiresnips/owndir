@@ -8,7 +8,7 @@
 const fsp = require('fs/promises')
 const { resolve } = require('path')
 const { isDir } = require('../../libs/utils/fs-utils/index.js')
-const install = require('./npm-install.js')
+const install = require('./yarn-install.js')
 
 // target should indicate the specific build, ie <the-owndir-root>/.owndir/build/server
 async function bundle (target) {
@@ -32,24 +32,9 @@ async function bundle (target) {
 
 	// before we build the final package, remove any existing owndir installation,
 	// because I'm a fucking idiot, and don't know how to force-install programmatically
-	await fsp.rm(resolve(moduleDir, "node_modules", "owndir.bundle"), {recursive: true}).catch((err) => {})
+	// await fsp.rm(resolve(moduleDir, "node_modules", "owndir.bundle"), {recursive: true}).catch((err) => {})
 	
-	// specifically install a fresh copy of the new owndir.tgz
-	// this is part of my ongoing battle with programmatic use of `npm install`
-	// console.log('installing owndir')
-	// await install(
-	// 	moduleDir, 
-	// 	[resolve(moduleDir, '../../owndir/owndir.tgz')],
-	// 	{ 'prefer-online': true, "package-lock": false, save: false, progress: false }
-	// );
-
-	// our module is expected to depend on the target directory's built owndir module,
-	// at <the-owndir-root>/.owndir/build/owndir/owndir.tgz (or, relatively, ../../owndir/owndir.tgz)
-	// the build's module can also bring it's own dependencies, though
-	
-	// console.log('installing everything')
 	await install(moduleDir)
-
 	await bundler(moduleDir, dist)
 
 	return dist

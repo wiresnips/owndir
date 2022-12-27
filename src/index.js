@@ -8,6 +8,7 @@ const express = require('express')
 const { isDir } = require('../libs/utils/fs-utils/index.js')
 
 const build = require('./build/build.js')
+const install = require('./build/yarn-install.js')
 const bundle = require('./build/bundle.js')
 const fsInterface = require('./fsNode/interface_server.js')
 const { router } = require('./fsNode/router')
@@ -40,24 +41,32 @@ if (!fs.statSync(absPath).isDirectory()) {
 }
 args.path = absPath;
 
+// just hardcode this shit for now
+const buildDir = "/home/ben/projects/owndir/build";
 
 (async function () {
 
   // build the common owndir code into <args.path>/.owndir/build/owndir
-  await build(args.path);
+  const moduleDir = resolve(buildDir, "module")
+  await build(args.path, moduleDir);
+  // await install(moduleDir);
 
   // yes, this is stupid. No, I'm not going to improve it right now.
-  const serverBundler = resolve(args.path, '.owndir', 'build', 'server');
-  if (!(await isDir(serverBundler))) {
-    await fsp.cp(resolve(__dirname, '../assets/server-default'), serverBundler, {recursive: true});
-  }
-  const serverJsPath = await bundle(serverBundler);
+  const serverDir = resolve(buildDir, "server")
+  const customServerBundler = resolve(args.path, '.owndir', 'build', 'server');
+  const serverBundler = (await isDir(customServerBundler))
+    ? customServerBundler
+    : resolve(__dirname, '../assets/server-default')
+  await fsp.cp(serverBundler, serverDir, {recursive: true});
+  const serverJsPath = await bundle(serverDir);
 
-  const clientBundler = resolve(args.path, '.owndir', 'build', 'client');
-  if (!(await isDir(clientBundler))) {
-    await fsp.cp(resolve(__dirname, '../assets/client-default'), clientBundler, {recursive: true});
-  }
-  const clientJsPath = await bundle(clientBundler);
+  const clientDir = resolve(buildDir, "client")
+  const customClientBundler = resolve(args.path, '.owndir', 'build', 'client');
+  const clientBundler = (await isDir(customServerBundler))
+    ? customClientBundler
+    : resolve(__dirname, '../assets/client-default')
+  await fsp.cp(clientBundler, clientDir, {recursive: true});
+  const clientJsPath = await bundle(clientDir);
 
 
   const { OwnDir } = require(serverJsPath);

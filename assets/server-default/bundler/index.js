@@ -7,15 +7,17 @@ const { filelocPlugin } = require('esbuild-plugin-fileloc')
 module.exports = async function bundle (src, dst) {
 
   return esbuild.build({
-      platform: 'node', // 'neutral' ? see: https://esbuild.github.io/api/#platform
-      entryPoints: [src],
-      outfile: dst,
-      bundle: true,
-      minify: false,
-      plugins: [
-        filelocPlugin({ rootDir: '/home/ben/projects/owndir/example-csr' }), 
-        externalizeBinaries
-      ],
+    platform: 'node', // 'neutral' ? see: https://esbuild.github.io/api/#platform
+    entryPoints: [src],
+    // absWorkingDir: src,
+    outfile: dst,
+    bundle: true,
+    minify: false,
+    sourcemap: 'inline',
+    plugins: [
+      filelocPlugin({ rootDir: '/home/ben/projects/owndir/example-csr' }), 
+      externalizeBinaries
+    ],
   }).then(result => {
       console.log('build (server) succeeded', result)
       result.errors.forEach(error => console.error(error))

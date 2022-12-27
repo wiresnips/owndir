@@ -1,7 +1,7 @@
 
 export default {
   navEntry: {
-    label: "Banking",
+    label: "Banking WAT",
       icon: AccountBalanceIcon
   },
 

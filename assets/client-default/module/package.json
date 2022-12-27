@@ -1,8 +1,13 @@
 {
-	"dependencies": {
-		"owndir.bundle": "file:../../owndir/owndir.tgz",
-	    "react": "^18.2.0",
-	    "react-dom": "^18.2.0",
-		"react-router-dom": "^6.4.2"
-	}
+  "dependencies": {
+    "owndir.bundle": "../../module",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.4.2"
+  },
+  "peerDependencies": {
+    "react": "*",
+    "react-dom": "*",
+    "react-router-dom": "*"
+  }
 }

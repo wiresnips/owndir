@@ -8,8 +8,6 @@ const fs = require('fs')
 const fsp = require('fs/promises')
 const pathUtil = require('path')
 const { resolve, relative } = pathUtil
-
-const packLib = require('libnpmpack')
 const { exists, isDir, mkdir, dirChildren } = require('../../libs/utils/fs-utils')
 
 
@@ -21,7 +19,7 @@ const genSym = (() => {
 
 // return a shitty blob of info that I can use to bundle a module
 
-async function moduleSpec (root, absPath) {
+async function moduleSpec (root, absPath, dst) {
   const pathIsDir = await isDir(absPath);
   let pathIsJs = !pathIsDir && absPath.match(/\.jsx?$/);
 
@@ -38,39 +36,29 @@ async function moduleSpec (root, absPath) {
     }
   }
 
-  const symbol = genSym();
+  const fullName = genSym(relative(root, absPath).replaceAll(/[^\w]+/g, '_'));
 
   return {
     root,
     path: absPath,
-    symbol,
-    req: (isPackage ? symbol : 
+    symbol: fullName,
+
+    req: (isPackage ? fullName : 
           pathIsJs ? absPath :
           null),
-    isPackage
+
+    dep: (isPackage ? resolve(dst, 'modules', fullName) :
+          null)
   }
 }
 
+async function ensureVersion (modulePath) {
+  const path = resolve(modulePath, "package.json");
+  const package = JSON.parse(await fsp.readFile(path));
 
-async function packModule (buildDir, spec) {
-  const { isPackage, root, path } = spec;
-  if (isPackage) {
-    const crumbs = (relative(root, path)
-      .split(pathUtil.sep)
-      .map(step => step.slice(0, 1))
-      .filter(s => s != '.')
-      .join(""));
-
-    const filename = `${genSym(crumbs)}.tgz`
-    const buildPath = resolve(buildDir, 'modules', filename);
-    const installPath = resolve(buildDir, 'node_modules', spec.symbol);
-
-    await fsp.rm(buildPath).catch(() => {});
-    await fsp.rm(installPath, {recursive: true}).catch(() => {});
-
-    spec.dep = `file:${buildPath}`;
-    
-    return packLib(path).then(tarball => fsp.writeFile(buildPath, tarball));
+  if (!package.version) {
+    package.version = "0.0.0"
+    await fsp.writeFile(path, JSON.stringify(package, null, 2));
   }
 }
 
@@ -79,28 +67,14 @@ function requireModuleJs ({symbol, req}, path) {
   return req
     ? `import { default as ${symbol} } from ${JSON.stringify(req)}`
     : `const ${symbol} = {};`
-
-/*
-  return `
-const ${symbol} = (
-  import(${JSON.stringify(req)})
-    .then(m => m?.default || m)
-    .catch((error) => {
-      console.log('error importing', ${JSON.stringify(path)}, error);
-      return {};
-    })
-);
-`;
-*/
 }
 
 
-async function build (src) {
-  const buildDir = resolve(src, '.owndir', 'build', 'owndir')
-  await mkdir(resolve(buildDir, 'modules')).catch(err => console.error(err));
+async function build (src, dst) {
+  await mkdir(resolve(dst, 'modules'), {recursive: true}).catch(err => console.error(err));
 
-  if (!await exists(buildDir)) {
-    console.error(`failed to create build directory at ${buildDir}`);
+  if (!await exists(dst)) {
+    console.error(`failed to create build directory at ${dst}`);
     return false;  
   }
 
@@ -128,24 +102,24 @@ async function build (src) {
     );
 
     if (!_.isEmpty(owndirCandidates)) {
-      const spec = await moduleSpec(src, owndirCandidates[0])
+      const spec = await moduleSpec(src, owndirCandidates[0], dst)
 
       const pluginDir = resolve(absPath, '.owndir', 'plugins')
       const plugins = await Promise.all(
         (await dirChildren(pluginDir))
-          .map(relPath => moduleSpec(src, resolve(pluginDir, relPath)))
+          .map(relPath => moduleSpec(src, resolve(pluginDir, relPath), dst))
        );
 
       const owndirModuleSpecs = [spec, ...plugins];
       for (let mod of owndirModuleSpecs) {
-        if (mod.isPackage) {
-          await packModule(buildDir, mod);
-        }
+        jsFragments.push(requireModuleJs(mod, relPath));
+
         if (mod.dep) {
+          await fsp.cp(mod.path, mod.dep, { recursive: true });
+          await ensureVersion(mod.dep);
+          //dependencies[mod.symbol] = `link:${mod.dep}`;
           dependencies[mod.symbol] = mod.dep;
         }
-
-        jsFragments.push(requireModuleJs(mod, relPath));
       }
 
       jsFragments.push(`
@@ -168,7 +142,7 @@ addModule(
   await buildNode(src);
 
   await fsp.writeFile(
-    resolve(buildDir, 'index.js'), 
+    resolve(dst, 'index.js'), 
     jsFragments.join('\n\n')
   );
 
@@ -179,11 +153,9 @@ addModule(
   }
 
   await fsp.writeFile(
-    resolve(buildDir, 'package.json'), 
+    resolve(dst, 'package.json'), 
     JSON.stringify(packageJson, null, 2)
   );
-
-  return packLib(buildDir).then(tarball => fsp.writeFile(resolve(buildDir, 'owndir.tgz'), tarball));
 }
 
 

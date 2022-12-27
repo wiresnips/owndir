@@ -1,6 +1,0 @@
-{
-  "dependencies": {
-    "esbuild": "^0.15.6",
-    "esbuild-plugin-fileloc": "0.0.6"
-  }
-}

@@ -18,6 +18,8 @@ const defaultFrame = function () {
 module.exports = function (owndir) {
   if (isServerSide) {
 
+    console.log("__dirname", resolve(__dirname, 'index.html'))
+
     if (!owndir.frame) {
       owndir.frame = defaultFrame
     }

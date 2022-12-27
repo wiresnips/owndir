@@ -8,9 +8,11 @@ module.exports = async function bundle (src, dst) {
   return esbuild.build({
     platform: 'browser',
     entryPoints: [src],
+    // absWorkingDir: src,
     outfile: dst,
     bundle: true,
     minify: false,
+    sourcemap: 'inline',
     plugins: [NodeModulesPolyfillPlugin(), NodeGlobalsPolyfillPlugin()]
   }).then(result => {
       console.log('build (client) succeeded', result)

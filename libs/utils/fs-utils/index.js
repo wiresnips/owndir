@@ -20,7 +20,7 @@ function mkdir (path) {
   return (fsp.stat(path)
     .then(dstat => dstat.isDirectory() || fsp.mkdir(path, {recursive: true}))
     .catch((err) => {
-    	console.log('wtf', err)
+    	// console.log('wtf', err)
     	return fsp.mkdir(path, {recursive: true})
     })
   )
