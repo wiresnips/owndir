@@ -5,20 +5,28 @@ const fs = require('fs')
 const { resolve } = require('path')
 const { DateTime } = require('luxon')
 const papa = require('papaparse')
+const AcctParser = require('./parsers.js')
+const AutoTag = require('./tagger.js')
 
-// alright, what's our output format?
-//    date, amount, total, tags, label
-//    all as a regular ol' CSV
-//    new->old
+/*
+  Account: {
+    name: string,
+    fsNode: FsNode,
+    transactions: Transaction[],
 
-// and, what's our input format?
-//    date, label, withdrawal, deposit, total
-//    old->new
+    // plus a bunch of utility functions
+  }
 
-//    a week of transactions
-//    blank line
-
-// yeah, that seems nice
+  Transaction: {
+    account: Account,
+    date: Luxon DateTime,
+    amount: number,
+    total: number, // account total AFTER transaction
+    tags: string[],
+    label: string,
+    error?: string,
+  }
+*/
 
 
 // AND, when I interpret the "raw" file, I can rename it using the latest date it contains
@@ -57,24 +65,6 @@ const toNearestCent = (value) => {
   return Math.round(value * 100) / 100;
 };
 
-const txSig = ({date, amount, total}) => `${date.toFormat('yyyy-MM-dd')} ${amount} ${total}`;
-
-function parseRawCsv (raw) {
-  // when I pull out raw transactions, I reverse them, because the default format stores them old->new
-  // if I introduce raw-dir transformers, I can probably do away with this entirely
-  return papa.parse(raw, parserConf).data.map(
-    ([date, label, out$, in$, total]) => {
-      date = DateTime.fromFormat(date, 'MM/dd/yyyy')
-      out$ = parseFloat(out$)
-      in$ = parseFloat(in$)
-      total = parseFloat(total)
-      label = label.replace(/\s+/g, ' ');
-      const amount = out$ ? -(Math.abs(out$)) : Math.abs(in$);
-      return {date, amount, total, tags: [], label};
-    }
-  ).reverse();
-}
-
 function parseAccountCsv (csv) {
   return papa.parse(csv, parserConf).data.map(
     ([date, amount, total, tags, label]) => {
@@ -101,55 +91,31 @@ async function newRawFiles (rawFolder) {
   return rawFolder.files().then(files => files.filter(isTarget))
 }
 
-async function newRawTransactionLists (rawFolder) {
-  const files = await newRawFiles(rawFolder);
-  return (Promise.all(files.map(f => f.text().then(parseRawCsv)))
-    // if we're going to work through more than one, we should do them "in order"
-    .then(txLists => _.sortBy(txLists, txs => _.last(txs)?.date))
-  );
-}
 
-
-
-/*
-okay, what does merging mean, now that we're rolling the total into the transaction?
-gotta find the last transaction that they both have, and then take everything AFTER that from the new transactions,
-and keep everything AFTER that
-
-there are two things that I can look for:
-  - legitimately new transactions
-  - discrepancies between known and new transactions
-
-when I find discrepancies, what should I DO with them?
-  well, I could just include them directly, right?
-  then, the audit can flag them for investigation and manual sync
-
-with all of that, what's the plan?
-  - identify the last transaction that's in BOTH
-*/
 
 function mergeTransactions (knownTransactions, newTransactions) {
 
   // I'm going to do this _very_ naively, because I kinda don't give a shit, 
   // but it's very reasonable to expect that transactionsA is _very_ long, and most of it is obviously irrelevant
   // so let's restrict ourselves to the slice that at least _temporally_ overlaps
-  const lastDate = _.last(newTransactions).date
-  const knownRelevant = _.takeWhile(knownTransactions, txA => txA.date >= lastDate)
+  const oldestNew = _.last(newTransactions)
+  const knownRelevant = _.takeWhile(knownTransactions, txA => txA.date >= oldestNew.date)
 
   const newSyncIndex = newTransactions.findIndex(txB => {
-    const sigB = txSig(txB);
-    return knownRelevant.find(txA => sigB === txSig(txA))
+    const {date, amount, total} = txB;
+    return knownRelevant.find(txA => (
+      txA.total === total && 
+      txA.amount === amount && 
+      txA.date.equals(date)
+    ))
   });
 
   // everything before the sync point is _actually_ new
-  const actuallyNewTransactions = newTransactions.slice(0, newSyncIndex);
+  const actuallyNewTransactions = (newSyncIndex !== -1)
+    ? newTransactions.slice(0, newSyncIndex)
+    : newTransactions;
 
-  // slam the new shit on the front, then stable-sort by reverse-date
-  // this way, 'new' transactions will always come before 'old' transactions that they've probably displaced
-  return _.sortBy(
-    actuallyNewTransactions.concat(knownTransactions),
-    []
-  )
+  return actuallyNewTransactions.concat(knownTransactions);
 }
 
 
@@ -259,9 +225,11 @@ async function loadAccount (fsNode) {
     throw 'loadAccount files must have an extension (usually .acct)'
   }
 
-  const transactions = await fsNode.text().then(parseAccountCsv);
-
   const account = Object.create(AccountProto);
+
+  const transactions = await fsNode.text().then(parseAccountCsv);
+  transactions.forEach(tx => tx.account = account);
+
   Object.assign(account, { name, fsNode, transactions })
 
   return account;
@@ -292,48 +260,79 @@ const AccountProto = {
     return this.currentText !== existingText 
       ? this.fsNode.write(currentText)
       : null;
-
-    /*
-    // this version cuts a backup, which I don't think is my job;
-    if (this.currentText !== existingText) {
-      const filename = this.fsNode.name;
-      const mvRes = await this.fsNode.move(filename + '.bk', {overwrite: true});
-      console.log("backup res", mvRes)
-
-      this.fsNode.parent.write(filename, currentText);
-      this.fsNode = this.fsNode.parent.children[filename];
-    }
-    */
   },
 
   processFiles: async function () {
-    await this.loadNewTransactions();
-    await this.markAllRawAsDone();
-    await this.save();
+    if (await this.loadNewTransactions()) {
+      await this.markAllRawAsDone();
+      await this.save();
+    }
     return this;
   },
 
+  parseFile: async function (file) {
+    const text = await file.text();
+    const parser = AcctParser[this.name];
+    const transactions = parser(this, text);
+
+    const self = this;
+    transactions.forEach(tx => {
+      tx.account = self; // account goes in first, so AutoTag can use it
+      const tag = AutoTag.tag(tx);
+      tx.tags = tag ? [tag] : []
+    })
+
+    return transactions;
+  },
 
   loadNewTransactions: async function () {
     const rawDir = this.fsNode.walk(`../${this.name}`);
-    const newTransactionLists = await newRawTransactionLists(rawDir);
+
+    const newTransactionLists = await newRawFiles(rawDir)
+      .then(files => files.map(file => this.parseFile(file)))
+      .then(files => Promise.all(files))
+      // if we're going to work through more than one, we should do them "in order"
+      .then(txLists => _.sortBy(txLists, txs => _.last(txs)?.date))
+
+    if (_.isEmpty(newTransactionLists)) {
+      return false;
+    }
+
     this.transactions = newTransactionLists.reduce(
       (knownTxs, newTxs) => mergeTransactions(knownTxs, newTxs),
       this.transactions
     );
 
     audit(this.transactions);
-    return this;
+    return true;
+  },
+
+  updateTransactionMeta: async function (tx) {
+    const index = this.transactions.findIndex(t => txEquals(tx, t))
+    if (index === -1) {
+      console.error(
+        "Could not match transaction for update", 
+        {transaction: tx, allTransactions: this.transactions}
+      );
+    }
+
+    else if (!_.isEqual(tx, this.transactions[index])) {
+      this.transactions[index] = tx;
+      this.save();
+    }
   },
 
   markAllRawAsDone: async function () {
     const rawDir = this.fsNode.walk(`../${this.name}`);
     const rawFiles = await newRawFiles(rawDir);
 
-    const newNames = await Promise.all(rawFiles.map(async (file) => {
-      const transactions = await file.text().then(text => parseRawCsv(text));
+    console.log('markAllRawAsDone', { rawFiles })
 
-      console.log('markAllRawAsDone', file.name, transactions)
+    const self = this;
+    const newNames = await Promise.all(rawFiles.map(async (file) => {
+      const transactions = await self.parseFile(file)
+
+      console.log({transactions})
 
       if (_.isEmpty(transactions)) {
         return null;
@@ -353,11 +352,11 @@ const AccountProto = {
         // is our name already taken? let's append a suffix
         let n = 1;
         while (takenNames.includes(filename)) {
-          filename = `${name}-${n++}.csv`
+          filename = `${name}_${n++}.csv`
         }
 
         if (filename !== file.name) {
-          file = file.move(filename)
+          file = await file.move(filename)
         }
       }
 
@@ -371,13 +370,24 @@ const AccountProto = {
       (await done.text()).split("\n").concat(newNames)
     ).filter(f => !_.isEmpty(f)).join("\n");
 
+
+    console.log('markAllRawAsDone', { newNames, updatedList })
+
     return done.write(updatedList);
   }
 
 }
 
 
-
+function txEquals (a, b) {
+  // these are the "invariants" of a transaction
+  // there's no reason it _has_ to be true, but if it's false that requires human intervention anyways.
+  return (
+    a.date == b.date && 
+    a.amount === b.amount && 
+    a.total === b.total
+  )
+}
 
 
 

@@ -7,7 +7,15 @@
   text-align: right;
 }
 
-.tx-table .money {
+.tx-table th:nth-child(4) {
+  text-align: center;
+}
+
+.tx-table td:nth-child(5) {
+  max-width: 15em;
+}
+
+.money {
   font-weight: bolder;
   text-align: right;
   font-family: monospace;
@@ -32,4 +40,16 @@
 
 .MuiChip-label {
   height: 50%;
+}
+
+
+
+
+.chart-data-right {
+  white-space: nowrap;
+  margin-right: -4em;
+}
+
+.tag-spending tbody tr th {
+  --labels-size: 10em;
 }

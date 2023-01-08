@@ -65,9 +65,10 @@ export default function TagEditor ({ tags: value, onChange }) {
 
   return <Box display='flex' flexDirection='row' alignItems='center'>
 
-    <IconButton onClick={() => setActive(active => !active)}>
-      {active ? <CheckCircleOutlineIcon /> : <EditIcon />}
-    </IconButton>
+    {!onChange ? null :
+      <IconButton onClick={() => setActive(active => !active)}>
+        {active ? <CheckCircleOutlineIcon /> : <EditIcon />}
+      </IconButton>}
 
     {tags.map(tag => 
       <Chip key={tag} label={tag}

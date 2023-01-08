@@ -181,7 +181,8 @@ const Interface = {
   },
 
   write: async function (path, data, opts) {
-    console.log("write", {path, data, opts})
+    console.log("write", this.relativePath, {path, data, opts})
+
 
     // because path is optional and data is not, we have to check whether arg2 can be data
     // if a path WAS given, we walk it FIRST, so after this point, we can normalize our args

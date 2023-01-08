@@ -23,7 +23,6 @@ module.exports = {
 		middleware: [
 			["*", 
 				["all", function (req, res, next) {
-					console.log('child middleware', req.originalUrl, this)
 					next()
 				}]
 			]

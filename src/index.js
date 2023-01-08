@@ -13,6 +13,7 @@ const bundle = require('./build/bundle.js')
 const fsInterface = require('./fsNode/interface_server.js')
 const { router } = require('./fsNode/router')
 
+
 var args = (require('yargs/yargs')(process.argv.slice(2))
   .option('p', {
     alias: 'port',
@@ -46,6 +47,8 @@ const buildDir = "/home/ben/projects/owndir/build";
 
 (async function () {
 
+  //*
+
   // build the common owndir code into <args.path>/.owndir/build/owndir
   const moduleDir = resolve(buildDir, "module")
   await build(args.path, moduleDir);
@@ -72,6 +75,8 @@ const buildDir = "/home/ben/projects/owndir/build";
   const { OwnDir } = require(serverJsPath);
   const FsInterface = fsInterface.init(args.path, OwnDir);
   OwnDir.injectFsInterface(FsInterface);
+
+  //*/
 
   const app = express() 
 

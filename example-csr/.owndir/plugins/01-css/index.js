@@ -29,6 +29,7 @@ function CssPlugin (owndir) {
 			const css = await this.css();
 			res.type("text/css");
 			res.send(css);
+			res.end();
 		}
 	]]);
 }

@@ -15,8 +15,6 @@ function isBasic (x) {
 }
 
 function queryStr (m) {
-  console.log('queryStr', m)
-
   // this feels like a _lot_
   // drop empty strings & arrays, drop null && undefined, stringify things that aren't basic types
   m = Object.fromEntries(
@@ -27,9 +25,6 @@ function queryStr (m) {
         [k, JSON.stringify(v)]
       ))
     );
-
-  console.log('        ', m)
-
   return (new URLSearchParams(m)).toString()
 }
 
@@ -155,7 +150,7 @@ const Interface = {
   },
 
   write: async function (path, data, opts) {
-    console.log("write", {path, data, opts})
+    console.log("write", this.relativePath, {path, data, opts})
 
     // because path is optional and data is not, we have to check whether arg2 can be data
     // if a path WAS given, we walk it FIRST, so after this point, we can normalize our args

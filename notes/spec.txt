@@ -66,39 +66,4 @@ Module Structure:
 	}
 
 
-Directory Structure: 
 
-	{
-		name: 'the name of the file or dir',
-		path: '/the/absolute/path/to/the/file/or/dir',
-		absolutePath: '/the/absolute/path/to/the/file/or/dir', // synonym to 'path'
-		relativePath: '/path/to/the/node/from/the/root',
-
-		root: {
-			/* the root node (of the central server), not the filesystem */
-		},
-
-		parent: {
-			/* the parent node, if any */
-		},
-
-		children: {
-			/* if a directory, any child nodes keyed by name */
-		}
-
-		// basically a dump of the stat object
-		isFile: true/false,
-		isDirectory: true/false,
-		isSymbolicLink: true/false,
-
-		// https://nodejs.org/api/fs.html#stat-time-values
-		atime: number, // access time
-		mtime: number, // modify time
-		ctime: number, // change time
-
-		// if a file, the size
-		// if a directory, the aggregate size of the contents
-		size: 9001,
-
-
-	}
