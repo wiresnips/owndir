@@ -1,26 +1,20 @@
 
 
 
-replace Express
-=========================================
+plugin distribution mechanism
+=============================
+	a postinstall script that moves the plugin from node_modules up a level
 
-	the fact that I can't route to a path that contains "(" is a bridge too far
-	I don't want to fuck with that shit TODAY, but that's gonna be the next major refactor
+	then, you can `npm install @owndir/fancy-plugin`, and it'll just work, I think ...
 
+	can I get this working cross-platform?
+		the way to do this is, to use javascript instead of bash
 
+		so, let's imagine a package, @owndir/plugin-utils
+		plugins can require it, and it will provide a postinstall.js script
 
-
-Permissions
-===========
-
-	currently, these are stubbed
-
-
-
-Android?
-========
-
-
+		then, in package.json, you have this:
+			"postinstall": "node node_modules/owndir-plugin-utils/postinstall.js my-plugin"
 
 
 File Change Events
@@ -31,6 +25,12 @@ File Change Events
 
 	needs a built-in client-side solution
 
+
+
+Permissions
+===========
+
+	currently, these are stubbed
 
 
 
@@ -46,6 +46,26 @@ __dirname
 		__fileloc.dirname /home/ben/projects/owndir/build/server/module/node_modules/_owndir_plugins_10_react_csr_3/index.html
 
 		because `__dirname` became `__fileloc.dirname`, BUT SO DID `"__dirname"`
+
+
+
+replace Express
+=========================================
+
+	the fact that I can't route to a path that contains "(" is a bridge too far
+	I don't want to fuck with that shit TODAY, but that's gonna be the next major refactor
+
+
+
+
+
+Android?
+========
+
+
+
+
+
 
 
 Loose Ends
@@ -78,30 +98,3 @@ crashes and failed compilation
 	
 
 
-plugin distribution mechanism
-=============================
-	a postinstall script that moves the plugin from node_modules up a level
-
-	then, you can `npm install @owndir/fancy-plugin`, and it'll just work, I think ...
-
-	can I get this working cross-platform?
-		the way to do this is, to use javascript instead of bash
-
-		so, let's imagine a package, @owndir/plugin-utils
-		plugins can require it, and it will provide a postinstall.js script
-
-		then, in package.json, you have this:
-			"postinstall": "node node_modules/owndir-plugin-utils/postinstall.js my-plugin"
-
-
-
-HTML diff and patch for SSR bundles
-===================================
-
-	this seems like it should be a solved problem, right?
-	there must be some existing solution to merge a DOM node into an existing DOM node
-
-	checkout jQuery.load(), this is like 90% of what I care about
-	and it's deliciously braindead
-
-		https://api.jquery.com/load/
