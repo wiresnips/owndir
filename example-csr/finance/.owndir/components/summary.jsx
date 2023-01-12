@@ -23,33 +23,31 @@ import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 
 import { TransactionRow, addOrdinal } from './accountTable'
 
-/*
-  okay, what do I actually want to put here?
-
-    CASHFLOW VIEW
-      - no averaging here, just slam all the data down
-      - draw a line-of-best-fit through it ?
-
-*/
-
-
-
 
 
 export function Summary ({accounts}) {
-
   const transactions = _.flatMap(accounts, acct => acct.transactions)
 
+  return <Box display='flex' className='summary'>
+    <Box className="left-col">
+      <TagDailyAverage transactions={transactions} />
+    </Box>
 
-  return <Box display='flex' flexDirection='column'>
-    <AccountTotals accounts={accounts} />
-    <TagDailyAverage transactions={transactions}/>
+    <Box className='right-col'>
+      <WeeklySpend transactions={transactions} />
+      <DailySpend transactions={transactions} />
+      <AccountTotals accounts={accounts} />
+    </Box>
+
+
   </Box>
 }
 
 
+
+
 function AccountTotals ({accounts}) {
-  return <Table>
+  return <Table className='account-totals'>
     <TableBody>
       {accounts.map(account => {
         let tx = account.transactions[0];
@@ -87,6 +85,8 @@ function dropTransferPairs (transactions) {
 
   return transactions.filter(tx => !tx.drop)
 }
+
+
 
 
 function normalizeRent (transactions, days) {
@@ -132,6 +132,8 @@ function quadInOut (k) {
     );
 }
 
+
+
 function weightedAvgByTagForDays (transactions, days) {
   if (_.isEmpty(transactions)) {
     return {};
@@ -150,7 +152,9 @@ function weightedAvgByTagForDays (transactions, days) {
     .filter(tx => tx.date >= cutoff)
     .reduce((tagTotals, tx) => {
       const day = daysBtwn(tx.date, latest)
-      tx.tags.forEach(tag => {
+      const tags = _.isEmpty(tx.tags) ? ["untagged"] : tx.tags;
+
+      tags.forEach(tag => {
         let totals = tagTotals[tag];
         if (!totals) {
           tagTotals[tag] = totals = new Array(days + 1).fill(0);
@@ -184,60 +188,181 @@ function TagDailyAverage ({transactions}) {
   const longAverages = weightedAvgByTagForDays(transactions, 168); // 24 weeks
   const shortAverages = weightedAvgByTagForDays(transactions, 42); // 6 weeks
 
-  console.log({shortAverages})
-
   const tags = _.sortBy(
       _.toPairs(longAverages), 
       [([tag, avg]) => avg])
     .map(([tag, avg]) => tag)
     .filter(tag => longAverages[tag] < 0 || shortAverages[tag] < 0)
 
-  const maxSpend = Math.min(
+  const maxSpend = Math.min( // min because spend is negative
     ...(Object.values(longAverages)),
     ...(Object.values(shortAverages)),
     0
   );
 
-  const chartMax = Math.floor(maxSpend / 20) * 20;
+  const chartMax = -(Math.floor(maxSpend / 20) * 20);
+  const chartScale = 1/chartMax
   const classes = [
-    "tag-spending",
     "charts-css",
     "bar",
     "show-labels",
     "labels-align-end",
     "multiple",
     "data-spacing-4",
-    `show-${-chartMax/5}-secondary-axes`
+    "show-data-on-hover",
+    `show-${chartMax/5}-secondary-axes`
+  ]
+
+  function dataDisplay (amount) {
+    return "data money " + (amount < 15 ? "chart-data-small" : "chart-data-large")
+  }
+
+  return <div className="tag-spending">
+    <table className={classes.join(' ')}>
+      <tbody>
+      {tags.map(tag => {
+        const long = toNearestCent(longAverages[tag] || 0) * -1
+        const short = toNearestCent(shortAverages[tag] || 0) * -1
+
+        return <tr key={tag}>
+          <th scope='row'>{tag}</th>
+          <td style={{"--size": long * chartScale}} className='long'>
+            <span className={dataDisplay(long)}>{long.toFixed(2)}</span>
+          </td>
+          <td style={{"--size": short * chartScale}} className='short'>
+            <span className={dataDisplay(short)}>{short.toFixed(2)}</span>
+          </td>
+        </tr>
+
+      })}
+      </tbody>
+    </table>
+
+    <ul class="charts-css legend legend-square">
+      <li className="long">24 wk avg</li>
+      <li className="short">6 wk avg</li>
+    </ul>
+
+  </div>
+}
+
+
+
+function DailySpend ({transactions}) {
+  const days = 12 * 7;
+
+  transactions = dropTransferPairs(transactions);
+  transactions = normalizeRent(transactions, days);
+
+  if (_.isEmpty(transactions)) {
+    return null;
+  }
+
+  const latest = _.maxBy(transactions, tx => tx.date).date;
+  const spent = Array(days).fill(0);
+  transactions.forEach(tx => {
+    if (tx.amount < 0) {
+      const d = daysBtwn(tx.date, latest)
+      if (d < days) {
+        spent[d] -= tx.amount;
+      }
+    }
+  })
+  
+
+  const maxSpend = Math.max(...spent)
+  const chartMax = Math.min(
+    Math.floor(maxSpend / 25) * 25,
+    400
+  );
+  const classes = [
+    "day-spending",
+    "charts-css",
+    "show-heading",
+    "column",
+    "reverse-data",
+    "show-data-on-hover",
+    `show-8-secondary-axes`
   ]
 
   return <table className={classes.join(' ')}>
-    <caption>Tags / Day</caption>
+    <caption>Spent /day</caption>
     <tbody>
-    {tags.map(tag => {
-      const long = toNearestCent(longAverages[tag] || 0)
-      const short = toNearestCent(shortAverages[tag] || 0)
+    {spent.map((amount, d) => {
+      amount = toNearestCent(amount);
+      const date = latest.minus({days: d});
+      const dayOfWeek = date.weekday; // monday=1 ... sunday=7
+      const dayOfMonth = date.day; // starts at 1
 
-      return <tr key={tag}>
-        <th scope='row'>{tag}</th>
-        <td style={{"--size": long / chartMax}}>
-          <span className="chart-data-right money">{long * -1}</span>
-        </td>
-        <td style={{"--size": short / chartMax}}>
-          <span className="chart-data-right money">{short * -1}</span>
+      return <tr key={d} className={(date.month % 2) ? 'month-odd' : 'month-even'}>
+        <td className={amount < chartMax ? '' : 'overspend'} 
+            style={{"--size": Math.min(amount, chartMax) / chartMax}}
+        >
+          <span className={`data top-left`}>
+            {date.toFormat('LLL d')}<br/>
+            <span className='money'>{amount.toFixed(2)}</span>
+          </span>
         </td>
       </tr>
 
     })}
     </tbody>
   </table>
-
 }
 
 
 
-function DailySpend ({transactions}) {
 
+
+function WeeklySpend ({transactions}) {
+  const weeks = 12;
+
+  transactions = dropTransferPairs(transactions);
+  transactions = normalizeRent(transactions, weeks * 7);
+
+  if (_.isEmpty(transactions)) {
+    return null;
+  }
+
+  const latest = _.maxBy(transactions, tx => tx.date).date;
+  const spent = Array(weeks).fill(0);
+  transactions.forEach(tx => {
+    if (tx.amount < 0) {
+      const week = Math.floor(daysBtwn(tx.date, latest) / 7)
+      if (week < weeks) {
+        spent[week] -= tx.amount;
+      }
+    }
+  })
+  
+  const maxSpend = Math.max(...spent)
+  const chartMax = Math.floor(maxSpend / 25) * 25;
+
+  const classes = [
+    "week-spending",
+    "charts-css",
+    "show-heading",
+    "column",
+    "reverse-data",
+    "show-data-on-hover"
+  ]
+
+  return <table className={classes.join(' ')}>
+    <caption>Spent /week</caption>
+    <tbody>
+    {spent.map((amount, d) => {
+      amount = toNearestCent(amount);
+
+      return <tr key={d}>
+        <td style={{"--size": Math.min(amount, chartMax) / chartMax}}>
+          <span className={`data top-left`}>
+            <span className='money'>{amount.toFixed(2)}</span>
+          </span>
+        </td>
+      </tr>
+
+    })}
+    </tbody>
+  </table>  
 }
-
-
 

@@ -1,10 +1,4 @@
 
-Banking
-========
-
-	- category filter
-	- summary/day
-
 
 
 replace Express

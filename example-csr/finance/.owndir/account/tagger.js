@@ -56,19 +56,21 @@ const tagMatchers = [
   ["transfer", [
     /from - \*{5}\d{2}\*\d{4}/,
     /pc (from|to) \d{8,20}/,
+    /tfr-(from|to) \d{8,20}/,
     (tx) => Math.abs(tx.amount) > 999 && tx.label.match(/e-?transfer/i)
   ]],
   
   ["household", [
     "staples", "dollar it", /wal.?mart/, "target", "kmart", 
-    "canadian tire", "cdn tire"
+    "canadian tire", "cdn tire",
   ]],
 
   ["utilities", [
     /cra.*tax owing/, 
     /t.?s.?i.? internet/, 
     "virgin mobile", "koodo", "chatr",
-    "hydro", "wyse meter"
+    "hydro", "wyse meter",
+    "coinamatic"
   ]],
 
   ["subs", [

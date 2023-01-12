@@ -1,4 +1,5 @@
 import _ from 'lodash'
+const { DateTime } = require('luxon')
 
 import React, { useContext, useEffect, useState, useReducer, useRef } from 'react';
 
@@ -44,7 +45,6 @@ function RxFilter ({setFilter}) {
     const rawWords = raw.trim().toLowerCase().split(/\s+/).filter(w => w.length > 1);
     if (!_.isEqual(words, rawWords)) {
       setWords(rawWords);
-
       setFilter(!_.isEmpty(rawWords) 
         ? new RegExp(rawWords.join('|'))
         : null);
@@ -86,8 +86,7 @@ export function TransactionTable ({transactions, showAccount}) {
         </TableRow>
       </TableHead>
 
-      {/* drop the last week, because it's probably partial, so the summary would be lies */}
-      {Acct.partitionTxsByWeek(shortList).slice(0,-1).map(weekTxs => (
+      {Acct.partitionTxsByWeek(shortList).map(weekTxs => (
         <TransactionChunk 
           transactions={weekTxs}
           showAccount={showAccount}
@@ -99,6 +98,7 @@ export function TransactionTable ({transactions, showAccount}) {
   </>
 }
 
+const NOW = DateTime.local();
 
 export function TransactionChunk ({transactions, showAccount}) {
 
@@ -108,10 +108,9 @@ export function TransactionChunk ({transactions, showAccount}) {
       return acc;
     }, {in$: 0, out$: 0})
 
-
   return <TableBody>
     {transactions.map((tx, i) => { 
-      const showDate = (i === 0) || tx.date < transactions[i-1].date ;
+      const showDate = (i === 0) || tx.date < transactions[i-1].date;
 
       return <TransactionRow
         key={`${tx.account?.name} ${tx.date.toString()} ${tx.amount} ${tx.total}`}
@@ -136,6 +135,7 @@ export function TransactionChunk ({transactions, showAccount}) {
 export function TransactionRow ({transaction, showDate, showAccount}) {
   const [tx, setTx] = useState(transaction); // this should eventually be replaced by feedback through the fs
   const deposit = tx.amount > 0;
+  const showYear = transaction.date?.year != NOW.year;
 
   function onChange (updatedTx) {
     tx.account?.updateTransactionMeta(updatedTx);
@@ -149,6 +149,8 @@ export function TransactionRow ({transaction, showDate, showAccount}) {
             <Typography>
               {tx.date.toFormat('MMM d')}
               <sup>{addOrdinal(tx.date.day)}</sup>
+              {!showYear ? null : 
+                <><br/>{tx.date.year}</>}
             </Typography>}
       </TableCell>
 

@@ -18,7 +18,7 @@ import Acct from './account/account.js'
 export default {
   navEntry: {
     label: "Banking",
-      icon: AccountBalanceIcon
+    icon: AccountBalanceIcon
   },
 
   title: "Banking",
