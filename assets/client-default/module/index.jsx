@@ -4,9 +4,13 @@ import ReactDOM from 'react-dom';
 import { BrowserRouter, useLocation, useParams } from 'react-router-dom';
 
 // hardcode the FUCK out of this until we figure out how to package it less stupidly
-// const Permission = require('/home/ben/projects/owndir/src/fsNode/permission.js')
+import fsInterface from '/home/ben/projects/owndir/server/src/fsNode/interface_client.js';
 
-import fsInterface from '/home/ben/projects/owndir/src/fsNode/interface_client.js';
+// I expect this will end up being something like:
+// import fsInterface from '@owndir/server/fsNode/interface_client.js'
+
+// or maybe it'll even get pulled out into it's own package:
+// import fsInterface from '@owndir/browserFsInterface'
 
 (async function () {
 
