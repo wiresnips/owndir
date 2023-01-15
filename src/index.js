@@ -32,15 +32,20 @@ var args = (require('yargs/yargs')(process.argv.slice(2))
 // there's probably a better way to establish a name and validation for an anonymous arg, 
 // but damned if I was able to figure out what it is
 const pathArg = _.last(args._)
+if (!pathArg) {
+  console.log(`specify a target path`)
+  process.exit(1)
+}
+
 const path = resolve(pathArg)
 if (!fs.existsSync(path)) {
   console.log(`unable to resolve path <${path}>`)
-  process.exit(0)
+  process.exit(1)
 }
 
 if (!fs.statSync(path).isDirectory()) {
   console.log(`${path} is not a directory`)
-  process.exit(0)
+  process.exit(1)
 }
 
 // we store the built artifacts "here" (with the owndir-server)

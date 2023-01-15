@@ -5,8 +5,10 @@
   "main": "server.js",
   "scripts": {
     "test": "node src/index.js -p 3232 ~/central",
-    "__pretest": "npm run cleanup",
     "cleanup": "rm -R ./build; exit 0"
+  },
+  "bin": {
+
   },
   "author": "Ben Ells",
   "license": "",
@@ -20,7 +22,6 @@
     "mmmagic": "^0.5.3",
     "tmp": "^0.2.1",
     "yargs": "^17.0.1",
-
     "@yarnpkg/core": "^3.3.0",
     "@yarnpkg/plugin-file": "^2.3.1",
     "@yarnpkg/plugin-link": "^2.0.0",
