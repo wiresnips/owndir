@@ -4,7 +4,7 @@
   "description": "",
   "main": "server.js",
   "scripts": {
-    "test": "node src/index.js -p 3232 ../personal",
+    "test": "node src/index.js -p 3232 ~/central",
     "__pretest": "npm run cleanup",
     "cleanup": "rm -R ./build; exit 0"
   },

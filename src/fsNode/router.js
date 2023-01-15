@@ -142,7 +142,6 @@ function FsRouter (fsNode) {
   router.label = `FsRouter ${fsNode.relativePath}`
   router.fsNode = fsNode
 
-
   /*
   router.all("*", (req, res, next) => {
     console.log(
@@ -223,11 +222,9 @@ const getFsRouter = (function () {
 // can't have static routers representing dynamic filepaths
 
 async function stack (fsNode, steps) {
+  const nodeExists = await fsNode.info();
   const handlers = []
 
-  if (!await fsNode.info()) {
-    return handlers;
-  }
 
   /*
   handlers.push((req, res, next) => {
@@ -237,7 +234,9 @@ async function stack (fsNode, steps) {
   })
   //*/
 
-  handlers.push(getMiddleware(fsNode.module));
+  if (nodeExists) {
+    handlers.push(getMiddleware(fsNode.module));
+  }
 
   /*
   handlers.push((req, res, next) => {
@@ -265,7 +264,9 @@ async function stack (fsNode, steps) {
   })
   //*/
 
-  handlers.push(getRoutes(fsNode.module));
+  if (nodeExists) {
+    handlers.push(getRoutes(fsNode.module));
+  }
 
   /*
   handlers.push((req, res, next) => {
@@ -274,7 +275,6 @@ async function stack (fsNode, steps) {
     next();
   })
   //*/
-
 
   return handlers;
 }
