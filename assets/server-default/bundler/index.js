@@ -15,6 +15,7 @@ module.exports = async function bundle (src, dst) {
     minify: false,
     sourcemap: 'inline',
     plugins: [
+      // haha, that's hardcoded as FUCK
       filelocPlugin({ rootDir: '/home/ben/projects/owndir/example-csr' }), 
       externalizeBinaries
     ],

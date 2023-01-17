@@ -1,21 +1,6 @@
 
 
 
-plugin distribution mechanism
-=============================
-	a postinstall script that moves the plugin from node_modules up a level
-
-	then, you can `npm install @owndir/fancy-plugin`, and it'll just work, I think ...
-
-	can I get this working cross-platform?
-		the way to do this is, to use javascript instead of bash
-
-		so, let's imagine a package, @owndir/plugin-utils
-		plugins can require it, and it will provide a postinstall.js script
-
-		then, in package.json, you have this:
-			"postinstall": "node node_modules/owndir-plugin-utils/postinstall.js my-plugin"
-
 
 File Change Events
 ==================
@@ -34,6 +19,24 @@ Permissions
 
 
 
+Process Management + Code Reloading
+===================================
+
+	https://stackoverflow.com/questions/16369018/forever-nodemon-running-together
+
+	not actually sure if I _need_ this, but it's something to think about.
+
+	for now, I think I'll just run it directly
+
+
+
+Android?
+========
+
+
+
+
+
 __dirname
 =========
 	currently points to the BUILD folder, not the actual folder
@@ -47,6 +50,11 @@ __dirname
 
 		because `__dirname` became `__fileloc.dirname`, BUT SO DID `"__dirname"`
 
+	notice that this _kinda_ works SOMETIMES
+		static assets included with a plugin will have been copied into build, for example
+
+	but, you could never navigate into the true directory using __dirname
+
 
 
 replace Express
@@ -58,9 +66,20 @@ replace Express
 
 
 
+plugin distribution mechanism
+=============================
+	a postinstall script that moves the plugin from node_modules up a level
 
-Android?
-========
+	then, you can `npm install @owndir/fancy-plugin`, and it'll just work, I think ...
+
+	can I get this working cross-platform?
+		the way to do this is, to use javascript instead of bash
+
+		so, let's imagine a package, @owndir/plugin-utils
+		plugins can require it, and it will provide a postinstall.js script
+
+		then, in package.json, you have this:
+			"postinstall": "node node_modules/owndir-plugin-utils/postinstall.js my-plugin"
 
 
 
@@ -80,6 +99,10 @@ Loose Ends
 	there might be some shenanigans WRT windows vs posix paths, ie foo/bar/baz vs foo\bar\baz
 		because a lot of this shit runs server-side AND client-side, consider normalizing paths to posix
 		this might entail replacing `require('path')` with `require('path').posix` everywhere
+
+
+
+
 
 
 how to deal with static assets?

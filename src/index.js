@@ -78,9 +78,9 @@ const buildDir = resolve(__dirname, "..", "build", pathHash);
   const FsInterface = fsInterface.init(path, OwnDir);
   OwnDir.injectFsInterface(FsInterface);
 
-
   const app = express() 
   app.use('/@/client.js', express.static(clientJsPath)); // just hardcode this shit for now
+
   app.use(router(FsInterface('/')));
   
   const server = app.listen(args.port, args.host, () => {

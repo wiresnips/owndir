@@ -1,7 +1,12 @@
 {
   "name": "owndir",
-  "version": "0.0.0",
+  "version": "0.0.2",
   "description": "",
+  "homepage": "https://github.com/wiresnips/owndir",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wiresnips/owndir.git"
+  },
   "author": "Ben Ells",
   "license": "Unlicense",
   "main": "server.js",
@@ -13,6 +18,10 @@
     "owndir": "./bin/owndir.js"
   },
   "dependencies": {
+    "@yarnpkg/core": "^3.3.0",
+    "@yarnpkg/plugin-file": "^2.3.1",
+    "@yarnpkg/plugin-link": "^2.0.0",
+    "@yarnpkg/plugin-nm": "^3.0.0",
     "anymatch": "^3.1.2",
     "body-parser": "^1.20.1",
     "chokidar": "^3.5.3",
@@ -20,11 +29,8 @@
     "lodash": "^4.17.21",
     "methods": "~1.1.2",
     "mmmagic": "^0.5.3",
+    "owndir": "^0.0.1",
     "tmp": "^0.2.1",
-    "yargs": "^17.0.1",
-    "@yarnpkg/core": "^3.3.0",
-    "@yarnpkg/plugin-file": "^2.3.1",
-    "@yarnpkg/plugin-link": "^2.0.0",
-    "@yarnpkg/plugin-nm": "^3.0.0"    
+    "yargs": "^17.0.1"
   }
 }
