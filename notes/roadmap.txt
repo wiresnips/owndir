@@ -34,9 +34,6 @@ Android?
 ========
 
 
-
-
-
 __dirname
 =========
 	currently points to the BUILD folder, not the actual folder

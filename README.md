@@ -30,9 +30,25 @@ Because OwnDir interprets code _from the directory_, it's directly embedded in t
 
 It should be noticed that this is not _safe_. You could never run a normal message-board like this - everyone has full write access to everything, and bad actors could spam dickbutts, or delete everything, or rewrite history to make other participants have said whatever. Safety is not a _requirement_, though, unless you're trying to operate on the open internet. Trust only becomes a problem at larger scales. If you have a little dry-erase board on your fridge door, it has all the same problems/features.
 
+(It should be stated that, OwnDir still provides mechanisms to build out a regular server, so you could theoretically run an outward-facing message board using it. A more traditional framework would almost certainly be a better choice for that purpose. OwnDir is working hard to narrow gap between the client and the filesystem, and that's really not something that you want to do, in a public-facing context).
+
 # Docs
 
 > This might have stabilized enough that I can actually start writing these, huh?
+
+## Directory Module
+- `.O`
+  - `directory`
+  - `middleware` / `routes`
+
+## FsNode
+
+## Plugins
+
+## Build Process
+
+## CSR vs SSR, React vs xxxx
+
 
 # Inspirations (an incomplete list)
 - https://tiddlywiki.com/
