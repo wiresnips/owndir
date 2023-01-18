@@ -48,6 +48,10 @@ const Interface = {
       throw fsnErr(`something at ${this.relativePath} cannot be deleted (write disallowed). `, status.forbidden);
     }
 
+    if (!this.info()) {
+      return this;
+    }
+
     await fsp.rm(this.absolutePath, { recursive: true, maxRetries: 10 });
     return this;
   },
