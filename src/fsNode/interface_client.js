@@ -36,6 +36,7 @@ function canBeWriteData (maybeData) {
   )
 }
 
+const subPollInterval = 500;
 
 
 const Interface = {
@@ -131,6 +132,48 @@ const Interface = {
     }
 
     return res.arrayBuffer();
+  },
+
+  sub: async function (paths, events, listener, opts) {
+
+    // paths and events are optional, grant them defaults and shuffle the args down
+    if (_.isFunction(paths)) {
+      opts = events;
+      listener = path;
+      events = ["all"];
+      paths = ["."];
+    } else if (_.isFunction(events)) {
+      opts = listener;
+      listener = events;
+      events = paths;
+      paths = ["."];
+    }
+
+    const params = queryStr({call: 'sub', paths, events, opts})
+    const url = `${this.relativePath}/@?${params}`
+    const res = await fetch(url)
+    if (res.status !== 200) {
+      throw await res.json(); 
+    }
+
+    const { subId } = await res.json();
+    const pollInterval = setInterval(
+      async () => {
+        const poll = await fetch(`${this.relativePath}/@?${queryStr({call: 'sub', subId })}`)
+        if (poll.status !== 200) {
+          console.error(`sub poller for ${this.relativePath} returned non-200?`)
+          throw poll;
+        }
+        const events = await poll.json();
+        events.forEach(([event, path]) => listener(event, this.walk(path)));
+      },
+      subPollInterval
+    );
+
+    return () => {
+      clearInterval(pollInterval);
+      fetch(`${this.relativePath}/@?${queryStr({call: 'sub', subId, unsub: true })}`);
+    }
   },
 
   touch: async function (path) {

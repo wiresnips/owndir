@@ -4,6 +4,7 @@ const anymatch = require('anymatch')
 const stream = require('stream');
 const { ReadableStream } = require('node:stream/web');
 const pathUtil = require("path")
+const chokidar = require('chokidar');
 
 const { mimeType, mkdir } = require('../../libs/utils/fs-utils/index.js')
 const { status, fsnErr } = require('./errors.js')
@@ -162,6 +163,62 @@ const Interface = {
       }
       return Buffer.concat(chunks);
     })
+  },
+
+  // https://github.com/paulmillr/chokidar
+  // events and options come straight from chokidar
+  //  options.depth defaults to 1
+  //  options.cwd is forced to FsNode.absolutePath
+  // events: add, addDir, change, unlink, unlinkDir, ready, raw, error, all
+  sub: async function (paths, events, listener, opts) {
+    
+    // paths and events are optional, grant them defaults and shuffle the args down
+    if (_.isFunction(paths)) {
+      opts = events;
+      listener = path;
+      events = ["all"];
+      paths = ["."];
+    } else if (_.isFunction(events)) {
+      opts = listener;
+      listener = events;
+      events = paths;
+      paths = ["."];
+    }
+
+    // massage args into expected shapes
+    if (!_.isArray(paths)) {
+      paths = [paths];
+    }
+
+    if (!_.isArray(events)) {
+      events = [events];
+    } else if (events.includes('all')) {
+      events = ['all'];
+    }
+
+    opts = Object.assign({
+      ignoreInitial: true,
+      depth: 1
+    }, opts);
+    opts.cwd = this.absolutePath;
+
+    let watcher = chokidar.watch(paths.map(path => resolve(this.relativePath, path)), opts)
+
+    const self = this;
+    events.forEach(event => {
+      if (event === 'all') {
+        watcher.on(event, (event, path) => listener(event, self.walk(path)))
+      } else {
+        watcher.on(event, (path) => listener(event, self.walk(path)))
+      }
+    })
+
+    return () => {
+      if (watcher) {
+        watcher.close()
+        watcher = null;
+      }
+    }
   },
 
   touch: async function (path) {

@@ -14,7 +14,7 @@ In as pithy terms as possible, OwnDir is a web framework for single-user apps. I
 
 Given a directory tree, OwnDir will load code from each directory, as an inheritance heirarchy.
 - On the server side, these nodes inform a router - each folder can specify http request handlers.
-- On the client side, the same nodes become JSX components, specifying how to display their respective folders.
+- On the client side, the same nodes expose JSX components, specifying how to display their respective folders.
 - a simple filesystem api gives both access to the contents of the folder
 - a basic plugin system means (eventually) you don't have to build everything from scratch.
 
@@ -49,10 +49,10 @@ It should be noticed that this is not _safe_. You could never run a normal messa
 
 ## CSR vs SSR, React vs xxxx
 
+# Examples
 
 # Inspirations (an incomplete list)
 - https://tiddlywiki.com/
 - https://obsidian.md/
 - https://cristobal.space/writing/folk
 - https://www.gwern.net/docs/technology/2004-03-30-shirky-situatedsoftware.html
-

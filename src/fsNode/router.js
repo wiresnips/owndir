@@ -361,7 +361,7 @@ function info (fsNode, req, res) {
 }
 
 function makeDir (fsNode, req, res) {
-  return (fsNode.makeDir(filename, data, opts)
+  return (fsNode.makeDir(data, opts)
     .then(fsNode => res.json({path: fsNode.relativePath}))
     .catch(err => fsnErr(err).then(err => err.respond(res)))
   );  
@@ -388,18 +388,65 @@ function read (fsNode, req, res) {
   )
 }
 
-function touch (target, req, res) {
-  return (target.touch()
+
+let nextSubId = 0;
+const subCache = {};
+const subTimeout = 10000;
+
+function sub (fsNode, req, res) {
+  const now = (new Date()).getTime();
+  let subId = req.query.subId && JSON.parse(req.query.subId);
+  let entry;
+  
+  if (subId) {
+    entry = subCache[subId];
+    if (!entry) {
+      return res.status(404).end();
+    }
+    
+    if (req.query.unsub) {
+      entry.unsub();
+      clearTimeout(entry.timeout);
+      return res.status(200).end();
+    }
+    
+    if (now >= subTimeout.refreshBy) {
+     clearTimeout(entry.timeout); 
+     entry.timeout = setTimeout(entry.unsub, subTimeout);
+    }
+    
+    res.json(entry.events);
+    entry.events = [];
+  }
+
+  else {
+    subId = nextSubId++;
+    const paths = req.query.paths && JSON.parse(req.query.paths);
+    const events = req.query.events && JSON.parse(req.query.events);
+    const opts = req.query.opts && JSON.parse(req.query.opts);
+
+    entry = { events: [] }
+    const subFn = (event, node) => entry.events.push([event, node.relativePath]);
+    entry.unsub = fsNode.sub(paths, events, subFn, opts);
+    entry.timeout = setTimeout(entry.unsub, subTimeout);
+    entry.refreshBy = now + (subTimeout/2);
+    res.json({subId});
+  }
+}
+
+
+function touch (fsNode, req, res) {
+  return (fsNode.touch()
     .then(fsNode => res.json({path: fsNode.relativePath}))
     .catch(err => fsnErr(err).then(err => err.respond(res)))
   );
 }
 
-function write (target, req, res) {
+function write (fsNode, req, res) {
   const opts = req.query.opts && JSON.parse(req.query.opts);
   const data = _.isEmpty(req.body) ? null : req.body;
 
-  return (target.write(data, opts)
+  return (fsNode.write(data, opts)
     .then(success => res.json(success))
     .catch(err => fsnErr(err).then(err => err.respond(res)))
   );
