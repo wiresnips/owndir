@@ -170,7 +170,7 @@ const Interface = {
   //  options.depth defaults to 1
   //  options.cwd is forced to FsNode.absolutePath
   // events: add, addDir, change, unlink, unlinkDir, ready, raw, error, all
-  sub: async function (paths, events, listener, opts) {
+  sub: function (paths, events, listener, opts) {
     
     // paths and events are optional, grant them defaults and shuffle the args down
     if (_.isFunction(paths)) {
@@ -185,6 +185,9 @@ const Interface = {
       paths = ["."];
     }
 
+    paths = paths || ['.']
+    events = events || ['all']
+
     // massage args into expected shapes
     if (!_.isArray(paths)) {
       paths = [paths];
@@ -196,20 +199,24 @@ const Interface = {
       events = ['all'];
     }
 
-    opts = Object.assign({
-      ignoreInitial: true,
-      depth: 1
-    }, opts);
+    opts = Object.assign({ depth: 1 }, opts);
     opts.cwd = this.absolutePath;
 
-    let watcher = chokidar.watch(paths.map(path => resolve(this.relativePath, path)), opts)
+    let watcher = chokidar.watch(
+      paths.map(path => pathUtil.resolve(this.absolutePath, path)), 
+      opts
+    )
 
     const self = this;
     events.forEach(event => {
       if (event === 'all') {
-        watcher.on(event, (event, path) => listener(event, self.walk(path)))
+        watcher.on(event, (event, path) => {
+          listener(event, self.walk(path))
+        })
       } else {
-        watcher.on(event, (path) => listener(event, self.walk(path)))
+        watcher.on(event, (path) => {
+          listener(event, self.walk(path))
+        })
       }
     })
 

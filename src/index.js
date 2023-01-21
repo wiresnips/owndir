@@ -53,6 +53,7 @@ if (!fs.statSync(path).isDirectory()) {
 const pathHash = crypto.createHash('sha1').update(path).digest('base64');
 const buildDir = resolve(__dirname, "..", "build", pathHash);
 
+
 (async function () {
   const moduleDir = resolve(buildDir, "module")
   await build(path, moduleDir);
@@ -68,7 +69,7 @@ const buildDir = resolve(__dirname, "..", "build", pathHash);
 
   const clientDir = resolve(buildDir, "client")
   const customClientBundler = resolve(path, '.owndir', 'build', 'client');
-  const clientBundler = (await isDir(customServerBundler))
+  const clientBundler = (await isDir(customClientBundler))
     ? customClientBundler
     : resolve(__dirname, '../assets/client-default')
   await fsp.cp(clientBundler, clientDir, {recursive: true});
@@ -86,5 +87,5 @@ const buildDir = resolve(__dirname, "..", "build", pathHash);
   const server = app.listen(args.port, args.host, () => {
     console.log(`listening at ${JSON.stringify(server.address(), null, 2)}`)
   })
-
 })()
+//*/

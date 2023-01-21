@@ -164,6 +164,7 @@ function FsRouter (fsNode) {
         case 'makeDir':  return makeDir(fsNode, req, res)
         case 'move':     return move(fsNode, req, res)
         case 'read':     return read(fsNode, req, res)
+        case 'sub':      return sub(fsNode, req, res)
         case 'touch':    return touch(fsNode, req, res)
         case 'write':    return write(fsNode, req, res)
       }
@@ -381,7 +382,7 @@ function read (fsNode, req, res) {
   const end = req.query.end || Infinity
 
   return (fsNode.info()
-    .then(info => res.setHeader("content-type", info?.mime?.contentType))
+    .then(info => info?.mime?.contentType && res.setHeader("content-type", info.mime.contentType))
     .then(() => fsNode.read(start, end))
     .then(stream => stream.pipe(res))
     .catch(err => fsnErr(err).then(err => err.respond(res)))
@@ -389,7 +390,7 @@ function read (fsNode, req, res) {
 }
 
 
-let nextSubId = 0;
+let nextSubId = 1;
 const subCache = {};
 const subTimeout = 10000;
 
@@ -397,9 +398,10 @@ function sub (fsNode, req, res) {
   const now = (new Date()).getTime();
   let subId = req.query.subId && JSON.parse(req.query.subId);
   let entry;
-  
+
   if (subId) {
     entry = subCache[subId];
+
     if (!entry) {
       return res.status(404).end();
     }
@@ -430,6 +432,8 @@ function sub (fsNode, req, res) {
     entry.unsub = fsNode.sub(paths, events, subFn, opts);
     entry.timeout = setTimeout(entry.unsub, subTimeout);
     entry.refreshBy = now + (subTimeout/2);
+    subCache[subId] = entry;
+
     res.json({subId});
   }
 }

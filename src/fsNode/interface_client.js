@@ -18,13 +18,15 @@ function queryStr (m) {
   // this feels like a _lot_
   // drop empty strings & arrays, drop null && undefined, stringify things that aren't basic types
   m = Object.fromEntries(
-      Object.entries(m)
-      .filter(([k, v]) => !_.isEmpty(v))
-      .map(([k, v]) => (
-        isBasic(v) ? [k, v] :
-        [k, JSON.stringify(v)]
-      ))
+        Object.entries(m)
+        .map(([k, v]) => (
+          isBasic(v) ? [k, v] :
+          _.isEmpty(v) ? null :
+          [k, JSON.stringify(v)]
+        ))
+        .filter(kv => kv)
     );
+
   return (new URLSearchParams(m)).toString()
 }
 
@@ -134,12 +136,12 @@ const Interface = {
     return res.arrayBuffer();
   },
 
-  sub: async function (paths, events, listener, opts) {
+  sub: function (paths, events, listener, opts) {
 
     // paths and events are optional, grant them defaults and shuffle the args down
     if (_.isFunction(paths)) {
       opts = events;
-      listener = path;
+      listener = paths;
       events = ["all"];
       paths = ["."];
     } else if (_.isFunction(events)) {
@@ -149,26 +151,32 @@ const Interface = {
       paths = ["."];
     }
 
-    const params = queryStr({call: 'sub', paths, events, opts})
-    const url = `${this.relativePath}/@?${params}`
-    const res = await fetch(url)
-    if (res.status !== 200) {
-      throw await res.json(); 
-    }
+    const params = queryStr({call: 'sub', paths, events, opts});
+    let subId, pollInterval;
 
-    const { subId } = await res.json();
-    const pollInterval = setInterval(
-      async () => {
-        const poll = await fetch(`${this.relativePath}/@?${queryStr({call: 'sub', subId })}`)
-        if (poll.status !== 200) {
-          console.error(`sub poller for ${this.relativePath} returned non-200?`)
-          throw poll;
-        }
-        const events = await poll.json();
-        events.forEach(([event, path]) => listener(event, this.walk(path)));
-      },
-      subPollInterval
-    );
+    fetch(`${this.relativePath}/@?${params}`).then(async res => {
+      const json = await res.json();
+      if (res.status !== 200) {
+        listener("error", this, json);
+      }
+      subId = json.subId;
+
+      pollInterval = setInterval(
+        async () => {
+          const poll = await fetch(`${this.relativePath}/@?${queryStr({call: 'sub', subId })}`)
+          if (poll.status !== 200) {
+            console.error(`sub poller for ${this.relativePath} returned non-200?`)
+            throw poll;
+          }
+          const events = await poll.json();
+          
+          if (!_.isEmpty(events)) {
+            events.forEach(([event, path]) => listener(event, this.root.walk(path)));
+          }
+        },
+        subPollInterval
+      );
+    });
 
     return () => {
       clearInterval(pollInterval);

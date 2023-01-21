@@ -18,6 +18,10 @@ Permissions
 	currently, these are stubbed
 
 
+Build Cache Invalidation
+========================
+
+	if .owndir/build changes, this should invalidate the buildcache
 
 Process Management + Code Reloading
 ===================================
