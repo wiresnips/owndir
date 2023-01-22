@@ -202,6 +202,15 @@ const Interface = {
     opts = Object.assign({ depth: 1 }, opts);
     opts.cwd = this.absolutePath;
 
+    /*
+    console.log('SUB', {
+      self: this,
+      paths,
+      pathsRes: paths.map(path => pathUtil.resolve(this.absolutePath, path)), 
+      events, listener, opts,
+    })
+    //*/
+
     let watcher = chokidar.watch(
       paths.map(path => pathUtil.resolve(this.absolutePath, path)), 
       opts
@@ -211,16 +220,19 @@ const Interface = {
     events.forEach(event => {
       if (event === 'all') {
         watcher.on(event, (event, path) => {
+          // console.log({event, path})
           listener(event, self.walk(path))
         })
       } else {
         watcher.on(event, (path) => {
+          // console.log({event, path})
           listener(event, self.walk(path))
         })
       }
     })
 
     return () => {
+      // console.log('UNSUB (server)')
       if (watcher) {
         watcher.close()
         watcher = null;
@@ -249,7 +261,7 @@ const Interface = {
   },
 
   write: async function (path, data, opts) {
-    console.log("write", this.relativePath, {path, data, opts})
+    // console.log("write", this.relativePath, {path, data, opts})
 
 
     // because path is optional and data is not, we have to check whether arg2 can be data

@@ -405,6 +405,8 @@ function sub (fsNode, req, res) {
     if (!entry) {
       return res.status(404).end();
     }
+
+    // console.log('poll', {subId, remaining: entry?.refreshBy - now})
     
     if (req.query.unsub) {
       entry.unsub();
@@ -412,8 +414,9 @@ function sub (fsNode, req, res) {
       return res.status(200).end();
     }
     
-    if (now >= subTimeout.refreshBy) {
+    if (now >= entry.refreshBy) {
      clearTimeout(entry.timeout); 
+     entry.refreshBy = now + (subTimeout/2)
      entry.timeout = setTimeout(entry.unsub, subTimeout);
     }
     
@@ -430,7 +433,10 @@ function sub (fsNode, req, res) {
     entry = { events: [] }
     const subFn = (event, node) => entry.events.push([event, node.relativePath]);
     entry.unsub = fsNode.sub(paths, events, subFn, opts);
-    entry.timeout = setTimeout(entry.unsub, subTimeout);
+    entry.timeout = setTimeout(() => {
+      // console.log('router timeout unsub')
+      entry.unsub()
+    }, subTimeout);
     entry.refreshBy = now + (subTimeout/2);
     subCache[subId] = entry;
 
