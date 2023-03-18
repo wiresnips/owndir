@@ -49,7 +49,7 @@ const Interface = {
       throw fsnErr(`something at ${this.relativePath} cannot be deleted (write disallowed). `, status.forbidden);
     }
 
-    if (!this.info()) {
+    if (!await this.info()) {
       return this;
     }
 
@@ -199,10 +199,10 @@ const Interface = {
       events = ['all'];
     }
 
-    opts = Object.assign({ depth: 1 }, opts);
+    opts = Object.assign({ depth: 0 }, opts);
     opts.cwd = this.absolutePath;
 
-    /*
+    //*
     console.log('SUB', {
       self: this,
       paths,
@@ -220,12 +220,12 @@ const Interface = {
     events.forEach(event => {
       if (event === 'all') {
         watcher.on(event, (event, path) => {
-          // console.log({event, path})
+          console.log({event, path})
           listener(event, self.walk(path))
         })
       } else {
         watcher.on(event, (path) => {
-          // console.log({event, path})
+          console.log({event, path})
           listener(event, self.walk(path))
         })
       }

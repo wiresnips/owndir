@@ -1,15 +1,28 @@
 
 
 
+Android?
+========
 
-File Change Events
-==================
 
-	these are just kinda fuckey no matter how I slice it
-		REALLY not happy with the handwave I have in the direction of listeners
+WYSIWYG admin console and plugin manager
+========================================
 
-	needs a built-in client-side solution
+	yeah, I should be able to create a (large, ugly) _component_ that allows this
+		- plugin manager that downloads and install plugins
+		- code editor with preview iframe (!!!)
+		
 
+First-Time Launch
+=================
+
+	I need some kind of a _default_ setup, where if you just run OwnDir out of an empty directory, 
+	you get an intelligent demonstration of what things are, how they work, etc
+
+	Oooooh nooo ....
+
+	yeah, I have to build this
+	no _fuckin_ idea how I _want_ to build it, but I need to, don't I?
 
 
 Permissions
@@ -23,6 +36,7 @@ Build Cache Invalidation
 
 	if .owndir/build changes, this should invalidate the buildcache
 
+
 Process Management + Code Reloading
 ===================================
 
@@ -33,9 +47,17 @@ Process Management + Code Reloading
 	for now, I think I'll just run it directly
 
 
+Relative Import Paths
+=====================
 
-Android?
-========
+	currently, modules cannot relatively import files from OUTSIDE themselves
+	(including relatively importing something from another module)
+
+	This is surprising enough that it might be a problem
+	But, i'm not sure what the solution could be, short of detecting and rewriting the import ...
+
+	I think this is work to circle back to if/when I look at things like directly incorporating Babel
+	(ie, for things like detecting build failures)
 
 
 __dirname
@@ -66,7 +88,6 @@ replace Express
 
 
 
-
 plugin distribution mechanism
 =============================
 	a postinstall script that moves the plugin from node_modules up a level
@@ -83,6 +104,9 @@ plugin distribution mechanism
 			"postinstall": "node node_modules/owndir-plugin-utils/postinstall.js my-plugin"
 
 
+	see also: First-Time Launch
+		if I build a _component_ that exposes a WYSIWYG configuration feature, that would go
+		a LONG fuckin' way towards solving this problem, AND
 
 
 
@@ -100,7 +124,6 @@ Loose Ends
 	there might be some shenanigans WRT windows vs posix paths, ie foo/bar/baz vs foo\bar\baz
 		because a lot of this shit runs server-side AND client-side, consider normalizing paths to posix
 		this might entail replacing `require('path')` with `require('path').posix` everywhere
-
 
 
 

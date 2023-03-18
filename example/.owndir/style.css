@@ -1,0 +1,10 @@
+* {
+  /* background-color: lavender; */
+}
+
+html, 
+body, 
+#csr-plugin-root-element {
+  height: 100%;
+}
+

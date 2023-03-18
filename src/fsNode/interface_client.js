@@ -38,8 +38,8 @@ function canBeWriteData (maybeData) {
   )
 }
 
-const subPollInterval = 500;
 
+const subPollInterval = 500;
 
 const Interface = {
 
@@ -154,32 +154,46 @@ const Interface = {
     const params = queryStr({call: 'sub', paths, events, opts});
     let subId, pollInterval;
 
+
     fetch(`${this.relativePath}/@?${params}`).then(async res => {
       const json = await res.json();
       if (res.status !== 200) {
         listener("error", this, json);
+        return;
       }
       subId = json.subId;
+      const self = this;
 
-      pollInterval = setInterval(
-        async () => {
-          const poll = await fetch(`${this.relativePath}/@?${queryStr({call: 'sub', subId })}`)
-          if (poll.status !== 200) {
-            console.error(`sub poller for ${this.relativePath} returned non-200?`)
-            throw poll;
-          }
-          const events = await poll.json();
+      async function poll () {
+        const res = await fetch(`${self.relativePath}/@?${queryStr({call: 'sub', subId })}`)
+        if (res.status !== 200) {
+          console.error(`sub poller for ${self.relativePath} returned non-200?`)
+          throw res;
+        }
+        const events = await res.json();
+        if (_.isEmpty(events)) {
+          return false;
+        }
+        else {
+          // console.log({events})
+          events.forEach(([event, path]) => listener(event, self.root.walk(path)));
+          return true;
+        }
+      }
 
-          if (!_.isEmpty(events)) {
-            //console.log({events})
-            events.forEach(([event, path]) => listener(event, this.root.walk(path)));
-          }
-        },
-        subPollInterval
-      );
+      // if we expect an initial event, wait for it _impatiently_
+      var expectInitial = !opts?.ignoreInitial;
+      while (expectInitial) {
+        if (await poll()) {
+          expectInitial = false;
+        }
+      }
+
+      pollInterval = setInterval(poll, subPollInterval);
     });
 
     return () => {
+      expectInitial = false;
       clearInterval(pollInterval);
       fetch(`${this.relativePath}/@?${queryStr({call: 'sub', subId, unsub: true })}`);
     }

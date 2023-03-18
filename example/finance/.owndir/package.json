@@ -1,0 +1,12 @@
+{
+	"dependencies": {
+		"@mui/icons-material": "^5.10.9",
+		"lodash": "^4.17.0",
+		"luxon": "^3.1.0",
+		"papaparse": "^5.3.2",
+		"react-window": "^1.8.8",
+		"react-virtualized-auto-sizer": "^1.0.0",
+		"mui-tabview": "https://github.com/wiresnips/owndir-utils.git#workspace=materialui-tabview"
+		
+	}
+}

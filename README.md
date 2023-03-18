@@ -10,7 +10,7 @@ That's the pattern that I want to disrupt. **We can have nice things**, and that
 
 # What
 
-In as pithy terms as possible, OwnDir is a web framework for single-user apps. It exists to run wee little home-grown web-apps, backed by a local folder.
+In as pithy terms as possible, OwnDir is a web framework for single-user apps. It exists to run wee little home-grown web-apps, backed by a local folder. Though it doesn't _have_ to be used this way, the **idea** is that the app be local-only.
 
 Given a directory tree, OwnDir will load code from each directory, as an inheritance heirarchy.
 - On the server side, these nodes inform a router - each folder can specify http request handlers.
@@ -48,6 +48,8 @@ It should be noticed that this is not _safe_. You could never run a normal messa
 ## Build Process
 
 ## CSR vs SSR, React vs xxxx
+
+## command-line interface
 
 # Examples
 
