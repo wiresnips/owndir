@@ -27,6 +27,11 @@ var args = (require('yargs/yargs')(process.argv.slice(2))
     default: '127.0.0.1',
     type: 'string'
   })
+  .option('t', {
+    alias: 'token',
+    default: null,
+    type: 'string'
+  })
   .argv);
 
 // there's probably a better way to establish a name and validation for an anonymous arg, 
@@ -82,8 +87,15 @@ const buildDir = resolve(__dirname, "..", "build", pathHash);
   const app = express() 
   app.use('/@/client.js', express.static(clientJsPath)); // just hardcode this shit for now
 
-  app.use(router(FsInterface('/')));
-  
+
+  const owndirRouter = router(FsInterface('/'));
+
+  if (args.token) {
+    app.use(token, owndirRouter)
+  } else {
+    app.use(owndirRouter)
+  }
+
   const server = app.listen(args.port, args.host, () => {
     console.log(`listening at ${JSON.stringify(server.address(), null, 2)}`)
   })
