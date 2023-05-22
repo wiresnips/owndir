@@ -6,7 +6,8 @@ const { ReadableStream } = require('node:stream/web');
 const pathUtil = require("path")
 const chokidar = require('chokidar');
 
-const { mimeType, mkdir } = require('../../libs/utils/fs-utils/index.js')
+const { mkdir } = require('../../libs/utils/fs-utils/index.js')
+const mime = require('mime');
 const { status, fsnErr } = require('./errors.js')
 
 const { Directory } = require('./directory.js')
@@ -81,7 +82,7 @@ const Interface = {
       mtime: stat.mtimeMs,
       ctime: stat.ctimeMs,
       mode: stat.mode,
-      mime: !isFile ? null : await mimeType(this.absolutePath).catch(() => null)
+      mime: !isFile ? null : mime.getType(this.absolutePath)
     }
   },
 

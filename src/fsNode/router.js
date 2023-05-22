@@ -382,7 +382,7 @@ function read (fsNode, req, res) {
   const end = req.query.end || Infinity
 
   return (fsNode.info()
-    .then(info => info?.mime?.contentType && res.setHeader("content-type", info.mime.contentType))
+    .then(info => info?.mime && res.setHeader("content-type", info.mime))
     .then(() => fsNode.read(start, end))
     .then(stream => stream.pipe(res))
     .catch(err => fsnErr(err).then(err => err.respond(res)))

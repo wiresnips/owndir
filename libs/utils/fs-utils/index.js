@@ -50,27 +50,6 @@ async function getText (path, encoding) {
 }
 
 
-// this lib is a wrapper over libmagic, and has inherited some terrible names
-const { Magic: MimeDetector, MAGIC_MIME: MIME_TYPE_ENCODING } = require('mmmagic')
-const mime = new MimeDetector(MIME_TYPE_ENCODING)
-
-function mimeType (path) {
-  return new Promise((resolve, reject) => {
-    mime.detectFile(path, (err, contentType) => {
-      if (err) {
-        return reject(err)
-      }
-      const [mimeType, charset] = contentType.split('; charset=')
-      if (charset) {
-        resolve({ mimeType, charset, contentType })
-      } else {
-				resolve({ contentType })
-      }
-    })
-  })
-}
-
-
 module.exports = {
 	exists,
 	isFile,
@@ -78,5 +57,4 @@ module.exports = {
 	mkdir,
 	dirChildren,
 	getText,
-	mimeType,
 }
