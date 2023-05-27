@@ -1,8 +1,6 @@
 
 
 
-Android?
-========
 
 
 WYSIWYG admin console and plugin manager
@@ -60,25 +58,6 @@ Relative Import Paths
 	(ie, for things like detecting build failures)
 
 
-__dirname
-=========
-	currently points to the BUILD folder, not the actual folder
-	also, the plugin that's managing that for me is replacing the STRING, ie
-
-		console.log("__dirname", resolve(__dirname, 'index.html'))
-
-		prints:
-
-		__fileloc.dirname /home/ben/projects/owndir/build/server/module/node_modules/_owndir_plugins_10_react_csr_3/index.html
-
-		because `__dirname` became `__fileloc.dirname`, BUT SO DID `"__dirname"`
-
-	notice that this _kinda_ works SOMETIMES
-		static assets included with a plugin will have been copied into build, for example
-
-	but, you could never navigate into the true directory using __dirname
-
-
 
 replace Express
 =========================================
@@ -106,7 +85,7 @@ plugin distribution mechanism
 
 	see also: First-Time Launch
 		if I build a _component_ that exposes a WYSIWYG configuration feature, that would go
-		a LONG fuckin' way towards solving this problem, AND
+		a LONG fuckin' way towards solving this problem
 
 
 

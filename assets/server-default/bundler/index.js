@@ -4,7 +4,7 @@ const { resolve } = require('path')
 const esbuild = require('esbuild')
 const { filelocPlugin } = require('esbuild-plugin-fileloc')
 
-module.exports = async function bundle (src, dst) {
+module.exports = async function bundle (src, dst, originalPath) {
 
   return esbuild.build({
     platform: 'node', // 'neutral' ? see: https://esbuild.github.io/api/#platform
@@ -15,8 +15,7 @@ module.exports = async function bundle (src, dst) {
     minify: false,
     sourcemap: 'inline',
     plugins: [
-      // haha, that's hardcoded as FUCK
-      filelocPlugin({ rootDir: '/home/ben/projects/owndir/example-csr' }), 
+      filelocPlugin({ rootDir: originalPath }), 
       externalizeBinaries
     ],
   }).then(result => {

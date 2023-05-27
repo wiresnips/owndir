@@ -10,7 +10,6 @@ const express = require('express')
 
 const { isDir } = require('../libs/utils/fs-utils/index.js')
 const build = require('./build/build.js')
-const install = require('./build/yarn-install.js')
 const bundle = require('./build/bundle.js')
 const fsInterface = require('./fsNode/interface_server.js')
 const { router } = require('./fsNode/router')
@@ -31,6 +30,11 @@ var args = (require('yargs/yargs')(process.argv.slice(2))
     alias: 'token',
     default: null,
     type: 'string'
+  })
+  .option('b', {
+    alias: 'build',
+    default: false,
+    type: 'boolean'
   })
   .argv);
 
@@ -64,21 +68,29 @@ const buildDir = resolve(__dirname, "..", "build", pathHash);
   await build(path, moduleDir);
 
   // yes, this is stupid. No, I'm not going to improve it right now.
-  const serverDir = resolve(buildDir, "server")
+
+  // server
+  const serverDir = resolve(buildDir, "server");
+  const serverJsPath = resolve(serverDir, 'dist.js');
+
   const customServerBundler = resolve(path, '.owndir', 'build', 'server');
   const serverBundler = (await isDir(customServerBundler))
     ? customServerBundler
     : resolve(__dirname, '../assets/server-default')
   await fsp.cp(serverBundler, serverDir, {recursive: true});
-  const serverJsPath = await bundle(serverDir);
+  await bundle(serverDir, serverJsPath, buildDir, path);
 
-  const clientDir = resolve(buildDir, "client")
+  // client
+  const clientDir = resolve(buildDir, "client");
+  const clientJsPath = resolve(clientDir, 'dist.js');
+
   const customClientBundler = resolve(path, '.owndir', 'build', 'client');
   const clientBundler = (await isDir(customClientBundler))
     ? customClientBundler
     : resolve(__dirname, '../assets/client-default')
   await fsp.cp(clientBundler, clientDir, {recursive: true});
-  const clientJsPath = await bundle(clientDir);
+  await bundle(clientDir, clientJsPath, buildDir, path);
+
 
   const { OwnDir } = require(serverJsPath);
   const FsInterface = fsInterface.init(path, OwnDir);

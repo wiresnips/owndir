@@ -4,7 +4,7 @@ const esbuild = require('esbuild')
 const { NodeModulesPolyfillPlugin } = require('@esbuild-plugins/node-modules-polyfill')
 const { NodeGlobalsPolyfillPlugin } = require('@esbuild-plugins/node-globals-polyfill')
 
-module.exports = async function bundle (src, dst) {
+module.exports = async function bundle (src, dst, originalPath) {
   return esbuild.build({
     platform: 'browser',
     entryPoints: [src],

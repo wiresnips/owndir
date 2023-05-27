@@ -8,7 +8,7 @@ const { npath } = require('@yarnpkg/fslib');
 const { dedupeUtils } = require("@yarnpkg/plugin-essentials")
 
 
-module.exports = async function (target) {
+module.exports = async function (target, globalFolder) {
   console.log('yarn-install', target)
   const t1 = (new Date()).getTime()
 
@@ -20,6 +20,7 @@ module.exports = async function (target) {
   ); 
 
   config.values.set("nodeLinker", "node-modules");
+  config.values.set("globalFolder", globalFolder || resolve(target, ".yarn"));
   // config.values.set("pnpMode", null);
 
   const { project } = await yarn.Project.find(config, target);
@@ -29,6 +30,6 @@ module.exports = async function (target) {
 
   // await dedupeUtils.dedupe(project, {strategy: "highest", patterns: [], cache, report})
 
-  const t2 = (new Date()).getTime()
-  console.log('    ', t2 - t1)
+  const t2 = (new Date()).getTime();
+  console.log(`    install took ${t2-t1} ms`);
 }
