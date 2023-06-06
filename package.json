@@ -1,6 +1,6 @@
 {
   "name": "owndir",
-  "version": "0.0.12",
+  "version": "0.0.14",
   "description": "",
   "homepage": "https://github.com/wiresnips/owndir",
   "repository": {
@@ -11,7 +11,7 @@
   "license": "Unlicense",
   "main": "src/index.js",
   "scripts": {
-    "test": "node src/index.js -p 3232 ~/central",
+    "test": "DEBUG=* node src/index.js -p 3232 ~/central",
     "cleanup": "rm -R ./build; exit 0"
   },
   "bin": {
