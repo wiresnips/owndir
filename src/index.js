@@ -67,7 +67,7 @@ const buildDir = resolve(__dirname, "..", "build", pathHash);
   const moduleDir = resolve(buildDir, "module")
   await build(path, moduleDir);
 
-  // yes, this is stupid. No, I'm not going to improve it right now.
+
 
   // server
   const serverDir = resolve(buildDir, "server");
@@ -80,6 +80,8 @@ const buildDir = resolve(__dirname, "..", "build", pathHash);
   await fsp.cp(serverBundler, serverDir, {recursive: true});
   await bundle(serverDir, serverJsPath, buildDir, path);
 
+
+
   // client
   const clientDir = resolve(buildDir, "client");
   const clientJsPath = resolve(clientDir, 'dist.js');
@@ -90,6 +92,7 @@ const buildDir = resolve(__dirname, "..", "build", pathHash);
     : resolve(__dirname, '../assets/client-default')
   await fsp.cp(clientBundler, clientDir, {recursive: true});
   await bundle(clientDir, clientJsPath, buildDir, path);
+
 
 
   const { OwnDir } = require(serverJsPath);

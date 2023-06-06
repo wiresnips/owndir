@@ -37,7 +37,12 @@ async function bundle (buildFrom, buildTo, buildRoot, originalPath) {
 	// await fsp.rm(resolve(moduleDir, "node_modules", "owndir.bundle"), {recursive: true}).catch((err) => {})
 	
 	await install(moduleDir, yarnGlobalFolder);
+
+  const t1 = (new Date()).getTime()
 	await bundler(moduleDir, buildTo, originalPath);
+	const t2 = (new Date()).getTime();
+  console.log(`    bundle took ${t2-t1} ms`);
+
 }
 
 module.exports = bundle;

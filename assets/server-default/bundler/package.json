@@ -1,6 +1,12 @@
 {
   "dependencies": {
+    "@babel/core": "^7.22.1",
+    "@babel/preset-env": "^7.22.2",
+    "@babel/preset-react": "^7.22.3",
+    "babel-loader": "^9.1.2",
     "esbuild": "^0.15.6",
-    "esbuild-plugin-fileloc": "0.0.6"
+    "esbuild-plugin-fileloc": "0.0.6",
+    "parcel": "^2.9.1",
+    "webpack": "^5.84.1"
   }
 }
