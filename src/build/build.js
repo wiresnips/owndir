@@ -38,18 +38,20 @@ async function moduleSpec (root, absPath, dst) {
 
   const fullName = genSym(relative(root, absPath).replaceAll(/[^\w]+/g, '_'));
 
-  return {
-    root,
-    path: absPath,
-    symbol: fullName,
+  const spec = {
+                  root,
+                  path: absPath,
+                  symbol: fullName,
 
-    req: (isPackage ? fullName : 
-          pathIsJs ? absPath :
-          null),
+                  req: (isPackage ? fullName :
+                        pathIsJs ? absPath :
+                        null),
 
-    dep: (isPackage ? resolve(dst, 'modules', fullName) :
-          null)
-  }
+                  dep: (isPackage ? resolve(dst, 'modules', fullName) :
+                        null)
+                }
+
+  return spec
 }
 
 async function ensureVersion (modulePath) {
@@ -71,6 +73,8 @@ function requireModuleJs ({symbol, req}, path) {
 
 
 async function build (src, dst) {
+  // console.log('BUILD:', { src, dst });
+
   await mkdir(resolve(dst, 'modules'), {recursive: true}).catch(err => console.error(err));
 
   if (!await exists(dst)) {
@@ -89,7 +93,7 @@ async function build (src, dst) {
 
   async function buildNode (absPath) {
     const relPath = relative(src, absPath)
-    // console.log('buildNode', absPath)
+    // console.log('buildNode', { absPath, relPath })
 
     if (!await isDir(absPath)) {
       return;
@@ -111,6 +115,7 @@ async function build (src, dst) {
        );
 
       const owndirModuleSpecs = [spec, ...plugins];
+
       for (let mod of owndirModuleSpecs) {
         jsFragments.push(requireModuleJs(mod, relPath));
 

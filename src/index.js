@@ -8,7 +8,7 @@ const crypto = require('crypto')
 const chokidar = require('chokidar')
 const express = require('express')
 
-const { isDir } = require('../libs/utils/fs-utils/index.js')
+const { isDir, isFile } = require('../libs/utils/fs-utils/index.js')
 const build = require('./build/build.js')
 const bundle = require('./build/bundle.js')
 const fsInterface = require('./fsNode/interface_server.js')
@@ -16,6 +16,11 @@ const { router } = require('./fsNode/router')
 
 
 var args = (require('yargs/yargs')(process.argv.slice(2))
+  .option('r', {
+    alias: "run",
+    default: true,
+    type: "boolean"
+  })
   .option('p', {
     alias: 'port',
     default: 0,
@@ -64,35 +69,40 @@ const buildDir = resolve(__dirname, "..", "build", pathHash);
 
 
 (async function () {
-  const moduleDir = resolve(buildDir, "module")
-  await build(path, moduleDir);
+  const forceBuild = args.build;
 
+  const moduleDir = resolve(buildDir, "module")
+  if (forceBuild || !(await isFile(resolve(moduleDir, 'index.js')))) {
+    await build(path, moduleDir);
+  }
 
 
   // server
   const serverDir = resolve(buildDir, "server");
   const serverJsPath = resolve(serverDir, 'dist.js');
 
-  const customServerBundler = resolve(path, '.owndir', 'build', 'server');
-  const serverBundler = (await isDir(customServerBundler))
-    ? customServerBundler
-    : resolve(__dirname, '../assets/server-default')
-  await fsp.cp(serverBundler, serverDir, {recursive: true});
-  await bundle(serverDir, serverJsPath, buildDir, path);
-
+  if (forceBuild || !(await isFile(serverJsPath))) {
+    const customServerBundler = resolve(path, '.owndir', 'build', 'server');
+    const serverBundler = (await isDir(customServerBundler))
+      ? customServerBundler
+      : resolve(__dirname, '../assets/server-default')
+    await fsp.cp(serverBundler, serverDir, {recursive: true});
+    await bundle(serverDir, serverJsPath, buildDir, path);
+  }
 
 
   // client
   const clientDir = resolve(buildDir, "client");
   const clientJsPath = resolve(clientDir, 'dist.js');
 
-  const customClientBundler = resolve(path, '.owndir', 'build', 'client');
-  const clientBundler = (await isDir(customClientBundler))
-    ? customClientBundler
-    : resolve(__dirname, '../assets/client-default')
-  await fsp.cp(clientBundler, clientDir, {recursive: true});
-  await bundle(clientDir, clientJsPath, buildDir, path);
-
+  if (forceBuild || !(await isFile(clientJsPath))) {
+    const customClientBundler = resolve(path, '.owndir', 'build', 'client');
+    const clientBundler = (await isDir(customClientBundler))
+      ? customClientBundler
+      : resolve(__dirname, '../assets/client-default')
+    await fsp.cp(clientBundler, clientDir, {recursive: true});
+    await bundle(clientDir, clientJsPath, buildDir, path);
+  }
 
 
   const { OwnDir } = require(serverJsPath);
@@ -110,6 +120,14 @@ const buildDir = resolve(__dirname, "..", "build", pathHash);
   } else {
     app.use(owndirRouter)
   }
+
+
+
+  // if we turned off the run (presumably because we only wanted to build), we can drop out here
+  if (!args.run) {
+    return;
+  }
+
 
   const server = app.listen(args.port, args.host, () => {
     console.log(`listening at ${JSON.stringify(server.address(), null, 2)}`)
