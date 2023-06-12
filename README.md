@@ -57,4 +57,5 @@ It should be noticed that this is not _safe_. You could never run a normal messa
 - https://tiddlywiki.com/
 - https://obsidian.md/
 - https://cristobal.space/writing/folk
+- https://www.robinsloan.com/notes/home-cooked-app/
 - https://www.gwern.net/docs/technology/2004-03-30-shirky-situatedsoftware.html
