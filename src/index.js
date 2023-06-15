@@ -116,7 +116,7 @@ const buildDir = resolve(__dirname, "..", "build", pathHash);
   const owndirRouter = router(FsInterface('/'));
 
   if (args.token) {
-    app.use(token, owndirRouter)
+    app.use("/" + args.token, owndirRouter)
   } else {
     app.use(owndirRouter)
   }

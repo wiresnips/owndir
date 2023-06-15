@@ -11,7 +11,7 @@
   "license": "Unlicense",
   "main": "src/index.js",
   "scripts": {
-    "test": "node src/index.js -b -p 3232 ~/central",
+    "test": "node src/index.js -p 3232 ~/central",
     "build": "node src/index.js -b -r false ~/central",
     "cleanup": "rm -R ./build; exit 0"
   },
