@@ -1,4 +1,6 @@
 
+TOKEN is broken right now
+	- require it to be in the header, instead of as part of the url
 
 
 
@@ -28,6 +30,8 @@ Permissions
 
 	currently, these are stubbed
 
+	also the stubs are synchronous, which is clearl incorrect
+
 
 Build Cache Invalidation
 ========================
@@ -56,6 +60,8 @@ Relative Import Paths
 
 	I think this is work to circle back to if/when I look at things like directly incorporating Babel
 	(ie, for things like detecting build failures)
+
+	- DOUBLE-CHECK this, switching to webpack might have fixed it?
 
 
 

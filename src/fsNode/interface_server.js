@@ -27,7 +27,8 @@ const Interface = {
   children: async function () {
     const self = this;
 
-    const info = await this.info();
+    // the call to info serves as a canRead check
+    const info = await this.info(); 
     if (!info?.isDirectory) {
       throw fsnErr(`${this.relativePath} is not a directory`, status.notFound)
     }
@@ -99,14 +100,14 @@ const Interface = {
     return this;
   },
 
-  move: async function (path, opts) {
+  move: async function (destPath, opts) {
     if (!this.canWrite()) {
       throw fsnErr(`source ${this.relativePath} cannot be written`, status.forbidden)
     }
 
     opts = Object.assign({overwrite: false}, opts)
 
-    let dest = this.parent.walk(path);
+    let dest = this.parent.walk(destPath);
     let destInfo = await dest.info();
 
     if (destInfo?.isDirectory) {

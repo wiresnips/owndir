@@ -110,7 +110,12 @@ const buildDir = resolve(__dirname, "..", "build", pathHash);
   OwnDir.injectFsInterface(FsInterface);
 
   const app = express() 
-  app.use('/@/client.js', express.static(clientJsPath)); // just hardcode this shit for now
+
+  // just hardcode this shit for now
+  // there should be a flag to disable the client entirely,
+  // because it all _works_ if you ditch the SPA entirely and just use the server as a server
+  // but I'm not expecially interested in exploring that right now, so here we are hardcoding
+  app.use('/@/client.js', express.static(clientJsPath)); 
 
 
   const owndirRouter = router(FsInterface('/'));

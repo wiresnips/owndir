@@ -126,6 +126,7 @@ async function isFile(path) {
 }
 
 // decide whether or not a binary addon is being loaded - if so, externalize it with an absolute path
+// also notice that this should just never happen anyways, if you want android compatibility
 const externalizeBinaries = function (context, request, callback) {
   if (/\.node$/.test(request)) {
     return callback(null, 'commonjs ' + request);

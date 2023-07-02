@@ -1,28 +1,4 @@
 
-Thread Management
-=================
-
-  I don't know how to actually _stop_ a nodejs process, short of bringing down the entire NodeService
-  That seems a little odd, doesn't it? There should be a way to do that ...
-
-  Apparently, I can spin off whole new processes, if I want to ...
-      ProcessBuilder processBuilder = new ProcessBuilder("path/to/your/native/executable", "arg1", "arg2", "arg3");
-      Process nativeProcess = processBuilder.start();
-
-  this is ... less than ideal. It might work, but it would require me to entirely disassemble my JNI machinery ...
-
-  
-
-
-
-
-
-
-
-
-
-
-
 Architectures
 =============
 
@@ -49,3 +25,5 @@ Binaries and Install Scripts
 
 
 
+Notifications
+=============

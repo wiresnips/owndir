@@ -24,14 +24,14 @@ const InterfaceMethods = [
   "children", "delete", "info", "makeDir", "move", "read", "readAll", "touch", "write",
 ]
 
-function wrapErrors (_interface) {
-  return InterfaceMethods.reduce((_interface, method) => {
-    const origFn = _interface[method]
-    _interface[method] = function (...args) {
-      return origFn.apply(_interface, args).catch(err => { throw(fsnErr(err)) })
+function wrapErrors (interface) {
+  return InterfaceMethods.reduce((interface, method) => {
+    const origFn = interface[method]
+    interface[method] = function (...args) {
+      return origFn.apply(interface, args).catch(err => { throw(fsnErr(err)) })
     };
-    return _interface
-  }, _interface)
+    return interface
+  }, interface)
 }
 
 
@@ -93,6 +93,7 @@ function Directory (root, OwnDir, Interface) {
     
     // ignore permissions for now
     // need to rethink how this will be specified
+    // also, these should definitely be async
     canRead: function () { return true; },
     canWrite: function () { return true; },
     canReadAll: function () { return true; },
@@ -103,9 +104,9 @@ function Directory (root, OwnDir, Interface) {
   // not sure whether this is the right place for this ... 
   function ErrorInterface (error) {
     const f = (...args) => { throw error }
-    const WrappedInterface = InterfaceMethods.reduce((_interface, method) => {
-      _interface[method] = f;
-      return _interface
+    const WrappedInterface = InterfaceMethods.reduce((interface, method) => {
+      interface[method] = f;
+      return interface
     }, Object.create(DirProto))
     
     return WrappedInterface;
