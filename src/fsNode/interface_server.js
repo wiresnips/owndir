@@ -201,10 +201,10 @@ const Interface = {
       events = ['all'];
     }
 
-    opts = Object.assign({ depth: 0 }, opts);
+    opts = Object.assign({}, opts);
     opts.cwd = this.absolutePath;
 
-    //*
+    /*
     console.log('SUB', {
       self: this,
       paths,
@@ -222,12 +222,12 @@ const Interface = {
     events.forEach(event => {
       if (event === 'all') {
         watcher.on(event, (event, path) => {
-          console.log({event, path})
+          // console.log({event, path})
           listener(event, self.walk(path))
         })
       } else {
         watcher.on(event, (path) => {
-          console.log({event, path})
+          // console.log({event, path})
           listener(event, self.walk(path))
         })
       }
@@ -277,14 +277,14 @@ const Interface = {
     data = path;
     path = null;
   
-    opts = Object.assign({flags: 'w'}, opts)
+    opts = Object.assign({flags: 'w+'}, opts)
 
     if (!this.canWrite()) {
       throw fsnErr(`${this.relativePath} cannot be written`, status.forbidden)
     }
 
     const file = await fsp.open(this.absolutePath, opts.flags)
-    const dest = file.createWriteStream({start: opts.start})
+    const dest = file.createWriteStream({start: opts.start, encoding: opts.encoding})
     const src = data && stream.Readable.from(data)
 
     return new Promise((resolve, reject) => {

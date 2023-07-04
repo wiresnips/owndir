@@ -183,17 +183,22 @@ const Interface = {
 
       // if we expect an initial event, wait for it _impatiently_
       var expectInitial = !opts?.ignoreInitial;
-      while (expectInitial) {
+      var running = true;
+
+      while (expectInitial && running) {
         if (await poll()) {
           expectInitial = false;
         }
       }
 
-      pollInterval = setInterval(poll, subPollInterval);
+      if (running) {
+        pollInterval = setInterval(poll, subPollInterval);
+      }
     });
 
     return () => {
       expectInitial = false;
+      running = false;
       clearInterval(pollInterval);
       fetch(`${this.relativePath}/@?${queryStr({call: 'sub', subId, unsub: true })}`);
     }
