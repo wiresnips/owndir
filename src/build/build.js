@@ -39,17 +39,17 @@ async function moduleSpec (root, absPath, dst) {
   const fullName = genSym(relative(root, absPath).replaceAll(/[^\w]+/g, '_'));
 
   const spec = {
-                  root,
-                  path: absPath,
-                  symbol: fullName,
+    root,
+    path: absPath,
+    symbol: fullName,
 
-                  req: (isPackage ? fullName :
-                        pathIsJs ? absPath :
-                        null),
+    req: (isPackage ? fullName :
+          pathIsJs ? absPath :
+          null),
 
-                  dep: (isPackage ? resolve(dst, 'modules', fullName) :
-                        null)
-                }
+    dep: (isPackage ? resolve(dst, 'modules', fullName) :
+          null)
+  }
 
   return spec
 }

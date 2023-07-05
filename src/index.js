@@ -68,6 +68,18 @@ const pathHash = crypto.createHash('sha1').update(path).digest('base64');
 const buildDir = resolve(__dirname, "..", "build", pathHash);
 
 
+
+
+
+
+process.on('unhandledRejection', (error, promise) => {
+  console.log('Unhandled Rejection:', {error, promise});
+});
+
+
+
+
+
 (async function () {
   const forceBuild = args.build;
 
@@ -132,6 +144,9 @@ const buildDir = resolve(__dirname, "..", "build", pathHash);
   if (!args.run) {
     return;
   }
+
+
+
 
 
   const server = app.listen(args.port, args.host, () => {

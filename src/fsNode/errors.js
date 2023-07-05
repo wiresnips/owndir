@@ -13,14 +13,14 @@ const FsnErrorProto = {
 }
 
 function fsnErr (error, statusCode) {
-
   // slide any existing FsnError through
   if (FsnErrorProto.isPrototypeOf(error)) {
     error.status = statusCode || error.status
     return error;
   }
 
-  console.error(error);
+  console.error("FsNode error:" error);
+
   const errObj = {
     success: false,
     status: statusCode || status.serverError,
@@ -28,7 +28,8 @@ function fsnErr (error, statusCode) {
   }
   Object.setPrototypeOf(errObj, FsnErrorProto)
 
-  return Promise.reject(errObj)
+  return errObj;
+  // return Promise.reject(errObj)
 }
 
 module.exports = {

@@ -46,7 +46,7 @@ function Directory (root, OwnDir, Interface) {
       const absPath = resolve(root, this.relativePath, path);
       return absPath.startsWith(root) 
         ? Node(absPath, Interface) 
-        : Node(absPath, OutOfBounds)
+        : Node(absPath, OutOfBounds())
     },
 
     get parent() {
@@ -112,7 +112,7 @@ function Directory (root, OwnDir, Interface) {
     return WrappedInterface;
   }
 
-  const OutOfBounds = ErrorInterface(fsnErr("Out of Bounds", status.forbidden).catch(e => e))
+  const OutOfBounds = () => ErrorInterface(fsnErr("Out of Bounds", status.forbidden).catch(e => e))
   
 
   function Node (path, proto) {
