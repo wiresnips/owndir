@@ -19,16 +19,6 @@ module.exports = {
 	},
 	// */
 
-	O: {
-		middleware: [
-			["*", 
-				["all", function (req, res, next) {
-					next()
-				}]
-			]
-		],
-
-	}
 }
 
 function Markdown ({fsNode}) {

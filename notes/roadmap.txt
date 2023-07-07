@@ -1,8 +1,5 @@
 
 TOKEN is broken right now
-	- require it to be in the header, instead of as part of the url
-
-
 
 
 WYSIWYG admin console and plugin manager
@@ -33,20 +30,10 @@ Permissions
 	also the stubs are synchronous, which is clearl incorrect
 
 
-Build Cache Invalidation
+Build Invalidation
 ========================
+	if .owndir/* changes, this should force a build
 
-	if .owndir/build changes, this should invalidate the buildcache
-
-
-Process Management + Code Reloading
-===================================
-
-	https://stackoverflow.com/questions/16369018/forever-nodemon-running-together
-
-	not actually sure if I _need_ this, but it's something to think about.
-
-	for now, I think I'll just run it directly
 
 
 Relative Import Paths

@@ -107,10 +107,8 @@ function specRouter (spec, owndir) {
     next();
   })
   
-  spec.forEach(([path, ...methodHandlers]) => {
-    methodHandlers.forEach(([method, ...handlers]) => {
-      router[method](path, ...handlers.map(h => h.bind(owndir)))
-    })
+  spec.forEach(([method, path, ...handlers]) => {
+    router[method](path, ...handlers.map(h => h.bind(owndir)))
   })
 
   return router;
@@ -250,7 +248,7 @@ async function stack (fsNode, steps) {
   const [nextStep, ...restPath] = steps;
   
   if (nextStep) {
-    if (nextStep === "@") {
+    if (nextStep === "@" && _.isEmpty(restPath)) {
       handlers.push(getFsRouter(fsNode))
     } else {
       handlers.push(...(await stack(fsNode.walk(nextStep), restPath)))
