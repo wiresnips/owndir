@@ -1,7 +1,6 @@
 const _ = require('lodash')
 
 // this requires a polyfill for the node globals
-const pathUtil = require("path")
 const stream = require('stream')
 
 
@@ -30,6 +29,19 @@ function queryStr (m) {
   return (new URLSearchParams(m)).toString()
 }
 
+function callUrl (fsNode, call, params) {
+
+  // stupid carveout for the root, avoids double leading slashes
+  const path = fsNode.relativePath != '' 
+    ? `/${fsNode.relativePath}`
+    : '';
+
+  params = params || {};
+  params.call = call;
+
+  return `${path}/@?${queryStr(params)}`
+}
+
 function canBeWriteData (maybeData) {
   return (
     _.isString(maybeData) || 
@@ -44,9 +56,7 @@ const subPollInterval = 500;
 const Interface = {
 
   children: async function () {
-    const params = queryStr({call: 'children'})
-    const url = `${this.absolutePath}/@?${params}`
-    const res = await fetch(url)
+    const res = await fetch(callUrl(this, 'children'));
     if (res.status !== 200) {
       throw await res.json();         
     }
@@ -60,9 +70,7 @@ const Interface = {
       return this.walk(path).delete();
     }
 
-    const params = queryStr({call: 'delete'});
-    const url = `${this.absolutePath}/@?${params}`;
-    const res = await fetch(url, {method: 'POST'});
+    const res = await fetch(callUrl(this, 'delete'), {method: 'POST'});
     if (res.status !== 200) {
       throw await res.json(); 
     }
@@ -76,9 +84,7 @@ const Interface = {
       return this.walk(path).info();
     }
 
-    const params = queryStr({call: 'info'})
-    const url = `${this.absolutePath}/@?${params}`
-    const res = await fetch(url)
+    const res = await fetch(callUrl(this, 'info'))
     if (res.status !== 200) {
       throw await res.json();     
     }
@@ -91,9 +97,7 @@ const Interface = {
       return this.walk(path).makeDir();
     }
 
-    const params = queryStr({call: 'makeDir'});
-    const url = `${this.absolutePath}/@?${params}`;
-    const res = await fetch(url, {method: 'POST'});
+    const res = await fetch(callUrl(this, 'makeDir'), {method: 'POST'});
     if (res.status !== 200) {
       throw await res.json(); 
     }
@@ -103,9 +107,7 @@ const Interface = {
   },
 
   move: async function (path, opts) {
-    const params = queryStr({call: 'move', path, opts});
-    const url = `${this.absolutePath}/@?${params}`;
-    const res = await fetch(url, {method: 'POST'});
+    const res = await fetch(callUrl(this, 'move', {path, opts}), {method: 'POST'});
     if (res.status !== 200) {
       throw await res.json(); 
     }
@@ -115,9 +117,7 @@ const Interface = {
   },
 
   read: async function (start, end) {
-    const params = queryStr({call: 'read', start, end})
-    const url = `${this.absolutePath}/@?${params}`
-    const res = await fetch(url)
+    const res = await fetch(callUrl(this, 'read', {start, end}))
     if (res.status !== 200) {
       throw await res.json(); 
     }
@@ -126,9 +126,7 @@ const Interface = {
   },
 
   readAll: async function () {
-    const params = queryStr({call: 'read'})
-    const url = `${this.absolutePath}/@?${params}`
-    const res = await fetch(url)
+    const res = await fetch(callUrl(this, 'read'))
     if (res.status !== 200) {
       throw await res.json(); 
     }
@@ -162,12 +160,9 @@ const Interface = {
       events = ['all'];
     }
 
-
-    const params = queryStr({call: 'sub', paths, events, opts});
     let subId, pollInterval;
 
-    fetch(`${this.absolutePath}/@?${params}`).then(async res => {
-
+    fetch(callUrl(this, 'sub', {paths, events, opts})).then(async res => {
       if (res.status !== 200) {
         listener("error", this, json);
         return;
@@ -178,7 +173,7 @@ const Interface = {
       const self = this;
 
       async function poll () {
-        const res = await fetch(`${self.absolutePath}/@?${queryStr({call: 'sub', subId })}`)
+        const res = await fetch(callUrl(self, 'sub', {subId}))
         if (res.status !== 200) {
           console.error(`sub poller for ${self.absolutePath} returned non-200?`)
           throw res;
@@ -213,7 +208,7 @@ const Interface = {
       expectInitial = false;
       running = false;
       clearInterval(pollInterval);
-      fetch(`${this.absolutePath}/@?${queryStr({call: 'sub', subId, unsub: true })}`);
+      fetch(callUrl(this, 'sub', {subId, unsub: true }));
     }
   },
 
@@ -222,9 +217,7 @@ const Interface = {
       return this.walk(path).touch();
     }
 
-    const params = queryStr({call: 'touch'});
-    const url = `${this.absolutePath}/@?${params}`;
-    const res = await fetch(url, {method: 'POST'});
+    const res = await fetch(callUrl(this, 'touch'), {method: 'POST'});
     if (res.status !== 200) {
       throw await res.json(); 
     }
@@ -247,9 +240,7 @@ const Interface = {
     data = path;
     path = null;
 
-    const params = queryStr({call: 'write', opts});
-    const url = `${this.absolutePath}/@?${params}`;
-    const res = await fetch(url, {method: 'POST', body: data})
+    const res = await fetch(callUrl(this, 'write', opts), {method: 'POST', body: data})
     if (res.status !== 200) {
       throw await res.json(); 
     }
