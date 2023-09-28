@@ -319,7 +319,7 @@ function stackHandler (stack) {
 function FsReqHandler (root) {
   return async function (req, res, next) {
     const { path } = req;
-    const reqStack = await stack(root, path.split('/').filter(s => !_.isEmpty(s)))
+    const reqStack = await stack(root, decodeURI(req.path).split('/').filter(s => !_.isEmpty(s)))
     const handler = stackHandler(reqStack)
     handler(req, res, next);
   }
@@ -340,7 +340,7 @@ module.exports.router = FsReqHandler
 function children(fsNode, req, res) {
   return (fsNode.children()
     .then(children => res.json(children.map(child => child.name)))
-    .catch(err => fsnErr(err).then(err => err.respond(res)))
+    .catch(err => fsnErr(err).respond(res))
   );  
 }
 
@@ -348,21 +348,21 @@ function children(fsNode, req, res) {
 function del (fsNode, req, res) {
   return (fsNode.delete()
     .then(fsNode => res.json({path: fsNode.relativePath}))
-    .catch(err => fsnErr(err).then(err => err.respond(res)))
+    .catch(err => fsnErr(err).respond(res))
   );  
 }
 
 function info (fsNode, req, res) {
   return (fsNode.info()
     .then(info => res.json(info))
-    .catch(err => fsnErr(err).then(err => err.respond(res)))
+    .catch(err => fsnErr(err).respond(res))
   );
 }
 
 function makeDir (fsNode, req, res) {
   return (fsNode.makeDir(data, opts)
     .then(fsNode => res.json({path: fsNode.relativePath}))
-    .catch(err => fsnErr(err).then(err => err.respond(res)))
+    .catch(err => fsnErr(err).respond(res))
   );  
 }
 
@@ -371,7 +371,7 @@ function move (fsNode, req, res) {
   const opts = req.query.opts && JSON.parse(req.query.opts)
   return (fsNode.move(path, opts)
     .then(fsNode => res.json({path: fsNode.relativePath}))
-    .catch(err => fsnErr(err).then(err => err.respond(res)))
+    .catch(err => fsnErr(err).respond(res))
   );  
 }
 
@@ -383,7 +383,7 @@ function read (fsNode, req, res) {
     .then(info => info?.mime && res.setHeader("content-type", info.mime))
     .then(() => fsNode.read(start, end))
     .then(stream => stream.pipe(res))
-    .catch(err => fsnErr(err).then(err => err.respond(res)))
+    .catch(err => fsnErr(err).respond(res))
   )
 }
 
@@ -446,7 +446,7 @@ function sub (fsNode, req, res) {
 function touch (fsNode, req, res) {
   return (fsNode.touch()
     .then(fsNode => res.json({path: fsNode.relativePath}))
-    .catch(err => fsnErr(err).then(err => err.respond(res)))
+    .catch(err => fsnErr(err).respond(res))
   );
 }
 
@@ -456,6 +456,6 @@ function write (fsNode, req, res) {
 
   return (fsNode.write(data, opts)
     .then(success => res.json(success))
-    .catch(err => fsnErr(err).then(err => err.respond(res)))
+    .catch(err => fsnErr(err).respond(res))
   );
 }

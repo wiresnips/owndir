@@ -24,14 +24,14 @@ const InterfaceMethods = [
   "children", "delete", "info", "makeDir", "move", "read", "readAll", "touch", "write",
 ]
 
-function wrapErrors (interface) {
-  return InterfaceMethods.reduce((interface, method) => {
-    const origFn = interface[method]
-    interface[method] = function (...args) {
-      return origFn.apply(interface, args).catch(err => { throw(fsnErr(err)) })
+function wrapErrors (intface) {
+  return InterfaceMethods.reduce((intface, method) => {
+    const origFn = intface[method]
+    intface[method] = function (...args) {
+      return origFn.apply(intface, args).catch(err => { throw(fsnErr(err)) })
     };
-    return interface
-  }, interface)
+    return intface
+  }, intface)
 }
 
 
@@ -40,10 +40,14 @@ function Directory (root, OwnDir, Interface) {
 
   const DirProto = {
     walk: function (path) {
+      // console.log('WALK 1', this, path)
+
       if (path.startsWith('/')) {
         path = root + path
       }
       const absPath = resolve(root, this.relativePath, path);
+      // console.log('WALK 2', {fsNode: this, path, absPath})
+
       return absPath.startsWith(root) 
         ? Node(absPath, Interface) 
         : Node(absPath, OutOfBounds())
@@ -65,6 +69,9 @@ function Directory (root, OwnDir, Interface) {
       return this.readAll().then(buffer => decoder(encoding).decode(buffer))
     },
 
+
+    // this "works" in the client, but it ends up being _very_ chatty
+    // consider moving to the layer below, even though it doesn't really belong there
     files: async function () {
       return this.children()
         .then(children => 
@@ -78,6 +85,7 @@ function Directory (root, OwnDir, Interface) {
                   .map(([isFile, child]) => child))
     },
 
+    // same as files, consider optimizing this for the client
     folders: async function () {
       return this.children()
         .then(children => 
@@ -104,9 +112,9 @@ function Directory (root, OwnDir, Interface) {
   // not sure whether this is the right place for this ... 
   function ErrorInterface (error) {
     const f = (...args) => { throw error }
-    const WrappedInterface = InterfaceMethods.reduce((interface, method) => {
-      interface[method] = f;
-      return interface
+    const WrappedInterface = InterfaceMethods.reduce((intface, method) => {
+      intface[method] = f;
+      return intface
     }, Object.create(DirProto))
     
     return WrappedInterface;

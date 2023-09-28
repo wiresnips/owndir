@@ -27,5 +27,6 @@ import { BrowserRouter, useLocation, useParams } from 'react-router-dom';
 
 function OwndirRouter ({ root }) {
 	const { pathname } = useLocation();
+	// this has to be structured as a "normal" function call in order to preserve `this`
 	return root.walk(pathname).module.frame();	
 }

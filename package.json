@@ -1,6 +1,6 @@
 {
   "name": "owndir",
-  "version": "0.0.14",
+  "version": "0.0.16",
   "description": "",
   "homepage": "https://github.com/wiresnips/owndir",
   "repository": {
@@ -8,11 +8,11 @@
     "url": "https://github.com/wiresnips/owndir.git"
   },
   "author": "Ben Ells",
-  "license": "Unlicense",
+  "license": "MIT",
   "main": "src/index.js",
   "scripts": {
-    "test": "node src/index.js -p 3232 ~/central",
-    "build": "node src/index.js -b -r false ~/central",
+    "test": "node src/index.js -p 3232 ~/central.example",
+    "build": "node src/index.js -b -r false ~/central.example",
     "cleanup": "rm -R ./build; exit 0"
   },
   "bin": {

@@ -56,8 +56,7 @@ module.exports = async function bundle(src, dst, originalPath) {
     entry: resolve(src, 'index.jsx'),
     output: {
       path: dirname(dst),
-      filename: basename(dst),
-      libraryTarget: 'commonjs2'
+      filename: basename(dst)
     },
 
     module: {

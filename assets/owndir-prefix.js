@@ -36,7 +36,6 @@ function addModule (path, mod, plugins) {
   mod.O.children = [];
   mod.O.module = mod;
 
-
   for (const plugin of plugins) {
     plugin(mod);
   }
@@ -48,7 +47,6 @@ function addModule (path, mod, plugins) {
 export function OwnDir (path) {
   path = resolve('/', path)
 
-  // const mod = modules[path]
   const mod = modules[path]; // Object.create(modules[path]) 
   if (mod) {
     return mod;

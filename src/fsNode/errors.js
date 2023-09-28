@@ -19,7 +19,7 @@ function fsnErr (error, statusCode) {
     return error;
   }
 
-  console.error("FsNode error:", error);
+  // console.error("FsNode error:", error);
 
   const errObj = {
     success: false,

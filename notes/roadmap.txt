@@ -2,6 +2,24 @@
 TOKEN is broken right now
 
 
+Component CSS
+=============
+	consider react-fs-navigator:
+		- opening and closing doesn't work without _some_ kind of styling
+		- I can inline the styles, but then they can't be overridden
+
+	one answer is, distribute that shit as plugins after all
+	that way, it's a whole folder in a sensible place that I can refer to (ie, by another plugin)
+
+	how do other things do it?
+		- material-ui appears to use wholy inline styling, which is going to make it _very_ difficult to override
+		  you just have to theme it on _it's_ terms, with its system
+
+		I kinda hate that ...
+
+	
+
+
 WYSIWYG admin console and plugin manager
 ========================================
 

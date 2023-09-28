@@ -68,7 +68,7 @@ const Interface = {
       throw fsnErr(`${this.relativePath} cannot be read`, status.forbidden)
     }
 
-    const stat = await fsp.stat(this.absolutePath).catch(err => null)
+    const stat = await fsp.stat(this.absolutePath).catch(err => { console.error(err); return null})
     if (!stat) {
       return null;
     }
@@ -169,7 +169,6 @@ const Interface = {
 
   // https://github.com/paulmillr/chokidar
   // events and options come straight from chokidar
-  //  options.depth defaults to 1
   //  options.cwd is forced to FsNode.absolutePath
   // events: add, addDir, change, unlink, unlinkDir, ready, raw, error, all
   sub: function (paths, events, listener, opts) {

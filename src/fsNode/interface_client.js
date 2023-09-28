@@ -151,6 +151,11 @@ const Interface = {
       paths = ["."];
     }
 
+    // massage args into expected shapes
+    if (!_.isArray(paths)) {
+      paths = [paths];
+    }
+
     const params = queryStr({call: 'sub', paths, events, opts});
     let subId, pollInterval;
 

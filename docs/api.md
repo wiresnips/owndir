@@ -1,7 +1,55 @@
+# OwnDir Module
+
+## Overview
+It should be noticed that OwnDir does it's best to stay out from underfoot in the Module. Almost everything has been tucked away in the `module.O` object.
+
+> TODO: brief explanation of module-folder relationship
+> - heredity (and exceptions thereto)
+> - routing
+> - plugins
+
+> I don't actually remember why I pulled specifically `directory` up a level. Perhaps it was simply to cut down on the boiler plate of climbing through `this.O.directory` every damned time you wanted to read a file? Still seems odd, maybe reconsider.
+
+> TODO: pointer outwards to notes on build, eager and lazy module compilation, etc.
+
+> TODO: is the module-centric heirarchical navigation obsolete? what am I actually using `O.parent` and `O.children` for?
+> mmmkay, looks like it _is_ useful for plugins and such, to be able to navigate specifically along modules (ie, and not into directories that were excluded by Build). Although ... only a couple of them, and only fairly old ones ... something to consider for the cutting-room floor?
+
+## Properties
+### `directory: FsNode`
+The FsNode of the folder represented by this OwnDir. For pedantry's sake, let's clarify that this does **not** mean the `.owndir` folder, it means the containing folder. Ie, in the following structure:
+```
+foo/
+└─ bar/          <= owndir.directory gives this one
+   └─ .owndir/   <= NOT this one
+```
+
+### `O.children: OwnDir[]`
+An array of the modules of child folders. 
+
+### `O.module: OwnDir`
+Backlink from `module.O` up to `module` again. 
+
+### `O.parent: OwnDir`
+Reference to this module's parent module (if any).
+
+### `O.middleware`
+A list of request-handlers that take precendence over children's handlers. See [routing]().
+
+### `O.routes`
+A list of request-handlers that go _after_ children's handlers. See [routing]().
+
+### `O.path: string`
+The absolute path to the target folder. Same as [directory.absolutePath](#path-string).
+
+### `O.plugins: function[]`
+A list of the plugin functions that were applied to this module when it was instantiated. Intended for internal use. (I use it to keep track of which plugins to propagate to children. Not sure what else you'd do...)
+
+----
 
 # FsNode
-## Overview
 
+## Overview
 An object representing a filepath. All paths are relative to the root OwnDir.
 
 ### Highlights:
@@ -11,7 +59,9 @@ An object representing a filepath. All paths are relative to the root OwnDir.
 - folder contents: [children](#children-async---fsnode), [files](#files-async---fsnode), [folders](#folders-async---fsnode)
 - watching for changes: [sub](#sub-paths-events-listener-opts--unsubfn)
 
+
 ## Properties
+
 ### `absolutePath: string`
 The absolute path of the FsNode. Note that (currently) this works differently in the client than the server, because the client doesn't know where the root OwnDir is in the filesystem. Therefore, in the server, this includes the path _to_ the root, but in the client that's foreshortened to `"/"`.
 > This difference is stupid, so it may change. The trouble is in getting the information _to_ the client, in a way that's legible to custom clients (ie, user-provided versions of what's in `assets/client-default/module/index.jsx`, strictly theoretically). 
@@ -20,7 +70,7 @@ The absolute path of the FsNode. Note that (currently) this works differently in
 ### `module: OwnDir`
 The OwnDir module. See [OwnDir modules](#owndir-module) to learn more.
   
-### `name: string`tas
+### `name: string`
 The last segment of `path`, ie if our FsNode is `/foo/bar/baz`, our `name` is `"baz"`. 
 
 ### `parent: FsNode`
@@ -40,7 +90,7 @@ Shortcut to the top of the OwnDir directory structure.
 Alias of `fsNode.walk('/')`
 
 ### `router: Router`
-  Note: this is a server-only property.
+  Note: this is a server-only property, intended for internal use.
   http://expressjs.com/en/4x/api.html#router
 
 
