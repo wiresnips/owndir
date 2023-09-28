@@ -45,7 +45,7 @@ const Interface = {
 
   children: async function () {
     const params = queryStr({call: 'children'})
-    const url = `${this.relativePath}/@?${params}`
+    const url = `${this.absolutePath}/@?${params}`
     const res = await fetch(url)
     if (res.status !== 200) {
       throw await res.json();         
@@ -61,7 +61,7 @@ const Interface = {
     }
 
     const params = queryStr({call: 'delete'});
-    const url = `${this.relativePath}/@?${params}`;
+    const url = `${this.absolutePath}/@?${params}`;
     const res = await fetch(url, {method: 'POST'});
     if (res.status !== 200) {
       throw await res.json(); 
@@ -77,7 +77,7 @@ const Interface = {
     }
 
     const params = queryStr({call: 'info'})
-    const url = `${this.relativePath}/@?${params}`
+    const url = `${this.absolutePath}/@?${params}`
     const res = await fetch(url)
     if (res.status !== 200) {
       throw await res.json();     
@@ -92,7 +92,7 @@ const Interface = {
     }
 
     const params = queryStr({call: 'makeDir'});
-    const url = `${this.relativePath}/@?${params}`;
+    const url = `${this.absolutePath}/@?${params}`;
     const res = await fetch(url, {method: 'POST'});
     if (res.status !== 200) {
       throw await res.json(); 
@@ -104,7 +104,7 @@ const Interface = {
 
   move: async function (path, opts) {
     const params = queryStr({call: 'move', path, opts});
-    const url = `${this.relativePath}/@?${params}`;
+    const url = `${this.absolutePath}/@?${params}`;
     const res = await fetch(url, {method: 'POST'});
     if (res.status !== 200) {
       throw await res.json(); 
@@ -116,7 +116,7 @@ const Interface = {
 
   read: async function (start, end) {
     const params = queryStr({call: 'read', start, end})
-    const url = `${this.relativePath}/@?${params}`
+    const url = `${this.absolutePath}/@?${params}`
     const res = await fetch(url)
     if (res.status !== 200) {
       throw await res.json(); 
@@ -127,7 +127,7 @@ const Interface = {
 
   readAll: async function () {
     const params = queryStr({call: 'read'})
-    const url = `${this.relativePath}/@?${params}`
+    const url = `${this.absolutePath}/@?${params}`
     const res = await fetch(url)
     if (res.status !== 200) {
       throw await res.json(); 
@@ -156,23 +156,31 @@ const Interface = {
       paths = [paths];
     }
 
+    if (!_.isArray(events)) {
+      events = [events];
+    } else if (events.includes('all')) {
+      events = ['all'];
+    }
+
+
     const params = queryStr({call: 'sub', paths, events, opts});
     let subId, pollInterval;
 
+    fetch(`${this.absolutePath}/@?${params}`).then(async res => {
 
-    fetch(`${this.relativePath}/@?${params}`).then(async res => {
-      const json = await res.json();
       if (res.status !== 200) {
         listener("error", this, json);
         return;
       }
+      
+      const json = await res.json();
       subId = json.subId;
       const self = this;
 
       async function poll () {
-        const res = await fetch(`${self.relativePath}/@?${queryStr({call: 'sub', subId })}`)
+        const res = await fetch(`${self.absolutePath}/@?${queryStr({call: 'sub', subId })}`)
         if (res.status !== 200) {
-          console.error(`sub poller for ${self.relativePath} returned non-200?`)
+          console.error(`sub poller for ${self.absolutePath} returned non-200?`)
           throw res;
         }
         const events = await res.json();
@@ -205,7 +213,7 @@ const Interface = {
       expectInitial = false;
       running = false;
       clearInterval(pollInterval);
-      fetch(`${this.relativePath}/@?${queryStr({call: 'sub', subId, unsub: true })}`);
+      fetch(`${this.absolutePath}/@?${queryStr({call: 'sub', subId, unsub: true })}`);
     }
   },
 
@@ -215,7 +223,7 @@ const Interface = {
     }
 
     const params = queryStr({call: 'touch'});
-    const url = `${this.relativePath}/@?${params}`;
+    const url = `${this.absolutePath}/@?${params}`;
     const res = await fetch(url, {method: 'POST'});
     if (res.status !== 200) {
       throw await res.json(); 
@@ -226,7 +234,7 @@ const Interface = {
   },
 
   write: async function (path, data, opts) {
-    //console.log("write", this.relativePath, {path, data, opts})
+    //console.log("write", this.absolutePath, {path, data, opts})
 
     // because path is optional and data is not, we have to check whether arg2 can be data
     // if a path WAS given, we walk it FIRST, so after this point, we can normalize our args
@@ -240,7 +248,7 @@ const Interface = {
     path = null;
 
     const params = queryStr({call: 'write', opts});
-    const url = `${this.relativePath}/@?${params}`;
+    const url = `${this.absolutePath}/@?${params}`;
     const res = await fetch(url, {method: 'POST', body: data})
     if (res.status !== 200) {
       throw await res.json(); 
