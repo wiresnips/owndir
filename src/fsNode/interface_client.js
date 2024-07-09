@@ -160,6 +160,9 @@ const Interface = {
       events = ['all'];
     }
 
+
+    // console.log("SUB", {paths, events, opts})
+
     let subId, pollInterval;
 
     fetch(callUrl(this, 'sub', {paths, events, opts})).then(async res => {
@@ -240,12 +243,12 @@ const Interface = {
     data = path;
     path = null;
 
-    const res = await fetch(callUrl(this, 'write', opts), {method: 'POST', body: data})
+    const res = await fetch(callUrl(this, 'write', opts), {method: 'POST', body: data});
     if (res.status !== 200) {
       throw await res.json(); 
     }
     
-    const { path: newPath } = await res.json()
+    const { path: newPath } = await res.json();
     return this.root.walk(newPath);    
   },
 

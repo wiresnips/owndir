@@ -433,7 +433,7 @@ function sub (fsNode, req, res) {
     entry.unsub = fsNode.sub(paths, events, subFn, opts);
     entry.timeout = setTimeout(() => {
       // console.log('router timeout unsub')
-      entry.unsub()
+      entry.unsub();
     }, subTimeout);
     entry.refreshBy = now + (subTimeout/2);
     subCache[subId] = entry;

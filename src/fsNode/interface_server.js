@@ -222,12 +222,12 @@ const Interface = {
       if (event === 'all') {
         watcher.on(event, (event, path) => {
           // console.log({event, path})
-          listener(event, self.walk(path))
+          listener(event, path ? self.walk(path) : self)
         })
       } else {
         watcher.on(event, (path) => {
           // console.log({event, path})
-          listener(event, self.walk(path))
+          listener(event, path ? self.walk(path) : self)
         })
       }
     })
