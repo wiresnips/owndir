@@ -120,7 +120,13 @@ function Directory (root, OwnDir, Interface) {
     return WrappedInterface;
   }
 
-  const OutOfBounds = () => ErrorInterface(fsnErr("Out of Bounds", status.forbidden).catch(e => e))
+  const OutOfBounds = () => {
+    try {
+      return ErrorInterface(fsnErr("Out of Bounds", status.forbidden));
+    } catch (e) {
+      return ErrorInterface(e);
+    }
+  }
   
 
   function Node (path, proto) {

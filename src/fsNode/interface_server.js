@@ -207,6 +207,7 @@ const Interface = {
     console.log('SUB', {
       self: this,
       paths,
+      mappedPaths: paths.map(path => pathUtil.resolve(this.absolutePath, path)),
       pathsRes: paths.map(path => pathUtil.resolve(this.absolutePath, path)), 
       events, listener, opts,
     })

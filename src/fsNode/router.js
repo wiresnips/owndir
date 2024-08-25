@@ -108,6 +108,7 @@ function specRouter (spec, owndir) {
   })
   
   spec.forEach(([method, path, ...handlers]) => {
+    // console.log("SPEC METHOD", {owndir, spec, path, method, handlers});
     router[method](path, ...handlers.map(h => h.bind(owndir)))
   })
 
@@ -430,11 +431,18 @@ function sub (fsNode, req, res) {
 
     entry = { events: [] }
     const subFn = (event, node) => entry.events.push([event, node.relativePath]);
-    entry.unsub = fsNode.sub(paths, events, subFn, opts);
+    const fsUnsub = fsNode.sub(paths, events, subFn, opts);
+    
+    entry.unsub = () => {
+      delete subCache[subId];
+      fsUnsub();
+    }
+    
     entry.timeout = setTimeout(() => {
       // console.log('router timeout unsub')
       entry.unsub();
     }, subTimeout);
+
     entry.refreshBy = now + (subTimeout/2);
     subCache[subId] = entry;
 

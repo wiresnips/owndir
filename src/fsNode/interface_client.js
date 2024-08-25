@@ -164,6 +164,15 @@ const Interface = {
     // console.log("SUB", {paths, events, opts})
 
     let subId, pollInterval;
+    var expectInitial = !opts?.ignoreInitial; // when we first start, we wait IMPATIENTLY by default
+    var running = true;
+
+    function stop () {
+      expectInitial = false;
+      running = false;
+      clearInterval(pollInterval);
+      fetch(callUrl(this, 'sub', {subId, unsub: true }));      
+    }
 
     fetch(callUrl(this, 'sub', {paths, events, opts})).then(async res => {
       if (res.status !== 200) {
@@ -175,11 +184,17 @@ const Interface = {
       subId = json.subId;
       const self = this;
 
+      function onError (err, message) {
+        console.error(`Error in sub poller for ${self.absolutePath}\n${message}`);
+        stop();
+        throw err;          
+      }
+
       async function poll () {
-        const res = await fetch(callUrl(self, 'sub', {subId}))
+        const res = await fetch(callUrl(self, 'sub', {subId})).catch(onError)
+
         if (res.status !== 200) {
-          console.error(`sub poller for ${self.absolutePath} returned non-200?`)
-          throw res;
+          onError(res, 'Returned non-200')
         }
         const events = await res.json();
         if (_.isEmpty(events)) {
@@ -193,9 +208,6 @@ const Interface = {
       }
 
       // if we expect an initial event, wait for it _impatiently_
-      var expectInitial = !opts?.ignoreInitial;
-      var running = true;
-
       while (expectInitial && running) {
         if (await poll()) {
           expectInitial = false;
@@ -207,12 +219,7 @@ const Interface = {
       }
     });
 
-    return () => {
-      expectInitial = false;
-      running = false;
-      clearInterval(pollInterval);
-      fetch(callUrl(this, 'sub', {subId, unsub: true }));
-    }
+    return stop;
   },
 
   touch: async function (path) {

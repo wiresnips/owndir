@@ -2,7 +2,7 @@
 # Request Handlers
 
 ## OwnDir Routing
-Each folder in an OwnDir (with one [caveat]() _backfill: module generation does not traverse into .owndir folders_) has an associated `module` that can respond to web requests. There are two kinds of configurable handler: **middleware** and **routes**. You can think of these as the "pre" and "post" handlers - A folder's middleware will be invoked before any child folder's handlers, and it's routes will be invoked afterwards. When a request comes in, the server will take the url as a filepath. The request will pass down the filepath, and then back. On the way down, each module's middleware will be applied. On the way back, routes will be applied. The request will go as far as it can before "turning around".
+Each folder in an OwnDir (with one [caveat]( _backfill: module generation does not traverse into .owndir folders_ ) has an associated `module` that can respond to web requests. There are two kinds of configurable handler: **middleware** and **routes**. You can think of these as the "pre" and "post" handlers - A folder's middleware will be invoked before any child folder's handlers, and it's routes will be invoked afterwards. When a request comes in, the server will take the url as a filepath. The request will pass down the filepath, and then back. On the way down, each module's middleware will be applied. On the way back, routes will be applied. The request will go as far as it can before "turning around".
 
 Consider the following directory structure:
 ```

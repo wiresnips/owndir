@@ -63,7 +63,7 @@ An object representing a filepath. All paths are relative to the root OwnDir.
 ## Properties
 
 ### `absolutePath: string`
-The absolute path of the FsNode. Note that (currently) this works differently in the client than the server, because the client doesn't know where the root OwnDir is in the filesystem. Therefore, in the server, this includes the path _to_ the root, but in the client that's foreshortened to `"/"`.
+The absolute path of the FsNode. Note that (currently) this works differently in the client than the server, because the client doesn't know where the root OwnDir is in the underlying filesystem. Therefore, in the server, this includes the path _to_ the root, but in the client that's foreshortened to `"/"`.
 > This difference is stupid, so it may change. The trouble is in getting the information _to_ the client, in a way that's legible to custom clients (ie, user-provided versions of what's in `assets/client-default/module/index.jsx`, strictly theoretically). 
 > Probably the way to do this is to include it in the build (server doesn't need it, but that's fine), as a property of the `OwnDir` constructor exported by `assets/owndir-prefix.js`.
 
