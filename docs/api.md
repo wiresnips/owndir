@@ -226,13 +226,11 @@ The "permissions" methods, `canRead`, `canReadAll`, `canWrite`, `canWriteAll` ar
 
 Included for completeness, but out of order because they don't matter (yet).
 
-> these are not async, but they definitely _should_ be
-
-### `canRead: () => boolean`
+### `canRead: async () => boolean`
 returns: `true`
-### `canReadAll: () => boolean`
+### `canReadAll: async () => boolean`
 returns: `true`
-### `canWrite: () => boolean`
+### `canWrite: async () => boolean`
 returns: `true`
-### `canWriteAll: () => boolean`
+### `canWriteAll: async () => boolean`
 returns: `true`

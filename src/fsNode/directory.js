@@ -99,13 +99,11 @@ function Directory (root, OwnDir, Interface) {
                   .map(([isDirectory, child]) => child))
     },
     
-    // ignore permissions for now
-    // need to rethink how this will be specified
-    // also, these should definitely be async
-    canRead: function () { return true; },
-    canWrite: function () { return true; },
-    canReadAll: function () { return true; },
-    canWriteAll: function () { return true; },
+    // ignore permissions for now - need to rethink how this will be specified
+    canRead: async function () { return true; },
+    canWrite: async function () { return !this.path.includes(".owndir"); },
+    canReadAll: async function () { return true; },
+    canWriteAll: async function () { return !this.path.includes(".owndir"); },
   }
   Object.setPrototypeOf(Interface, DirProto);
 

@@ -132,6 +132,11 @@ process.on('unhandledRejection', (error, promise) => {
 
   const owndirRouter = router(FsInterface('/'));
 
+  app.use((req, res, next) => {
+    res.on('finish', () => console.info(req.method, req.originalUrl, res.statusCode));
+    next();
+  })
+
   if (args.token) {
     app.use("/" + args.token, owndirRouter)
   } else {

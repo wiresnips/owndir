@@ -22,6 +22,12 @@ function canBeWriteData (maybeData) {
   )
 }
 
+async function readableOrNull (fsNode) {
+  return (await fsNode.canRead()) 
+    ? fsNode 
+    : null;
+}
+
 const Interface = {
 
   children: async function () {
@@ -29,17 +35,14 @@ const Interface = {
 
     // the call to info serves as a canRead check
     const info = await this.info(); 
+
     if (!info?.isDirectory) {
       throw fsnErr(`${this.relativePath} is not a directory`, status.notFound)
     }
 
     const childNames = await fsp.readdir(this.absolutePath)
-    return Promise.all(
-      childNames
-        .sort()
-        .map(name => self.walk(name))
-        .filter(child => child.canRead())
-    );
+    const childFsNodes = childNames.sort().map(name => self.walk(name))
+    return (await Promise.all(childFsNodes.map(readableOrNull))).filter(x => x);
   },
 
   delete: async function (path) {
@@ -47,7 +50,7 @@ const Interface = {
       return this.walk(path).delete();
     }
 
-    if (!this.canWriteAll()) {
+    if (!(await this.canWriteAll())) {
       throw fsnErr(`something at ${this.relativePath} cannot be deleted (write disallowed). `, status.forbidden);
     }
 
@@ -64,7 +67,7 @@ const Interface = {
       return this.walk(path).info();
     }
 
-    if (!this.canRead()) {
+    if (!(await this.canRead())) {
       throw fsnErr(`${this.relativePath} cannot be read`, status.forbidden)
     }
 
@@ -92,7 +95,7 @@ const Interface = {
       return this.walk(path).makeDir();
     }
 
-    if (!this.canWrite()) {
+    if (!(await this.canWrite())) {
       throw fsnErr(`${this.relativePath} cannot be written`, status.forbidden)
     }
 
@@ -101,7 +104,7 @@ const Interface = {
   },
 
   move: async function (destPath, opts) {
-    if (!this.canWrite()) {
+    if (!(await this.canWrite())) {
       throw fsnErr(`source ${this.relativePath} cannot be written`, status.forbidden)
     }
 
@@ -115,7 +118,7 @@ const Interface = {
       destInfo = await dest.info();      
     }
 
-    if (!dest.canWrite()) {
+    if (!(await dest.canWrite())) {
       throw fsnErr(`destination ${dest.relativePath} cannot be written`, status.forbidden) 
     }
 
@@ -141,7 +144,7 @@ const Interface = {
     start = start || 0
     end = end || Infinity
 
-    if (!this.canRead()) {
+    if (!(await this.canRead())) {
       throw fsnErr(`${this.relativePath} cannot be read`, status.forbidden)
     }
 
@@ -247,7 +250,7 @@ const Interface = {
       return this.walk(path).touch();
     }
 
-    if (!this.canWrite()) {
+    if (!(await this.canWrite())) {
       throw fsnErr(`${this.relativePath} cannot be written`, status.forbidden)
     }
 
@@ -279,7 +282,7 @@ const Interface = {
   
     opts = Object.assign({flags: 'w+'}, opts)
 
-    if (!this.canWrite()) {
+    if (!(await this.canWrite())) {
       throw fsnErr(`${this.relativePath} cannot be written`, status.forbidden)
     }
 
