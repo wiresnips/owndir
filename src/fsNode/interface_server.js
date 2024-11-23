@@ -71,7 +71,7 @@ const Interface = {
       throw fsnErr(`${this.relativePath} cannot be read`, status.forbidden)
     }
 
-    const stat = await fsp.stat(this.absolutePath).catch(err => { console.error(err); return null})
+    const stat = await fsp.stat(this.absolutePath).catch(err => { /* console.error(err); */ return null; })
     if (!stat) {
       return null;
     }
@@ -199,12 +199,19 @@ const Interface = {
 
     if (!_.isArray(events)) {
       events = [events];
-    } else if (events.includes('all')) {
+    } 
+/*
+    else if (events.includes('all')) {
       events = ['all'];
     }
-
+*/
     opts = Object.assign({}, opts);
     opts.cwd = this.absolutePath;
+
+    let watcher = chokidar.watch(
+      paths, // paths.map(path => pathUtil.resolve(this.absolutePath, path)), 
+      opts
+    )
 
     /*
     console.log('SUB', {
@@ -216,28 +223,28 @@ const Interface = {
     })
     //*/
 
-    let watcher = chokidar.watch(
-      paths.map(path => pathUtil.resolve(this.absolutePath, path)), 
-      opts
-    )
-
     const self = this;
     events.forEach(event => {
       if (event === 'all') {
         watcher.on(event, (event, path) => {
-          // console.log({event, path})
+          //console.log({event, path})
+          listener(event, path ? self.walk(path) : self)
+        })
+      } else if (event === 'raw') {
+        watcher.on(event, (event, path, details) => {
+          //console.log({event, path, details})
           listener(event, path ? self.walk(path) : self)
         })
       } else {
         watcher.on(event, (path) => {
-          // console.log({event, path})
+          //console.log({event, path})
           listener(event, path ? self.walk(path) : self)
         })
       }
     })
 
     return () => {
-      // console.log('UNSUB (server)')
+      // console.log('UNSUB (server)', { watcher })
       if (watcher) {
         watcher.close()
         watcher = null;

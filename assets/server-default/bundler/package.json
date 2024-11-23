@@ -4,6 +4,11 @@
     "@babel/preset-env": "^7.22.2",
     "@babel/preset-react": "^7.22.3",
     "babel-loader": "^9.1.2",
-    "webpack": "^5.84.1"
+    "webpack": "^5.84.1",
+
+
+    "css-loader": "^7.1.2",
+    "style-loader": "^4.0.0"
+
   }
 }

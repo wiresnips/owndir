@@ -7,7 +7,8 @@ const NullFactory = require('webpack/lib/NullFactory');
 
 
 // I have only the loosest idea what this shit is, because I got it from ChatGPT.
-// I have no interest in learning the ins and outs of writing webpack plugins at two in the goddamned morning.
+// the _goal_, though, is to allow __filename and __dirname to resolve to the location of the original file,
+// instead of the location of the packed artifact (at least, I 'm pretty sure that's what this was)
 class __GlobalsPlugin {
   constructor(options) {
     this.options = options || {};
@@ -60,6 +61,11 @@ module.exports = async function bundle(src, dst, originalPath) {
       libraryTarget: 'commonjs2'
     },
 
+    cache: {
+      type: 'filesystem',
+      cacheDirectory: `${src}/node_modules/.cache/webpack`
+    },
+
     module: {
       rules: [
         {
@@ -73,6 +79,17 @@ module.exports = async function bundle(src, dst, originalPath) {
             },
           },
         },
+
+
+
+      {
+        test: /\.css$/,
+        use: ['style-loader', 'css-loader']
+      },
+
+
+
+
       ],
     },
 

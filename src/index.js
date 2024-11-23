@@ -41,6 +41,11 @@ var args = (require('yargs/yargs')(process.argv.slice(2))
     default: false,
     type: 'boolean'
   })
+  .option('v', {
+    alias: 'verbose',
+    default: false,
+    type: 'boolean'
+  })
   .argv);
 
 // there's probably a better way to establish a name and validation for an anonymous arg, 
@@ -88,7 +93,6 @@ process.on('unhandledRejection', (error, promise) => {
     await build(path, moduleDir);
   }
 
-
   // server
   const serverDir = resolve(buildDir, "server");
   const serverJsPath = resolve(serverDir, 'dist.js');
@@ -132,10 +136,12 @@ process.on('unhandledRejection', (error, promise) => {
 
   const owndirRouter = router(FsInterface('/'));
 
+  if (args.verbose) {
   app.use((req, res, next) => {
     res.on('finish', () => console.info(req.method, req.originalUrl, res.statusCode));
     next();
   })
+}
 
   if (args.token) {
     app.use("/" + args.token, owndirRouter)

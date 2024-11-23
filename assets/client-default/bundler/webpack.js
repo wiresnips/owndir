@@ -59,6 +59,11 @@ module.exports = async function bundle(src, dst, originalPath) {
       filename: basename(dst)
     },
 
+    cache: {
+      type: 'filesystem',
+      cacheDirectory: `${src}/node_modules/.cache/webpack`
+    },
+
     module: {
       rules: [
         {
@@ -72,6 +77,14 @@ module.exports = async function bundle(src, dst, originalPath) {
             },
           },
         },
+
+      {
+        test: /\.css$/,
+        use: ['style-loader', 'css-loader']
+      },
+
+
+
       ],
     },
 

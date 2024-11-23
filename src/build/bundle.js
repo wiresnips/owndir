@@ -27,8 +27,10 @@ async function bundle (buildFrom, buildTo, buildRoot, originalPath) {
 		throw "Expected a module at " + moduleDir;
 	}
 
+
 	// our bundler can have it's own requirements (ie, something like webpack or esbuild)
 	// since this is brought by the .owndir, we can't rely on everything being present
+	
 	await install(bundlerDir, yarnGlobalFolder);
 	const bundler = await require(bundlerDir);
 
