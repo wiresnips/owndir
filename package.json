@@ -13,7 +13,7 @@
   "scripts": {
     "run": "node src/index.js -p 3232 ~/central.example",
     "build": "node src/index.js -b -r false ~/central.example",
-    "test": "clear; time npm run build; npm run run",
+    "test": "clear; time npm run build; date; npm run run",
     "cleanup": "rm -R ./build; exit 0",
     "clean-test": "npm run cleanup; npm run test"
   },
