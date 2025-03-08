@@ -437,18 +437,15 @@ const subTimeoutGrace = 5000; // window to recover a sub with a keep-alive
 
 function sub (fsNode, req, res) {
   let entry = subCache[req.query.subId && JSON.parse(req.query.subId)];
-  console.log("sub-handler", req.query, Object.values(subCache).map(e => [e.subId, e.fsNode]))
 
 
   if (req.query.unsub) {
-    console.log("unsub!", req.query.subId, fsNode.relativePath);
     entry?.cleanup();
     return res.status(200).end();
   }
 
   // make a new subscription (or ressurect one that timed out)
   if (!entry) {
-    console.log("sub-handler NEW", fsNode.relativePath, req.query, nextSubId);
 
     const subId = nextSubId++;
     entry = subCache[subId] = { 
@@ -460,14 +457,12 @@ function sub (fsNode, req, res) {
 
     const fsSubFn = (event, node) => {
       if (entry.openResponse) {
-        console.log("sub-handler event SEND", subId, fsNode.relativePath, event, node.relativePath);
         entry.openResponse.json({ 
           subId, 
           events: [[event, node.relativePath]] 
         });
         entry.openResponse = null;
       } else {
-        console.log("sub-handler event QUEUE", subId, fsNode.relativePath, event, node.relativePath);
         entry.events.push([event, node.relativePath]);
       }
     };
@@ -478,7 +473,6 @@ function sub (fsNode, req, res) {
     const fsUnsub = fsNode.sub(paths, events, fsSubFn, opts);
     
     entry.cleanup = () => {
-      console.log("sub-handler entry cleanup", subId, fsNode.relativePath, entry.subId);
       // if we're timing ourselves out, allow a grace period before _really_ killing ourselves
       if (entry.openResponse) {
         entry.openResponse.status(408).end();
@@ -490,7 +484,6 @@ function sub (fsNode, req, res) {
       }
     }
     entry.touch = () => {
-      console.log("sub-handler entry touch", subId, fsNode.relativePath, entry.subId);
       if (entry.timeout) {
         clearTimeout(entry.timeout);
       }
@@ -502,8 +495,6 @@ function sub (fsNode, req, res) {
 
   // existing subscription
   else {
-    console.log("sub-handler EXISTING", fsNode.relativePath, req.query.subId, entry.subId);
-
     entry.touch();
 
     // is there already a response? then answer THAT first, whether or not there're events
