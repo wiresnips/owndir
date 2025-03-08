@@ -66,8 +66,14 @@ export function OwnDir (path) {
 OwnDir.injectFsInterface = function (FsInterface) {
   const mod = modules['/'];
   Object.setPrototypeOf(mod, {
-    get directory() {
+    get fsNode() {
       return FsInterface(this.O.path)
+    },
+    get directory() {
+      return this.fsNode;
+    },
+    get file () {
+      return this.fsNode;
     }
   });  
 }

@@ -273,8 +273,6 @@ const Interface = {
   },
 
   write: async function (path, data, opts) {
-    // console.log("write", this.relativePath, {path, data, opts})
-
 
     // because path is optional and data is not, we have to check whether arg2 can be data
     // if a path WAS given, we walk it FIRST, so after this point, we can normalize our args
@@ -288,6 +286,8 @@ const Interface = {
     path = null;
   
     opts = Object.assign({flags: 'w+'}, opts)
+
+    // console.log("write", this.relativePath, {path, data, opts})
 
     if (!(await this.canWrite())) {
       throw fsnErr(`${this.relativePath} cannot be written`, status.forbidden)

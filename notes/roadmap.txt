@@ -45,7 +45,7 @@ Permissions
 
 	currently, these are stubbed
 
-	also the stubs are synchronous, which is clearl incorrect
+	also the stubs are synchronous, which is clearly incorrect
 
 
 Build Invalidation
@@ -115,7 +115,8 @@ Loose Ends
 		because a lot of this shit runs server-side AND client-side, consider normalizing paths to posix
 		this might entail replacing `require('path')` with `require('path').posix` everywhere
 
-
+	Current client-side fsNode.write assumed that `fetch` could send ReadableStreams, 
+		which ranges between flatly false in firefox to barely true in chrome
 
 
 
@@ -133,5 +134,7 @@ crashes and failed compilation
 
 	Maybe I need to start fucking around with Babel directly
 	
+
+
 
 
