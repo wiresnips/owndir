@@ -388,69 +388,6 @@ function read (fsNode, req, res) {
   )
 }
 
-
-let nextSubId = 1;
-const subCache = {};
-const subTimeout = 10000;
-
-function sub (fsNode, req, res) {
-  const now = (new Date()).getTime();
-  let subId = req.query.subId && JSON.parse(req.query.subId);
-  let entry;
-
-  if (subId) {
-    entry = subCache[subId];
-
-    if (!entry) {
-      return res.status(404).end();
-    }
-
-    // console.log('poll', {subId, remaining: entry?.refreshBy - now})
-    
-    if (req.query.unsub) {
-      entry.unsub();
-      clearTimeout(entry.timeout);
-      return res.status(200).end();
-    }
-    
-    if (now >= entry.refreshBy) {
-     clearTimeout(entry.timeout); 
-     entry.refreshBy = now + (subTimeout/2)
-     entry.timeout = setTimeout(entry.unsub, subTimeout);
-    }
-    
-    res.json(entry.events);
-    entry.events = [];
-  }
-
-  else {
-    subId = nextSubId++;
-    const paths = req.query.paths && JSON.parse(req.query.paths);
-    const events = req.query.events && JSON.parse(req.query.events);
-    const opts = req.query.opts && JSON.parse(req.query.opts);
-
-    entry = { events: [] }
-    const subFn = (event, node) => entry.events.push([event, node.relativePath]);
-    const fsUnsub = fsNode.sub(paths, events, subFn, opts);
-    
-    entry.unsub = () => {
-      delete subCache[subId];
-      fsUnsub();
-    }
-    
-    entry.timeout = setTimeout(() => {
-      // console.log('router timeout unsub')
-      entry.unsub();
-    }, subTimeout);
-
-    entry.refreshBy = now + (subTimeout/2);
-    subCache[subId] = entry;
-
-    res.json({subId});
-  }
-}
-
-
 function touch (fsNode, req, res) {
   return (fsNode.touch()
     .then(fsNode => res.json({path: fsNode.relativePath}))
@@ -466,4 +403,126 @@ function write (fsNode, req, res) {
     .then(success => res.json(success))
     .catch(err => fsnErr(err).respond(res))
   );
+}
+
+
+
+/*
+  FsNode Subscriptions!
+
+  We use a long-polling method to keep the client up-to-date with fsNode subscriptions.
+  But, we still need to manage subscriptions with subIds and save arrays of events, 
+  because relying on the client to process an event and then re-subscribe for the next one
+  will lead to gaps in coverage between sending the response and receiving the next request.
+
+  when a new subscription is created:
+    - create the server-side subscription
+    - keep the request open (ie do not respond)
+        - expect an event to fire soon - repond THEN
+
+  when an fsNode event fires:
+    - if there is an open request, respond immediately
+    - if there is not, save the event to the subscription 
+
+  when an existing subscription is re-affirmed
+    - reset the subscription TTL
+    - if there are any events in the queue, respond immediately with them
+    - otherwise, keep the request open
+*/
+
+let nextSubId = 1;
+const subCache = {};
+const subTimeout = 100000;
+const subTimeoutGrace = 5000; // window to recover a sub with a keep-alive
+
+function sub (fsNode, req, res) {
+  let entry = subCache[req.query.subId && JSON.parse(req.query.subId)];
+  console.log("sub-handler", req.query, Object.values(subCache).map(e => [e.subId, e.fsNode]))
+
+
+  if (req.query.unsub) {
+    console.log("unsub!", req.query.subId, fsNode.relativePath);
+    entry?.cleanup();
+    return res.status(200).end();
+  }
+
+  // make a new subscription (or ressurect one that timed out)
+  if (!entry) {
+    console.log("sub-handler NEW", fsNode.relativePath, req.query, nextSubId);
+
+    const subId = nextSubId++;
+    entry = subCache[subId] = { 
+      subId: subId,
+      openResponse: res, 
+      events: [],
+      fsNode: fsNode.relativePath
+    };
+
+    const fsSubFn = (event, node) => {
+      if (entry.openResponse) {
+        console.log("sub-handler event SEND", subId, fsNode.relativePath, event, node.relativePath);
+        entry.openResponse.json({ 
+          subId, 
+          events: [[event, node.relativePath]] 
+        });
+        entry.openResponse = null;
+      } else {
+        console.log("sub-handler event QUEUE", subId, fsNode.relativePath, event, node.relativePath);
+        entry.events.push([event, node.relativePath]);
+      }
+    };
+
+    const paths = req.query.paths && JSON.parse(req.query.paths);
+    const events = req.query.events && JSON.parse(req.query.events);
+    const opts = req.query.opts && JSON.parse(req.query.opts);
+    const fsUnsub = fsNode.sub(paths, events, fsSubFn, opts);
+    
+    entry.cleanup = () => {
+      console.log("sub-handler entry cleanup", subId, fsNode.relativePath, entry.subId);
+      // if we're timing ourselves out, allow a grace period before _really_ killing ourselves
+      if (entry.openResponse) {
+        entry.openResponse.status(408).end();
+        entry.openResponse = null;
+        entry.timeout = setTimeout(entry.cleanup, subTimeoutGrace);
+      } else {
+        fsUnsub();
+        delete subCache[subId];
+      }
+    }
+    entry.touch = () => {
+      console.log("sub-handler entry touch", subId, fsNode.relativePath, entry.subId);
+      if (entry.timeout) {
+        clearTimeout(entry.timeout);
+      }
+      const fudgeFactor = Math.random() * subTimeoutGrace; // fudge the timeouts so not everyone expires all at once
+      entry.timeout = setTimeout(entry.cleanup, subTimeout + fudgeFactor);
+    }
+    entry.touch();
+  }
+
+  // existing subscription
+  else {
+    console.log("sub-handler EXISTING", fsNode.relativePath, req.query.subId, entry.subId);
+
+    entry.touch();
+
+    // is there already a response? then answer THAT first, whether or not there're events
+    if (entry.openResponse) {
+      entry.openResponse.json({ subId: entry.subId, events: entry.events });
+      entry.openResponse = null;
+      entry.events = [];
+    }
+    
+    // if we have any events in the queue reply with them immediate
+    // (ie, events that happened between response and re-request), 
+    if (entry.events?.length > 0) {
+      res.json(entry.events);
+      entry.events = [];
+    } 
+    
+    // otherwise, kick back and wait for something to happen
+    else {
+      entry.openResponse = res;
+    }
+  }
 }

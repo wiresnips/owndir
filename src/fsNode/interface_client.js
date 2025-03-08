@@ -160,65 +160,66 @@ const Interface = {
       events = ['all'];
     }
 
+    // console.log("sub", {paths, events, opts})
 
-    // console.log("SUB", {paths, events, opts})
+    let subId = null;
+    let running = true;
+    const self = this;
 
-    let subId, pollInterval;
-    var expectInitial = !opts?.ignoreInitial; // when we first start, we wait IMPATIENTLY by default
-    var running = true;
+    function poll () {
+      // console.log("sub poll", self.path, {paths, events, opts, subId} )
 
-    function stop () {
-      expectInitial = false;
-      running = false;
-      clearInterval(pollInterval);
-      fetch(callUrl(this, 'sub', {subId, unsub: true }));      
+      let subUrl = subId
+        ? callUrl(self, 'sub', {subId}) 
+        : callUrl(self, 'sub', {paths, events, opts});
+      if (running) {
+        fetch(subUrl).then(handleResponse)
+      }
     }
 
-    fetch(callUrl(this, 'sub', {paths, events, opts})).then(async res => {
-      if (res.status !== 200) {
-        listener("error", this, json);
-        return;
-      }
-      
-      const json = await res.json();
-      subId = json.subId;
-      const self = this;
-
-      function onError (err, message) {
-        console.error(`Error in sub poller for ${self.absolutePath}\n${message}`);
-        stop();
-        throw err;          
-      }
-
-      async function poll () {
-        const res = await fetch(callUrl(self, 'sub', {subId})).catch(onError)
-
-        if (res.status !== 200) {
-          onError(res, 'Returned non-200')
-        }
-        const events = await res.json();
-        if (_.isEmpty(events)) {
-          return false;
-        }
-        else {
-          // console.log({events})
-          events.forEach(([event, path]) => listener(event, self.root.walk(path)));
-          return true;
-        }
-      }
-
-      // if we expect an initial event, wait for it _impatiently_
-      while (expectInitial && running) {
-        if (await poll()) {
-          expectInitial = false;
-        }
-      }
+    function stop () {
+      // console.log("sub stop", self.path, {paths, events, opts} )
 
       if (running) {
-        pollInterval = setInterval(poll, subPollInterval);
+        fetch(callUrl(self, 'sub', {subId, unsub: true }));
+        running = false;
       }
-    });
+    }
 
+    async function handleResponse (res) {
+      // console.log("sub handleResponse", self.path, res );
+
+      if (res.status == 200) {
+        const json = await res.json();
+        subId = json.subId;
+        
+        poll(); // restart the wait before handling the listeners
+
+        for (const [event, path] of json.events) {
+          listener(event, self.root.walk(path))
+        }
+        return;
+      }
+
+      // if we notice the server timing us out, just re-run the poll to keep the sub alive
+      // the server has a 5-second grace period, so the status: 408 is more of a warning shot
+      else if (res.status == 408) {
+        poll();
+        return;
+      } 
+
+      // any other status, something has gone WRONG
+      stop();
+      if (events.includes("error") || events.includes("all")) {
+        listener("error", self, res.body); // man, I dunno what this wants
+      } else {
+        console.error(`Error in sub for ${self.absolutePath} - returned status ${res.status}`);
+        throw res;
+      }
+    }
+
+    // launch the long-poll loop and return the stop button
+    poll(); 
     return stop;
   },
 
@@ -237,7 +238,6 @@ const Interface = {
   },
 
   write: async function (path, data, opts) {
-    //console.log("write", this.absolutePath, {path, data, opts})
 
     // because path is optional and data is not, we have to check whether arg2 can be data
     // if a path WAS given, we walk it FIRST, so after this point, we can normalize our args
@@ -249,6 +249,14 @@ const Interface = {
     opts = data;
     data = path;
     path = null;
+
+    // console.log("write", this.absolutePath, {path, data, opts})
+
+    // note: this flatly does not work in firefox
+    // https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API#browser_compatibility
+    // https://bugzilla.mozilla.org/show_bug.cgi?id=1387483
+    // also note that chrome requires http/2 and https
+    // see also: https://developer.chrome.com/docs/capabilities/web-apis/fetch-streaming-requests
 
     const res = await fetch(callUrl(this, 'write', opts), {method: 'POST', body: data});
     if (res.status !== 200) {
