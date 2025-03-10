@@ -2,6 +2,7 @@ const status = {
   badRequest: 400,
   forbidden: 403,
   notFound: 404,
+  timeout: 408,
   conflict: 409,
   serverError: 500
 }
@@ -19,7 +20,7 @@ function fsnErr (error, statusCode) {
     return error;
   }
 
-  // console.error("FsNode error:", error);
+  console.error("FsNode error:", error);
 
   const errObj = {
     success: false,

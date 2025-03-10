@@ -144,6 +144,9 @@ const Interface = {
     start = start || 0
     end = end || Infinity
 
+
+    console.log("READ", this.path, start, end)
+
     if (!(await this.canRead())) {
       throw fsnErr(`${this.relativePath} cannot be read`, status.forbidden)
     }
@@ -298,6 +301,7 @@ const Interface = {
     const src = data && stream.Readable.from(data)
 
     return new Promise((resolve, reject) => {
+
       dest.on('error', error => reject(fsnErr(`error in write stream: ${error}`)));
       dest.on('finish', async () => resolve(this));
 
