@@ -6,7 +6,7 @@ const { ReadableStream } = require('node:stream/web');
 const pathUtil = require("path")
 const chokidar = require('chokidar');
 
-const { mkdir } = require('../../libs/utils/fs-utils/index.js')
+const { mkdir } = require('../../libs/utils/fs-utils.js')
 const mime = require('mime');
 const { status, fsnErr } = require('./errors.js')
 
@@ -31,17 +31,16 @@ async function readableOrNull (fsNode) {
 const Interface = {
 
   children: async function () {
-    const self = this;
+    // console.log(this, "\n", "children:")
 
     // the call to info serves as a canRead check
     const info = await this.info(); 
-
     if (!info?.isDirectory) {
       throw fsnErr(`${this.relativePath} is not a directory`, status.notFound)
     }
 
     const childNames = await fsp.readdir(this.absolutePath)
-    const childFsNodes = childNames.sort().map(name => self.walk(name))
+    const childFsNodes = childNames.sort().map(name => this.walk(name))
     return (await Promise.all(childFsNodes.map(readableOrNull))).filter(x => x);
   },
 
@@ -145,7 +144,7 @@ const Interface = {
     end = end || Infinity
 
 
-    console.log("READ", this.path, start, end)
+    console.log("interface_server read", this.path, start, end)
 
     if (!(await this.canRead())) {
       throw fsnErr(`${this.relativePath} cannot be read`, status.forbidden)
@@ -216,8 +215,8 @@ const Interface = {
       opts
     )
 
-    /*
-    console.log('SUB', {
+    //*
+    console.log('interface_server sub', {
       self: this,
       paths,
       mappedPaths: paths.map(path => pathUtil.resolve(this.absolutePath, path)),
@@ -290,7 +289,8 @@ const Interface = {
   
     opts = Object.assign({flags: 'w+'}, opts)
 
-    // console.log("write", this.relativePath, {path, data, opts})
+    console.log("write", this.relativePath, {path, data, opts})
+    console.log("    fsNode", this)
 
     if (!(await this.canWrite())) {
       throw fsnErr(`${this.relativePath} cannot be written`, status.forbidden)

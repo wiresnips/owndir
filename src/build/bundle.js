@@ -7,7 +7,7 @@
 
 const fsp = require('fs/promises')
 const { resolve } = require('path')
-const { isDir } = require('../../libs/utils/fs-utils/index.js')
+const { isDir } = require('../../libs/utils/fs-utils.js')
 const install = require('./yarn-install.js')
 
 // target should indicate the specific build, ie __dirname/build/<hash>/server

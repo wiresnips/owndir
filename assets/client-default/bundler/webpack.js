@@ -6,6 +6,10 @@ const ConstDependency = webpack.dependencies.ConstDependency;
 const NullFactory = require('webpack/lib/NullFactory');
 
 const NodePolyfillPlugin = require('node-polyfill-webpack-plugin');
+const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
+
+
+
 
 // I have only the loosest idea what this shit is, because I got it from ChatGPT.
 // I have no interest in learning the ins and outs of writing webpack plugins at two in the goddamned morning.
@@ -52,6 +56,7 @@ module.exports = async function bundle(src, dst, originalPath) {
   // Create the Webpack configuration
   const config = {
     mode: 'development',
+    // mode: 'production',
     context: src,
     entry: resolve(src, 'index.jsx'),
     output: {
@@ -82,15 +87,16 @@ module.exports = async function bundle(src, dst, originalPath) {
         test: /\.css$/,
         use: ['style-loader', 'css-loader']
       },
-
-
-
       ],
     },
 
     plugins: [
       new NodePolyfillPlugin(),
-      new __GlobalsPlugin()
+      new __GlobalsPlugin(),
+      new BundleAnalyzerPlugin({
+        analyzerMode: "static",
+        openAnalyzer: false   
+      })
     ],
 
     // look for babel-loader in server/bundler, not server/module

@@ -119,6 +119,14 @@ Loose Ends
 		which ranges between flatly false in firefox to barely true in chrome
 
 
+browser-specfic values are not stubbed in the server
+====================================================
+
+if you use `window.location.host` to get the current url, from a _module_, this will CRASH THE SERVER
+	I'm a fuckin' genius
+	this is apparent and confusing if you reference it from the root - if you reference it from inside a function that's never called server-side, everything's fine
+
+
 
 how to deal with static assets?
 ===============================

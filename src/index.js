@@ -7,12 +7,14 @@ const crypto = require('crypto')
 
 const chokidar = require('chokidar')
 const express = require('express')
+const wsocket = require('ws')
 
-const { isDir, isFile } = require('../libs/utils/fs-utils/index.js')
+const { isDir, isFile } = require('../libs/utils/fs-utils.js')
 const build = require('./build/build.js')
 const bundle = require('./build/bundle.js')
 const fsInterface = require('./fsNode/interface_server.js')
 const { router } = require('./fsNode/router')
+const { FsServer: ClientFsServerWs } = require('./fsNode/interface_client_ws.js')
 
 
 var args = (require('yargs/yargs')(process.argv.slice(2))
@@ -45,6 +47,12 @@ var args = (require('yargs/yargs')(process.argv.slice(2))
     alias: 'verbose',
     default: false,
     type: 'boolean'
+  })
+  .option('client-fs', {
+    description: 'Enable client filesystem operations',
+    choices: ['none', 'http', 'ws'],
+    default: 'ws',
+    type: 'string'
   })
   .argv);
 
@@ -87,6 +95,8 @@ process.on('unhandledRejection', (error, promise) => {
 
 (async function () {
   const forceBuild = args.build;
+  const clientFsInterfaceHttp = (args.clientFs == 'http');
+  const clientFsInterfaceWs = (args.clientFs == 'ws');
 
   const moduleDir = resolve(buildDir, "module")
   if (forceBuild || !(await isFile(resolve(moduleDir, 'index.js')))) {
@@ -123,25 +133,25 @@ process.on('unhandledRejection', (error, promise) => {
 
   const { OwnDir } = require(serverJsPath);
   const FsInterface = fsInterface.init(path, OwnDir);
+  const root = FsInterface('/');
   OwnDir.injectFsInterface(FsInterface);
 
   const app = express() 
 
+  if (args.verbose) {
+    app.use((req, res, next) => {
+      res.on('finish', () => console.info(new Date().getTime(), req.method, req.originalUrl, res.statusCode));
+      next();
+    })
+  }
+
   // just hardcode this shit for now
   // there should be a flag to disable the client entirely,
   // because it all _works_ if you ditch the SPA entirely and just use the server as a server
-  // but I'm not expecially interested in exploring that right now, so here we are hardcoding
+  // but I'm not especially interested in exploring that right now, so here we are hardcoding
   app.use('/@/client.js', express.static(clientJsPath)); 
 
-
-  const owndirRouter = router(FsInterface('/'));
-
-  if (args.verbose) {
-  app.use((req, res, next) => {
-    res.on('finish', () => console.info(req.method, req.originalUrl, res.statusCode));
-    next();
-  })
-}
+  const owndirRouter = router(root, { fsInterface: clientFsInterfaceHttp });
 
   if (args.token) {
     app.use("/" + args.token, owndirRouter)
@@ -156,12 +166,14 @@ process.on('unhandledRejection', (error, promise) => {
     return;
   }
 
-
-
-
-
   const server = app.listen(args.port, args.host, () => {
     console.log(`listening at ${JSON.stringify(server.address(), null, 2)}`)
   })
+
+  // in parallel, stand up the websocket 
+  if (clientFsInterfaceWs) {
+    ClientFsServerWs(server, root);
+  }
+
 })()
 //*/

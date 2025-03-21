@@ -7,7 +7,7 @@ They do cascade into each other, though. And I can cut out almost _all_ of the p
 ## What is OwnDir (ie, for non-programmers)
 - This is a way to have _personal_ (single-user) webapps
   - personal like how a car is personal, as opposed to a bus
-  - personalization as in customization is also posible, but that's incidental
+  - personalization as in customization is also possible, but that's incidental
 
 - what IS a single-user webapp?
   - no cloud, only directories

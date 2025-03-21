@@ -3,9 +3,10 @@ const { resolve } = require('path')
 const Router = require('express').Router
 
 const { status, fsnErr } = require('./errors.js')
-const { FsRouter } = require('./interface_adapter_express.js')
+const { FsRouter } = require('./interface_client_http.js')
 
 
+module.exports.router = FsReqHandler
 
 
 function reqInfo (req) {
@@ -176,8 +177,9 @@ const getFsRouter = (function () {
 // because I'm not ready to throw it away entirely, but I also 
 // can't have static routers representing dynamic filepaths
 
-async function stack (fsNode, steps) {
-  const nodeExists = await fsNode.info();
+async function stack (opts, fsNode, steps) {
+  const fsNodeInfo = await fsNode.info();
+  const nodeExists = !!fsNodeInfo;
   const handlers = []
 
 
@@ -204,10 +206,10 @@ async function stack (fsNode, steps) {
   const [nextStep, ...restPath] = steps;
   
   if (nextStep) {
-    if (nextStep === "@" && _.isEmpty(restPath)) {
+    if (nextStep === "@" && _.isEmpty(restPath) && opts.fsInterface) {
       handlers.push(getFsRouter(fsNode))
     } else {
-      handlers.push(...(await stack(fsNode.walk(nextStep), restPath)))
+      handlers.push(...(await stack(opts, fsNode.walk(nextStep), restPath)))
     }
   }
 
@@ -234,6 +236,8 @@ async function stack (fsNode, steps) {
   return handlers;
 }
 
+
+
 function stackHandler (stack) {
   return function (req, res, out) {
 
@@ -257,9 +261,9 @@ function stackHandler (stack) {
         return out(error)
       }
 
-      if (index >= stack.length) {
-        // return out();
-      }
+      // if (index >= stack.length) {
+      //   return out();
+      // }
 
       return error 
         ? out(error)
@@ -272,18 +276,62 @@ function stackHandler (stack) {
 }
 
 
-function FsReqHandler (root) {
-  return async function (req, res, next) {
-    const { path } = req;
-    const reqStack = await stack(root, decodeURI(req.path).split('/').filter(s => !_.isEmpty(s)))
-    const handler = stackHandler(reqStack)
-    handler(req, res, next);
+async function fsNodeDirectAccessHandler (fsNode) {
+
+  const isOwndir = fsNode.path.includes(".owndir");
+  if (isOwndir) {
+    return null;
+  }
+
+  const info = await fsNode.info();
+  if (!info?.isFile) {
+    return null;
+  }
+
+  const canRead = await fsNode.canRead();
+  if (!canRead) {
+    return null;
+  }
+
+  /*
+    TODO: evaluate cache handling
+      we should be able to do _something_ clever with etags if the file changes, right?
+  */
+
+  return function (req, res, next) {
+    // there's definitely a better way to do this, but for now I say fuck it
+    if (req.method?.toLowerCase() != "get") {
+      return next();
+    }
+
+    if (info.mime) {
+      res.setHeader("content-type", info.mime);
+    }
+
+    fsNode.read()
+      .then(stream => stream.pipe(res))
+      .catch(err => fsnErr(err).respond(res));
   }
 }
 
 
+function FsReqHandler (root, opts) {
+  return async function (req, res, next) {
+    const url = new URL(`${req.protocol}://${req.get('host')}${req.originalUrl}`);
+    const reqStack = await stack(opts, root, decodeURI(url.pathname).split('/').filter(s => !_.isEmpty(s)));
 
-module.exports.router = FsReqHandler
+    // if we are pointing directly at a file that we are allowed to read, explose it directly with the lowest priority
+    const directAccessHandler = await fsNodeDirectAccessHandler(root.walk(url.pathname));
+
+
+    if (directAccessHandler) {
+      reqStack.push(pathLiteralRouter(req.path, directAccessHandler));
+    }
+
+    const handler = stackHandler(reqStack);
+    handler(req, res, next);
+  }
+}
 
 
 

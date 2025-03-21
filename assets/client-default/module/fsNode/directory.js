@@ -1,5 +1,6 @@
-
+// this requires a polyfill for the node globals
 const { resolve, relative, basename } = require('path')
+
 const { status, fsnErr } = require('./errors.js')
 
 

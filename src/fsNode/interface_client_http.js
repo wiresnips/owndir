@@ -83,6 +83,7 @@ function info (fsNode, req, res) {
   );
 }
 
+// wow, definitely never tested _this_ one
 function makeDir (fsNode, req, res) {
   return (fsNode.makeDir(data, opts)
     .then(fsNode => res.json({path: fsNode.relativePath}))
@@ -110,14 +111,6 @@ function read (fsNode, req, res) {
     .catch(err => fsnErr(err).respond(res))
   )
 }
-
-function touch (fsNode, req, res) {
-  return (fsNode.touch()
-    .then(fsNode => res.json({path: fsNode.relativePath}))
-    .catch(err => fsnErr(err).respond(res))
-  );
-}
-
 
 /*
   FsNode Subscriptions!
@@ -229,6 +222,14 @@ function sub (fsNode, req, res) {
     }
   }
 }
+
+function touch (fsNode, req, res) {
+  return (fsNode.touch()
+    .then(fsNode => res.json({path: fsNode.relativePath}))
+    .catch(err => fsnErr(err).respond(res))
+  );
+}
+
 
 
 function write (fsNode, req, res) {
