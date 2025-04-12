@@ -171,10 +171,10 @@ arguments:
 returns (async):
 - [Buffer](https://nodejs.org/api/buffer.html) of the entire contents of the file.
 
-### `sub: (paths, events, listener, opts) => unsubFn`
+### `sub: (events, paths, listener, opts) => unsubFn`
 arguments:
-- `paths` (optional): Defaults to `["."]`. List of paths (relative to this FsNode) to watch. Folders are watched recursively. 
 - `events` (optional): Defaults to `["all"]`. Possible values include: `all`, `add`, `addDir`, `change`, `unlink`, `unlinkDir`, `ready`, `raw`, `error`. See [here](https://github.com/paulmillr/chokidar#methods--events) for details.
+- `paths` (optional): Defaults to `["."]`. List of paths (relative to this FsNode) to watch. Folders are watched recursively. 
 - `listener`: Listener function that's called with `listener(event, fsNode)` when something changes. 
 - `opts` (optional): See [here](https://github.com/paulmillr/chokidar#persistence) for details on what can be configured.
 

@@ -171,7 +171,7 @@ function SubManager (socket) {
 
   return {
     sub (reqId, fsNode, params) {
-      const [paths, events, opts] = params || [];
+      const [events, paths, opts] = params || [];
       // if we have already seen this reqId, this is an unsub
       const unsubFn = cache[reqId]
       if (unsubFn) {
@@ -181,7 +181,7 @@ function SubManager (socket) {
       }
 
       const listener = (event, fsNode) => socket.send(JSON.stringify([reqId, [event, fsNode.relativePath]]));
-      cache[reqId] = fsNode.sub(paths, events, listener, opts);
+      cache[reqId] = fsNode.sub(events, paths, listener, opts);
     },
 
     cleanup () {

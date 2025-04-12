@@ -12,7 +12,8 @@ import { BrowserRouter, useLocation, useParams } from 'react-router-dom';
   OwnDir.injectFsInterface(FsInterface);
 
 	const directory = await FsInterface('/');
-	window.directory = directory
+
+	window.directory = directory;
 
 	ReactDOM.render( 
 		<BrowserRouter>

@@ -154,36 +154,33 @@ async function Interface () {
       })
     },
 
-    sub: function (paths, events, listener, opts) {
+    sub: function (events, paths, listener, opts) {
 
       // paths and events are optional, grant them defaults and shuffle the args down
-      if (_.isFunction(paths)) {
-        opts = events;
-        listener = paths;
-        events = ["all"];
-        paths = ["."];
-      } else if (_.isFunction(events)) {
-        opts = listener;
+      if (_.isFunction(events)) {
+        opts = paths;
         listener = events;
-        events = paths;
         paths = ["."];
+        events = ["all"];
+      } else if (_.isFunction(paths)) {
+        opts = listener;
+        listener = paths;
+        paths = events;
+        events = ["all"];
       }
 
       // massage args into expected shapes
-      if (!_.isArray(paths)) {
-        paths = [paths];
-      }
-
       if (!_.isArray(events)) {
         events = [events];
-      } else if (events.includes('all')) {
-        events = ['all'];
+      }
+      if (!_.isArray(paths)) {
+        paths = [paths];
       }
 
       // console.log("sub", {paths, events, opts})
 
       const callback = (error, [event, fsNodePath]) => listener(event, this.root.walk(fsNodePath));
-      const reqId = send(this, METHODS.sub, [paths, events, opts], callback);
+      const reqId = send(this, METHODS.sub, [events, paths, opts], callback);
 
       return () => {
         cleanup(reqId);

@@ -175,7 +175,7 @@ function sub (fsNode, req, res) {
     const paths = req.query.paths && JSON.parse(req.query.paths);
     const events = req.query.events && JSON.parse(req.query.events);
     const opts = req.query.opts && JSON.parse(req.query.opts);
-    const fsUnsub = fsNode.sub(paths, events, fsSubFn, opts);
+    const fsUnsub = fsNode.sub(events, paths, fsSubFn, opts);
     
     entry.cleanup = (skipGrace) => {
       // if we're timing ourselves out, allow a grace period before _really_ killing ourselves

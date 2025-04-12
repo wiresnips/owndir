@@ -176,37 +176,32 @@ const Interface = {
   // events and options come straight from chokidar
   //  options.cwd is forced to FsNode.absolutePath
   // events: add, addDir, change, unlink, unlinkDir, ready, raw, error, all
-  sub: function (paths, events, listener, opts) {
+  sub: function (events, paths, listener, opts) {
     
     // paths and events are optional, grant them defaults and shuffle the args down
-    if (_.isFunction(paths)) {
-      opts = events;
-      listener = path;
-      events = ["all"];
-      paths = ["."];
-    } else if (_.isFunction(events)) {
-      opts = listener;
+    if (_.isFunction(events)) {
+      opts = paths;
       listener = events;
-      events = paths;
       paths = ["."];
+      events = ["all"];
+    } else if (_.isFunction(paths)) {
+      opts = listener;
+      listener = paths;
+      paths = events;
+      events = ["all"];
     }
 
     paths = paths || ['.']
     events = events || ['all']
 
     // massage args into expected shapes
+    if (!_.isArray(events)) {
+      events = [events];
+    } 
     if (!_.isArray(paths)) {
       paths = [paths];
     }
 
-    if (!_.isArray(events)) {
-      events = [events];
-    } 
-/*
-    else if (events.includes('all')) {
-      events = ['all'];
-    }
-*/
     opts = Object.assign({}, opts);
     opts.cwd = this.absolutePath;
 
