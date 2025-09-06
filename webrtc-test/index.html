@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>WebRTC Test</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+  </head>
+
+  <body>
+
+    <button id="offer-button" onclick="offerHandshake()">Offer Handshake</button>
+    <div id="info-div"></div>
+    <div class="signals">
+      <div id="client-signal-div"></div>
+      <div id="server-signal-div"></div>
+    </div>
+
+<script>
+
+
+// indexedDB.deleteDatabase("owndir");
+
+
+
+
+var offerButton = document.getElementById('offer-button')
+var infoDiv = document.getElementById('info-div')
+var clientSignalDiv = document.getElementById('client-signal-div')
+var serverSignalDiv = document.getElementById('server-signal-div')
+
+async function updateDisplay () {
+  const state = await dbLoadHsDirectory();
+  let { directory, uuid, clientFile, serverFile } = state || {};
+
+  // console.log("update", state)
+
+  offerButton.removeAttribute("disabled");
+  infoDiv.innerHTML = '';
+  clientSignalDiv.innerHTML = '';
+  serverSignalDiv.innerHTML = '';
+
+  const permission = await directory?.queryPermission({mode: 'readwrite'})
+  if (permission != "granted") { 
+    return;
+  }
+
+  // offerButton.setAttribute("disabled", "disabled");
+
+  if (clientFile) {
+    const clientText = await clientFile.getFile().then(f => f.text());
+    clientSignalDiv.innerHTML = clientText;
+
+    try {
+      const clientData = JSON.parse(clientText);
+      let { offer_ts, update_ts } = clientData;
+      offer_ts = !offer_ts ? 'none' : Math.abs(((new Date()).getTime() - offer_ts) / 1000);
+      update_ts = !update_ts ? 'none' : Math.abs(((new Date()).getTime() - update_ts) / 1000);
+      infoDiv.innerHTML = `age: ${age} | update: ${update_ts} | uuid: ${uuid}`
+    } catch (e) {}
+  }
+
+  if (serverFile) {
+    serverSignalDiv.innerHTML = await serverFile.getFile().then(f => f.text()); 
+  }
+}
+
+// suck it, reactivity
+setInterval(updateDisplay, 1000)
+
+
+
+
+var dbPromise = new Promise((resolve, reject) => {
+    const request = indexedDB.open('owndir', 1);
+    request.onupgradeneeded = (event) => {
+        const db = event.target.result;
+        db.createObjectStore('system-fs-handles', { keyPath: 'name' });
+    };
+    request.onsuccess = (event) => resolve(event.target.result);
+    request.onerror = (event) => reject(event.target.error);
+})
+
+async function dbLoadHsDirectory () {
+  const db = await dbPromise;
+  const req = db.transaction(['system-fs-handles'], 'readonly')
+                .objectStore('system-fs-handles')
+                .get('handshake dir')
+  
+  const result = await (new Promise((resolve, reject) => {
+    req.onerror = reject;
+    req.onsuccess = event => resolve(event?.target?.result)
+  }))
+  if (!result?.directory) {
+    return null;
+  }
+
+  let permission = await result.directory.queryPermission({mode: 'readwrite'});
+  if (permission == 'granted') {
+    return result;
+  }
+
+  permission = await result.directory.requestPermission({mode: 'readwrite'});
+  if (permission == 'granted') {
+    return result;
+  }
+
+  return null;
+}
+
+async function dbSaveHsDirectory (directory) {
+  const db = await dbPromise;
+  const existing = await dbLoadHsDirectory();
+  const uuid = existing?.uuid || crypto.randomUUID();
+  const clientFile = await directory.getFileHandle(`${uuid}.client.json`, { create: true });
+  const serverFile = await directory.getFileHandle(`${uuid}.server.json`, { create: true });
+
+  return db.transaction(['system-fs-handles'], 'readwrite')
+           .objectStore('system-fs-handles')
+           .put({name: 'handshake dir', directory, uuid, clientFile, serverFile });
+}
+
+async function pickerLoadHsDirectory () {
+  const pickerOpts = {
+    types: [{
+      description: "handshake.json",
+      accept: {
+        "application/json": [".json"]
+      }
+    }],
+    multiple: false  
+  }
+  
+  const directory = await window.showDirectoryPicker({mode: "readwrite"});
+  await dbSaveHsDirectory(directory);
+  return dbLoadHsDirectory();
+}
+
+
+async function wipeFile (fileHandle) {
+  if (fileHandle) {
+    const writable = await fileHandle.createWritable();
+    await writable.write('');
+    await writable.close();
+  }
+}
+
+
+async function appendIceCandidate (clientFile, conn, candidate) {
+  const text = await clientFile.getFile().then(f => f.text());
+  const data = text.length > 0 
+    ? JSON.parse(text)
+    : {};
+
+  data.iceConnectionState = conn.iceConnectionState;
+  data.candidates = data.candidates || [];
+
+  // okay, how do I toString these bitches?
+  data.candidates.push(candidate);
+
+  data.conn = conn.localDescription;
+
+  const now = (new Date()).getTime();
+  data.offer_ts = data.offer_ts || now;
+  data.update_ts = now;
+
+  const writable = await clientFile.createWritable();
+  await writable.write(JSON.stringify(data, null, 2));
+  await writable.close();
+}
+
+
+
+
+async function offerHandshake () {
+  let dbData = await dbLoadHsDirectory();
+  let dbData2 = dbData || await pickerLoadHsDirectory();
+  console.log({dbData, dbData2 })
+
+  const { clientFile, serverFile } = dbData2 ;
+
+  // wipe the existing handshake
+  await wipeFile(clientFile);
+  await wipeFile(serverFile);
+
+  updateDisplay();
+
+  const offer = await generateWRTCOffer(clientFile);
+  // clickcreateoffer()
+}
+
+
+async function generateWRTCOffer (clientFile) {
+  console.log("generateWRTCOffer")
+  let conn;
+  
+  try {
+    let configuration = {
+        iceServers: [
+          { urls: "stun:stun.stunprotocol.org" }
+        ]
+      };
+
+    conn = new RTCPeerConnection(configuration);
+
+  } catch(err) {
+    console.error('generateWRTCOffer error', error);
+  }
+
+
+  conn.onicecandidate = (event) => {
+    console.log('wrtc onicecandidate', { candidate: event.candidate })
+
+    if (event.candidate) {
+      appendIceCandidate(clientFile, conn, event.candidate);
+    } else {
+      // console.log("wrtc")
+    }
+    updateDisplay();
+  }
+
+  conn.onconnectionstatechange = (event) => console.log('wrtc onconnectionstatechange', event);
+  conn.oniceconnectionstatechange = (event) => console.log('wrtc oniceconnectionstatechange', event);
+  
+  const channel = conn.createDataChannel('chat');
+  channel.onopen = () => console.log("wrtc data channel open");
+  channel.onmessage = (...args) => console.log("wrtc data channel message", args);
+
+  const offer = await conn.createOffer();
+  await conn.setLocalDescription(offer);
+  
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</script>
+
+
+
+  </body>
+</html>

@@ -2,6 +2,7 @@ const { OwnDir } = require('owndir.bundle');
 
 import fsInterfaceWs from "./fsNode/interface_ws.js"
 import fsInterfaceHttp from "./fsNode/interface_http.js"
+// import fsInterfaceWrtc from "./fsNode/interface_wrtc.js"
 
 import React from 'react';
 import ReactDOM from 'react-dom';

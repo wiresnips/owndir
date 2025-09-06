@@ -48,6 +48,11 @@ var args = (require('yargs/yargs')(process.argv.slice(2))
     default: false,
     type: 'boolean'
   })
+  .option('wrtc-proxy', {
+    description: 'Allow remote clients to proxy through this server over WebRTC',
+    default: false,
+    type: 'boolean'
+  })
   .option('client-fs', {
     description: 'Enable client filesystem operations',
     choices: ['none', 'http', 'ws'],
