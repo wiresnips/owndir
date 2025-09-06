@@ -320,7 +320,7 @@ function FsReqHandler (root, opts) {
     const url = new URL(`${req.protocol}://${req.get('host')}${req.originalUrl}`);
     const reqStack = await stack(opts, root, decodeURI(url.pathname).split('/').filter(s => !_.isEmpty(s)));
 
-    // if we are pointing directly at a file that we are allowed to read, explose it directly with the lowest priority
+    // if we are pointing directly at a file that we are allowed to read, expose it directly with the lowest priority
     const directAccessHandler = await fsNodeDirectAccessHandler(root.walk(url.pathname));
 
 

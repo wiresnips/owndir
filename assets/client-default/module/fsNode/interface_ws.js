@@ -12,7 +12,7 @@ function openSocket (url) {
   const socket = new WebSocket(url); 
   return new Promise((resolve, reject) => {
     socket.onopen = () => {
-      console.log("SOCKET OPEN", {event})
+      // console.log("SOCKET OPEN", {event})
       resolve(socket)
     }
   })
@@ -65,7 +65,7 @@ async function Interface () {
   function send (fsNode, method, args, callback) {
     const reqId = nextReqId++;
     requests[reqId] = callback;
-    console.log("fsNode ws send", {reqId, fsNode, method: METHODS[method], args, callback, socket})
+    // console.log("fsNode ws send", {reqId, fsNode, method: METHODS[method], args, callback, socket})
 
     // sending a lot of 'null' when args doesn't exist here, but that'll get cleaned up in the eventual 
     // switch to a binary format - at this stage, code clarity for future-me is more important than efficiency
@@ -84,7 +84,7 @@ async function Interface () {
     // the websocket itself is error-last, not error first, so that in normal operation it can be omitted entirely
     const [reqId, result, error] = JSON.parse(data);
 
-    console.log("fsNode ws receive", {reqId, result, error, requests})
+    // console.log("fsNode ws receive", {reqId, result, error, requests})
 
     const callback = requests[reqId];
     if (callback) {
@@ -260,7 +260,7 @@ async function Interface () {
       data = path;
       path = null;
 
-      console.log("write", this.absolutePath, {path, data, opts})
+      // console.log("write", this.absolutePath, {path, data, opts})
 
       if (!canBeWriteData(data)) {
         throw new Error(

@@ -23,7 +23,7 @@ Object.keys(METHODS).forEach(key => METHODS[METHODS[key]] = key)
 const textEncoder = new TextEncoder();
 
 function FsServer (appServer, fsNodeRoot) {
-  console.log(new Date().getTime(), "LAUNCHING WEBSOCKETS FS-SERVER")
+  console.log(new Date().getTime(), "LAUNCHING WEBSOCKETS FS-SERVER", {fsNodeRoot, "walk('')": fsNodeRoot.walk('')})
   
   const server = new WebSocket.Server({server: appServer})
 
@@ -34,7 +34,7 @@ function FsServer (appServer, fsNodeRoot) {
   server.on("connection", function (socket, request) {
     console.log(new Date().getTime(), "websocket FsServer connection")
     const sendJson = (x) => {
-      console.log(new Date().getTime(), "sendJSON", x)
+      // console.log(new Date().getTime(), "sendJSON", x)
       socket.send(JSON.stringify(x))
     }
 
@@ -65,9 +65,11 @@ function FsServer (appServer, fsNodeRoot) {
 
       // this feels too stupid, right?
       const [reqId, path, method, params] = JSON.parse(data.toString());
-      const fsNode = path && fsNodeRoot.walk(path);
+      const fsNode = _.isString(path) 
+        ? fsNodeRoot.walk(path) 
+        : null;
 
-      console.log(new Date().getTime(), "websocket FsServer message", { reqId, path, method: METHODS[method], params });
+      console.log(new Date().getTime(), "websocket FsServer message", { reqId, path, fsNodeRoot, fsNode, method: METHODS[method], params });
 
       // expected reply format:
       // [reqId, result, error]
@@ -205,7 +207,7 @@ function WriteManager (socket) {
         queueStream = cache[reqId] = new QueueStream();
 
         queueStream.queue.onPull = (chunk) => {
-          console.log("onPull CHUNK", chunk)
+          // console.log("onPull CHUNK", chunk)
           if (!chunk) {
             return null;
           }

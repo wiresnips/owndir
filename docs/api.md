@@ -13,7 +13,7 @@ It should be noticed that OwnDir does it's best to stay out from underfoot in th
 > TODO: pointer outwards to notes on build, eager and lazy module compilation, etc.
 
 > TODO: is the module-centric heirarchical navigation obsolete? what am I actually using `O.parent` and `O.children` for?
-> mmmkay, looks like it _is_ useful for plugins and such, to be able to navigate specifically along modules (ie, and not into directories that were excluded by Build). Although ... only a couple of them, and only fairly old ones ... something to consider for the cutting-room floor?
+> mmmkay, looks like it _is_ useful for plugins and such, to be able to navigate specifically along modules (ie, and not into directories that were excluded by Build). Although ... only a couple of them, and only fairly old ones ... something to consider for the cutting-room floor?)
 
 ## Properties
 ### `directory: FsNode`
