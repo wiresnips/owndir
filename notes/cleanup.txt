@@ -1,0 +1,303 @@
+
+
+
+okay, let's take stock of what the whole concept of routing is being used for right now:
+
+  ~/central
+    serve favicon         (plugin)
+    serve css             (plugin)
+    serve bootstrap html  (plugin)
+
+  ~/central.example
+    font icons            (plugin)
+      okay, this one is pretty clever, it's re-serving files out of node_modules
+
+  ~/central.kingmaker
+    ./owndir/public       (plugin)
+
+
+
+
+There's none of that that I would want to force through the fsInterface ... so even though the routing didn't end up being what I EXPECTED, it still gives me important capability
+
+IMPORTANT:
+  this lets me serve files without bypassing the browser cache
+  I know this is really obvious, but we're re-inventing a lot of wheels here
+
+
+okay, so we don't want to remove it wholesale, but surely it can be simplified a great deal, if we stop trying to run it recursively
+
+basically, I want to lose the express baggage
+
+
+
+
+yeah, I feel like when this is actually done, I'll have learned that I can go a LOT farther by making strong initial conventions
+
+the fact that you can bring your own build, and potentially go all-static is not that _interesting_ to me, I specifically want that semi-realtime reactivity
+
+
+
+
+
+
+CLEANUP CANDIDATES:
+
+  ROUTER
+    this actually isn't as bad as I thought it was
+    I'm _already_ running everything through a single clearing-house handler and building my own execution stack
+
+    TODO:
+      strip out interface_html, use alternatives for this
+      strip out direct file access (? is anything I've built using this?)
+
+      build router once statically
+        this is probably a lot closer to how it was happening before, TBH
+
+        I used to be doing this, but I shifted away I think when I was solidifying the fsNode interface
+        but, that's no longer a thing, I've moved beyond it into websockets
+
+  
+
+
+  NETWORK SECURITY
+    - token breaks everything, this idea needs to _go_
+    - https is essential
+    - once you've got that, you can have a login screen
+
+
+
+  ANDROID
+    this honestly just never really worked well enough, and I've got a view to an alternative
+      alternative: webRTC client, phone home to a running server
+        this is not as pure, but it's a damn-sight more realizable
+
+    TODO:
+      switch build back from webpack to esbuild
+        oh fuck me the hell yes
+
+        note: make sure that style loading still works
+          react-fs-navigator is using it
+
+      discard the android port entirely
+
+
+
+  BUILD
+    the potential for custom build is neat, and it isn't _that_ onerous (from a code-complexity perspective)
+    but, we need to fold the defaults in, so I don't end up reinstalling webpack over and over again
+
+    TODO:
+      1- add webpack and ebuild into the core dependencies
+      2- when custom build is not present, use the built-in instead to skip a compile phase
+          note: custom build will never be present
+      3- add a CLI flag to specify webpack vs esbuild (as a token towards android support)
+      4- validate that style loading still works
+          central.example uses it with react-fs-navigator
+          effect is, to inline the style into the <head> element
+
+    NOTE:
+      the client-side angle on this is deeply mixed up in the HTML question, see below
+
+
+
+
+
+  HTML
+    this has been screaming for a standard solution, for a _long_ time
+
+
+      important pieces:
+
+        server/index.js
+          app.use('/@/client.js', express.static(clientJsPath)); 
+
+
+        utils/plugins/react-csr/index.js
+          owndir.O.routes.push(['get', '*',
+            function (req, res, next) {
+              // hardcode this shit for now, we'll get back to it later
+              res.sendFile(resolve(__dirname, 'index.html'))
+            }
+          ])
+
+
+        utils/plugins/react-csr/index.html
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <title>lol fuck</title>
+            </head>
+            <body>
+              <div id='csr-plugin-root-element'>
+              </div>
+              
+              <!-- just hardcode this shit for now -->
+              <script src="/@/client.js"></script>
+            </body>
+          </html>
+
+
+        server/assets/client-default/module/index.jsx
+          const { OwnDir } = require('owndir.bundle');
+
+          import fsInterfaceWs from "./fsNode/interface_ws.js"
+          import fsInterfaceHttp from "./fsNode/interface_http.js"
+          // import fsInterfaceWrtc from "./fsNode/interface_wrtc.js"
+
+          import React from 'react';
+          import ReactDOM from 'react-dom';
+          import { BrowserRouter, useLocation, useParams } from 'react-router-dom';
+
+          function OwndirRouter ({ root }) {
+            const { pathname } = useLocation();
+            // this has to be structured as a "normal" function call in order to preserve `this`
+            return root.walk(pathname).module.frame();  
+          }
+
+          async function renderOwndir (fsInterface) {
+            const FsInterface = await fsInterface.init(OwnDir);
+            OwnDir.injectFsInterface(FsInterface);
+
+            const directory = await FsInterface('/');
+            window.directory = directory;
+
+            ReactDOM.render(
+              <BrowserRouter>
+                <OwndirRouter root={directory} />
+              </BrowserRouter>,
+              document.getElementById('csr-plugin-root-element')
+            );
+          }
+
+          renderOwndir(fsInterfaceWs);
+
+
+    the net effect of all the above was:
+      from CORE:
+        a zeroeth-level route that returns dist.js
+
+      from PLUGIN:
+        a first-level router that always replies w/ index.html
+
+      from BUILD:
+        an opinionated entrypoint to the root module
+          the entrypoint has to look like SOMETHING, and I refused to make the decision anywhere else, so this is where it landed
+          one hundred percent this is the wrong PLACE for it, though ...
+
+        a split between the server-side and client-side fsNode implementations
+          THIS one is low-key the most offensive - it absolutely belongs in core, it's just there because 
+
+
+    okay, so what does it _want_ ?
+    is there some obvious way to force all this into coherence with a couple more fixed points?
+
+      ideally, the client entrypoint should in some way BE the root-level module, right?
+        things that happen in the current entrypoint:
+          - selection of fsNode interface
+          - module routing
+          - ReactDOM.render
+              note: this requires apriori knowledge of index.html
+
+        if the client entry-point comes from the module, then the MODULE can own decisions like whether to have a router
+          am I ready to say that React cannot be overridden yet?
+              NO
+              but, I probably _should_ be ready to take that position, right?
+
+
+          okay, let's try to game it out a little - what would it look like if I _did_ commit to baking React directly into the core?
+            well, I could make `module.html` return literal html, that's kinda neat
+            if I did do that, would it follow that the client-side routing is ALSO forced?
+              kinda doesn't seem like it should be?
+
+          alternatively, suppose I DON'T bake React _directly_ into the core
+            so, we keep the optional build
+            we keep all the client-default stuff, but we reorganize it a little
+              okay, tell me about that reorganization
+
+                1- the client-side fsNode-interface libraries go into a support lib
+                      I would kinda like it to _live_ in the core, but I don't want the whole-ass server to be a dependency of the client
+
+                2- the index.html needs to be rendered by the root module
+                      this is also going to have to be something that comes in along side, though ...
+
+
+          As things are now, the Client does not require the Server as a dependency
+            this is almost certainly a good thing, which we want
+
+            So, perhaps instead of moving _more_ of that into the core, we need to push more of it into the client?
+
+              1- lose the special route for dist.js
+                  this part has to be handled by the client itself (somehow)
+
+              2- pull the opinionated entrypoint from build ALSO into the client (somehow)
+
+              3- wrap the whole thing into a plugin
+                  we are still allowed to have the plugin, and we will have consolidated our concern into the only place that it CAN be consolidated
+
+              Alright, that sounds somewhat reasonable - what do we need, to go about it?
+
+                maybe, root module needs a method that outputs static HTML?
+                    this is a new part of the spec, the formal bridge into core
+                    okay, but how do I give it the path to dist.js? 
+                      I mean, I could pass it as an arg when I call the function, I guess
+                      I could attach it as `module.O.build.clientJsPath` or something
+                        it's ... not great, but it's still better than the status quo
+
+
+
+
+
+
+
+    let's take another look at wrtc-test/README.md
+
+      module.O.static = {
+        "path/to/file.html": "<p>the literal content of the file, as a string or buffer",
+        "path/to/another/file.css": function () { return "or else a function that will return it."; }
+      }
+
+      is that ... enough? all by itself?
+      I almost think it might be
+        the core doesn't even have to serve it, that can get left in the hands of a plugin that's injecting routes ...
+        but on the other hand, why would the core _not_ serve it?
+          well, because it doesn't want to answer the question of _where_ to serve it, I suppose ...
+
+      On the other hand, very obviously it should be served - it's a minimal, reasonable thing to do, if possible
+
+      okay, so that's attached to the _module_ - what does it mean, if deeper modules _also_ add a `.static` ?
+
+        routing:
+          1- walk to the module
+          2- serve static content if there's an exact match
+          3- recurse into _parent's_ static content, match there too (refer to `public`)
+          4- run the whole middleware stack
+
+          note: because walking to the module happens _first_, it's not possible for static content to preempt modules
+
+      yeah alright, that's all fine then isn't it
+
+      
+
+
+
+
+
+
+DIST vs STATIC
+  the difference here is, "static" is a fact about the build, and it's artifacts would live _with the build_
+  ie, they would not be DISTRIBUTED
+
+  whereas, "distribute" explicitly writes back into the target filestructure
+
+
+
+
+Okay, I think that's enough of a framework to actually get started.
+
+  1- reintroduce esbuild, confirm that it works
+  2- refactor default build into the core, so we can skip a round of installation in the default case
+  3- refactor the router
+      - strip out interface_html routing
+      - build router ONCE, on startup
+  4- circle back to `module.O.distribution`

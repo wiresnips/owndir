@@ -24,7 +24,8 @@ They do cascade into each other, though. And I can cut out almost _all_ of the p
     - link out to another document, detailing `syncthing` setup
 
 - what's easy to set up?
-  - I will GET TO THIS, in a YEAR OR SO
+  - I will GET TO THIS, in a YEAR OR SO 
+    (rofl, it was not a year)
 
 ## (Non-Web Programmers)
 - each folder is a package/module/object/class
@@ -39,7 +40,7 @@ They do cascade into each other, though. And I can cut out almost _all_ of the p
 - bridge the filesystem into the browser
   - webapp backed by human-readable plaintext data files
   - electron without electron
-    - hilariously cross-platform (if you ignore IOS)
+    - hilariously cross-platform
 
 - extensibility comparable to wordpress
   - plugins are king, allow almost anything
