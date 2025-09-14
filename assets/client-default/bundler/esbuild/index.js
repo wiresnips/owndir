@@ -10,6 +10,7 @@ const { NodeModulesPolyfillPlugin } = require('@esbuild-plugins/node-modules-pol
 const { NodeGlobalsPolyfillPlugin } = require('@esbuild-plugins/node-globals-polyfill')
 const { externalizeBinariesPlugin } = require('./plugin-externalize-binaries.js')
 const { injectDirnameFilenamePlugin } = require('./plugin-inject-dirname-filename.js')
+const { styleLoaderPlugin } = require('./plugin-style-loader.js')
 
 module.exports = async function bundle (src, dst, originalPath) {
   return esbuild.build({
@@ -23,7 +24,8 @@ module.exports = async function bundle (src, dst, originalPath) {
       NodeModulesPolyfillPlugin(), 
       NodeGlobalsPolyfillPlugin(), 
       externalizeBinariesPlugin, 
-      injectDirnameFilenamePlugin
+      injectDirnameFilenamePlugin,
+      styleLoaderPlugin
     ]
   }).then(result => {
       console.log('bundle (client) succeeded', result)
