@@ -35,12 +35,9 @@ module.exports.styleLoaderPlugin = {
         return;
       }
 
-      console.log({build, result, outputFile: result.outputFiles });
-
       const cssFiles = result.outputFiles?.filter(f => f.path.endsWith(".css")) || [];
       const cssStr = cssFiles.map(f => f.text).join("\n\n\n")
-
-
+      
       for (const outFile of result.outputFiles || []) {
         await mkdir(dirname(outFile.path));
         await fsp.writeFile(outFile.path, outFile.contents);

@@ -384,6 +384,8 @@ Okay, I think that's enough of a framework to actually get started.
         https://github.com/omar-azmi/esbuild-plugin-css?tab=readme-ov-file
           this seems to be barking up the right tree ... 
 
+        alright, that was the right angle, everything is working nicely
+
 
 
   2- refactor default build into the core, so we can skip a round of installation in the default case

@@ -6,6 +6,7 @@ const traverse = require("@babel/traverse").default
 const core = require("@babel/core")
 
 const esbuild = require('esbuild')
+const { sassPlugin } = require('esbuild-sass-plugin')
 const { NodeModulesPolyfillPlugin } = require('@esbuild-plugins/node-modules-polyfill')
 const { NodeGlobalsPolyfillPlugin } = require('@esbuild-plugins/node-globals-polyfill')
 const { externalizeBinariesPlugin } = require('./plugin-externalize-binaries.js')
@@ -21,6 +22,7 @@ module.exports = async function bundle (src, dst, originalPath) {
     minify: false,
     sourcemap: 'inline',
     plugins: [
+      sassPlugin(),
       NodeModulesPolyfillPlugin(), 
       NodeGlobalsPolyfillPlugin(), 
       externalizeBinariesPlugin, 
