@@ -1,14 +1,14 @@
 
-const webpack = require('./webpack');
-// const parcel = require('./parcel'); // couldn't get this to build .jsx inside node_modules
-// const esbuild = require('./esbuild'); // couldn't get this to run in Android - always wants to shell out to an executable
+// const webpack = require('./webpack');
+const esbuild = require('./esbuild'); 
 
 module.exports = async function bundle(src, dst, originalPath) {
 
   console.log("bundle server", {src, dst, originalPath});
 
   try {
-    await webpack(src, dst, originalPath);
+    // await webpack(src, dst, originalPath);
+    await esbuild(src, dst, originalPath);
     console.log('bundle (server) succeeded');
   } catch (err) {
     console.log('bundle (server) failed');
