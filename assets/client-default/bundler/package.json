@@ -7,19 +7,13 @@
     "node-polyfill-webpack-plugin": "^2.0.1",
     "path-browserify": "^1.0.1",
     "webpack": "^5.84.1",
-    "webpack-bundle-analyzer": "4.10.2",
-  
+    "webpack-bundle-analyzer": "4.10.2",  
 
     "css-loader": "^7.1.2",
     "style-loader": "^4.0.0",
 
-    "@babel/parser": "^7.22.0",
-    "@babel/traverse": "^7.22.0",
-
     "@esbuild-plugins/node-globals-polyfill": "^0.2.3",
     "@esbuild-plugins/node-modules-polyfill": "^0.2.2",
     "esbuild": "^0.25.9"
-
-
   }
 }
