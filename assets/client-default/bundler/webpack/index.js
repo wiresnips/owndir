@@ -102,7 +102,7 @@ module.exports = async function bundle(src, dst, originalPath) {
     // look for babel-loader in server/bundler, not server/module
     resolveLoader: {
       modules: [
-        resolve(__dirname, "node_modules")
+        resolve(__dirname, "../node_modules")
       ],
     },
 

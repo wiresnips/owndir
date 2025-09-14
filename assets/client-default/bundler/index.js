@@ -1,4 +1,4 @@
-// const webpack = require('./webpack');
+// const webpack = require('./webpack/index.js');
 // const parcel = require('./parcel'); // couldn't get this to build .jsx inside node_modules
 const esbuild = require('./esbuild/index.js'); // couldn't get this to run in Android - always wants to shell out to an executable
 
