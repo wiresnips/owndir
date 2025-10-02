@@ -1,9 +1,8 @@
 
 // const webpack = require('./webpack');
-const esbuild = require('./esbuild'); 
+const esbuild = require('./esbuild/index.js'); 
 
 module.exports = async function bundle(src, dst, originalPath) {
-
   console.log("bundle server", {src, dst, originalPath});
 
   try {

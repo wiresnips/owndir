@@ -1,10 +1,3 @@
-const fsp = require('fs/promises')
-const { resolve, dirname } = require('path')
-
-const parser = require("@babel/parser")
-const traverse = require("@babel/traverse").default
-const core = require("@babel/core")
-
 const esbuild = require('esbuild')
 const { sassPlugin } = require('esbuild-sass-plugin')
 const { NodeModulesPolyfillPlugin } = require('@esbuild-plugins/node-modules-polyfill')
@@ -13,7 +6,7 @@ const { externalizeBinariesPlugin } = require('./plugin-externalize-binaries.js'
 const { injectDirnameFilenamePlugin } = require('./plugin-inject-dirname-filename.js')
 const { styleLoaderPlugin } = require('./plugin-style-loader.js')
 
-module.exports = async function bundle (src, dst, originalPath) {
+module.exports = async function bundle (src, dst) {
   return esbuild.build({
     platform: 'browser',
     entryPoints: [src],
