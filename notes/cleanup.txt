@@ -319,12 +319,81 @@ Okay, I think that's enough of a framework to actually get started.
         alright, that was the right angle, everything is working nicely
 
 
-
   2- refactor default build into the core, so we can skip a round of installation in the default case
+
+    this is messier than I was expecting, because the server and client _module_ are also tied up in it
+      mmmkay, which is definitely linked in to why we started all this up in the first place
+
+      server-default/module
+        this is literally just a pass-through, it's completely empty
+          - package.json that requires the "naked" module (ie, build/<hash>/module)
+          - index.js that directly exports it
+
+        part of WHY this is able to be a straight passthrough is because work it could be doing is shifted into the core
+          - injecting the FsInterface into the module
+          - building the router
+
+        interesting how that makes sense to me - I've made some clear decisions about how the module relates to the server
+        is the issue here that I then refused to do that for the client?
+
+      client-default/module
+        - injecting the FsInterface (again)
+            (can I fold this into the core somehow?)
+
+        - injecting the module into the DOM
+            requires a specific shape to the HTML, but does not provide it (instead, a plugin has to add a route to the server)
+
+            requires a specific shape to the MODULE, but does not provide it (instead, the plugin injects a dummy that needs overwriting)
+
+        honestly, this flexibility is very interesting, and I do want to keep some of it
+        BUT, we need to consolidate this bullshit one way or another
+
+
+
+    AND, the reason that I was able to accidentally inline server-module is, because I HAVE SOMEPLACE TO RUN IT
+    whereas the client just _doesn't_, so the module had to build it up from scratch
+
+      fuck, it's even entabled with the client module:
+        `app.use('/@/client.js', express.static(clientJsPath));`
+
+    okay, so how do I fold more of the server architecture into the server's module, then?
+
+    also, holy shit that moves a LOT of the functionality out of the core, doesn't it?
+      ooookaaaay .... that's kinda hot
+
+      alright, how does this work?
+      weeeelllll ... I need to move all of that code out of the core and into the module ... how do I run it?
+
+
+
+
+
+
+
+
+
+
+
+        let's look at JUST the problem of how to reclaim the FsInterface
+          I mean ... the solution is kinda already the right shape, right?
+          I need to wrap a layer around the module that can pull in it's own requirements (the FsInterface, specifically), and make that the new surface
+
+          OR
+
+          I need to make that the job of the execution substrate (like server does), 
+            ie by forcing the HTML to be some fixed thing that inclues that work
+            like is currently being done by the react-csr plugin
+
+
+
+
+
+
 
 
 
   3- refactor the router
       - strip out interface_html routing
       - build router ONCE, on startup
+      
   4- circle back to `module.O.distribution`

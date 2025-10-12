@@ -136,6 +136,16 @@ process.on('unhandledRejection', (error, promise) => {
   }
 
 
+
+
+  // mmmkay, so if we were going to achieve symmetry between the client and server modules,
+  // in the sense that one of them is a pass-through and the other is a WHOLE THING,
+  // this next section of code is what we need to consider
+
+  // because this bottom section is very much equivalent to the staging portion of the client-side module
+  // but I inlined it without even noticing
+
+
   const { OwnDir } = require(serverJsPath);
   const FsInterface = fsInterface.init(path, OwnDir);
   const root = FsInterface('/');
@@ -179,6 +189,12 @@ process.on('unhandledRejection', (error, promise) => {
   if (clientFsInterfaceWs) {
     ClientFsServerWs(server, root);
   }
+
+
+
+
+
+
 
 })()
 //*/
