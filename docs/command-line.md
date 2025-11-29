@@ -34,13 +34,3 @@ build only: `node src/index.js --build --run false ~/my-owndir`
 
 see also: [build](./build.md)
 
----
-
-### `-t`, `--token`
-Included for completeness, but this is a broken feature. 
-
-The idea is a layer of security-by-obscurity - the actual server would only respond to requests that are prefixed with the token, ie `http://127.0.0.1/my-secret-token/` for the root. The trouble comes in relating this to the client. 
-
-Currently, the client architecture is technically uncontrolled. I've provided a default client, but it can be locally overridden (eg, if you wanted to use SolidJs instead of React, or you wanted to povot to SSR instead of CSR). A working implementation of `--token` would need to be correctly implemented in the client as well, which imposes poorly-specified requirements on hypothetical alternative clients.
-
-I have not sorted out the solution, so for now the client is just broken.

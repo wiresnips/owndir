@@ -33,11 +33,6 @@ var args = (require('yargs/yargs')(process.argv.slice(2))
     default: '127.0.0.1',
     type: 'string'
   })
-  .option('t', {
-    alias: 'token',
-    default: null,
-    type: 'string'
-  })
   .option('b', {
     alias: 'build',
     default: false,
@@ -167,13 +162,7 @@ process.on('unhandledRejection', (error, promise) => {
   app.use('/@/client.js', express.static(clientJsPath)); 
 
   const owndirRouter = router(root, { fsInterface: clientFsInterfaceHttp });
-
-  if (args.token) {
-    app.use("/" + args.token, owndirRouter)
-  } else {
-    app.use(owndirRouter)
-  }
-
+  app.use(owndirRouter)
 
 
   // if we turned off the run (presumably because we only wanted to build), we can drop out here
