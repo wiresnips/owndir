@@ -2,12 +2,12 @@
 // const webpack = require('./webpack');
 const esbuild = require('./esbuild/index.js'); 
 
-module.exports = async function bundle(src, dst, originalPath) {
-  console.log("bundle server", {src, dst, originalPath});
+module.exports = async function bundle(src, dst) {
+  console.log("bundle server", {src, dst});
 
   try {
-    // await webpack(src, dst, originalPath);
-    await esbuild(src, dst, originalPath);
+    // await webpack(src, dst);
+    await esbuild(src, dst);
     console.log('bundle (server) succeeded');
   } catch (err) {
     console.log('bundle (server) failed');

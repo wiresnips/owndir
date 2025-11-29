@@ -14,7 +14,7 @@ const install = require('./yarn-install.js')
 // buildRoot will always be one step up, ie  __dirname/build/<hash> 
 //    to direct the location of the yarn "global" cache
 //    because android can't write to the default by default, which is troublesome
-async function bundle (buildFrom, buildTo, buildRoot, originalPath) {
+async function bundle (buildFrom, buildTo, buildRoot) {
 	const yarnGlobalFolder = resolve(buildRoot, ".yarn");
 
 	const bundlerDir = resolve(buildFrom, 'bundler');
@@ -41,7 +41,7 @@ async function bundle (buildFrom, buildTo, buildRoot, originalPath) {
 	await install(moduleDir, yarnGlobalFolder);
 
   const t1 = (new Date()).getTime()
-	await bundler(moduleDir, buildTo, originalPath);
+	await bundler(moduleDir, buildTo);
 	const t2 = (new Date()).getTime();
   console.log(`    bundle took ${t2-t1} ms`);
 

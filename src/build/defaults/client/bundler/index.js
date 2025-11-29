@@ -1,10 +1,10 @@
 const esbuild = require('./esbuild/index.js');
 
-module.exports = async function bundle(src, dst, originalPath) {
-  console.log("bundle client", {src, dst, originalPath});
+module.exports = async function bundle(src, dst) {
+  console.log("bundle client", {src, dst});
 
   try {
-    await esbuild(src, dst, originalPath);
+    await esbuild(src, dst);
     console.log('bundle (client) succeeded');
   } catch (err) {
     console.log('bundle (client) failed');

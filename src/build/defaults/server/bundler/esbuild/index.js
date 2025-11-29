@@ -2,7 +2,7 @@ const esbuild = require('esbuild')
 const { externalizeBinariesPlugin } = require('./plugin-externalize-binaries.js')
 const { injectDirnameFilenamePlugin } = require('./plugin-inject-dirname-filename.js')
 
-module.exports = async function bundle (src, dst, originalPath) {
+module.exports = async function bundle (src, dst) {
 
   return esbuild.build({
     platform: 'node', // 'neutral' ? see: https://esbuild.github.io/api/#platform
