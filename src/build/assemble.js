@@ -72,8 +72,8 @@ function requireModuleJs ({symbol, req}, path) {
 }
 
 
-async function build (src, dst) {
-  // console.log('BUILD:', { src, dst });
+async function assemble (src, dst) {
+  // console.log('ASSEMBLE:', { src, dst });
 
   await mkdir(resolve(dst, 'modules'), {recursive: true}).catch(err => console.error(err));
 
@@ -91,9 +91,9 @@ async function build (src, dst) {
     await fsp.readFile(`${__dirname}/../../assets/owndir-prefix.js`, 'utf-8')
   ];
 
-  async function buildNode (absPath) {
+  async function assembleNode (absPath) {
     const relPath = relative(src, absPath)
-    // console.log('buildNode', { absPath, relPath })
+    // console.log('assembleNode', { absPath, relPath })
 
     if (!await isDir(absPath)) {
       return;
@@ -138,13 +138,13 @@ addModule(
     await (fsp.readdir(absPath)
       .then(relPaths => relPaths
         .filter(rel => !rel.startsWith('.owndir'))
-        .map(rel => buildNode(resolve(absPath, rel)))
+        .map(rel => assembleNode(resolve(absPath, rel)))
       )
       .then(x => Promise.all(x))
     );
   }
 
-  await buildNode(src);
+  await assembleNode(src);
 
   await fsp.writeFile(
     resolve(dst, 'index.js'), 
@@ -165,5 +165,5 @@ addModule(
 
 
 
-module.exports = build
+module.exports = assemble
 

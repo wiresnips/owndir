@@ -10,7 +10,7 @@ const express = require('express')
 const wsocket = require('ws')
 
 const { isDir, isFile } = require('../libs/utils/fs-utils.js')
-const build = require('./build/build.js')
+const assemble = require('./build/assemble.js')
 const bundle = require('./build/bundle.js')
 const fsInterface = require('./fsNode/interface_server.js')
 const { router } = require('./fsNode/router')
@@ -105,7 +105,7 @@ process.on('unhandledRejection', (error, promise) => {
 
   const moduleDir = resolve(buildDir, "module")
   if (forceBuild || !(await isFile(resolve(moduleDir, 'index.js')))) {
-    await build(path, moduleDir);
+    await assemble(path, moduleDir);
   }
 
   // server
