@@ -5,7 +5,6 @@ const { resolve, relative } = require('path')
 
 const crypto = require('crypto')
 
-const chokidar = require('chokidar')
 const express = require('express')
 const wsocket = require('ws')
 
@@ -103,35 +102,13 @@ process.on('unhandledRejection', (error, promise) => {
     await assemble(path, moduleDir);
   }
 
-  // server
-  const serverDir = resolve(buildDir, "server");
-  const serverJsPath = resolve(serverDir, 'dist.js');
+  const serverDistPath = await bundle(path, buildDir, "server", forceBuild);
+  const clientDistPath = await bundle(path, buildDir, "client", forceBuild);
 
-  if (forceBuild || !(await isFile(serverJsPath))) {
-    const customServerBundler = resolve(path, '.owndir', 'build', 'server');
-    const serverBundler = (await isDir(customServerBundler))
-      ? customServerBundler
-      : resolve(__dirname, '../assets/server-default')
-    await fsp.cp(serverBundler, serverDir, {recursive: true});
-    await bundle(serverDir, serverJsPath, buildDir, path);
+  // if we turned off the run (presumably because we only wanted to build), we can drop out here
+  if (!args.run) {
+    return;
   }
-
-
-  // client
-  const clientDir = resolve(buildDir, "client");
-  const clientJsPath = resolve(clientDir, 'dist.js');
-
-  if (forceBuild || !(await isFile(clientJsPath))) {
-    const customClientBundler = resolve(path, '.owndir', 'build', 'client');
-    const clientBundler = (await isDir(customClientBundler))
-      ? customClientBundler
-      : resolve(__dirname, '../assets/client-default')
-    await fsp.cp(clientBundler, clientDir, {recursive: true});
-    await bundle(clientDir, clientJsPath, buildDir, path);
-  }
-
-
-
 
   // mmmkay, so if we were going to achieve symmetry between the client and server modules,
   // in the sense that one of them is a pass-through and the other is a WHOLE THING,
@@ -141,7 +118,7 @@ process.on('unhandledRejection', (error, promise) => {
   // but I inlined it without even noticing
 
 
-  const { OwnDir } = require(serverJsPath);
+  const { OwnDir } = require(serverDistPath);
   const FsInterface = fsInterface.init(path, OwnDir);
   const root = FsInterface('/');
   OwnDir.injectFsInterface(FsInterface);
@@ -159,7 +136,7 @@ process.on('unhandledRejection', (error, promise) => {
   // there should be a flag to disable the client entirely,
   // because it all _works_ if you ditch the SPA entirely and just use the server as a server
   // but I'm not especially interested in exploring that right now, so here we are hardcoding
-  app.use('/@/client.js', express.static(clientJsPath)); 
+  app.use('/@/client.js', express.static(clientDistPath)); 
 
   const owndirRouter = router(root, { fsInterface: clientFsInterfaceHttp });
   app.use(owndirRouter)
@@ -178,6 +155,10 @@ process.on('unhandledRejection', (error, promise) => {
   if (clientFsInterfaceWs) {
     ClientFsServerWs(server, root);
   }
+
+
+
+
 
 
 

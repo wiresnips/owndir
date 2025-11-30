@@ -7,44 +7,82 @@
 
 const fsp = require('fs/promises')
 const { resolve } = require('path')
-const { isDir } = require('../../libs/utils/fs-utils.js')
+const { isFile, isDir, mkdir } = require('../../libs/utils/fs-utils.js')
 const install = require('./yarn-install.js')
 
-// target should indicate the specific build, ie __dirname/build/<hash>/server
-// buildRoot will always be one step up, ie  __dirname/build/<hash> 
-//    to direct the location of the yarn "global" cache
-//    because android can't write to the default by default, which is troublesome
-async function bundle (buildFrom, buildTo, buildRoot) {
-	const yarnGlobalFolder = resolve(buildRoot, ".yarn");
+const defaultBundlerServer = require('./defaults/server/bundler/index.js')
+const defaultBundlerClient = require('./defaults/client/bundler/index.js')
 
-	const bundlerDir = resolve(buildFrom, 'bundler');
-	if (!await isDir(bundlerDir)) {
-		throw "Expected a bundler at " + bundlerDir;
-	}
+async function bundle (path, buildDir, platform, forceBuild) {
+  // path       : target directory-tree for which the .owndir is being built
+  // buildDir   : build artifacts are kept here
+  // platform   : "client" or "server" - anything else is a mistake
+  // forceBuild : if true, ignore the existing dist.js and rebuild
 
-	const moduleDir = resolve(buildFrom, 'module');
-	if (!await isDir(moduleDir)) {
-		throw "Expected a module at " + moduleDir;
-	}
+  const moduleDir = resolve(buildDir, 'module');
+  if (!await isDir(moduleDir)) {
+    throw "Expected a module at " + moduleDir + ". Did `assemble` fail to run somehow? (this should not be possible).";
+  }
+
+  if (platform != "server" && platform != "client") {
+    throw `expected platform to be one of 'client', 'server'\n\tgot ${platform}`
+  }
+
+  const yarnGlobalFolder = resolve(buildDir, ".yarn");
+  const platformDir = resolve(buildDir, platform);
+  const distPath = resolve(platformDir, "dist.js");
 
 
-	// our bundler can have it's own requirements (ie, something like webpack or esbuild)
-	// since this is brought by the .owndir, we can't rely on everything being present
-	
-	await install(bundlerDir, yarnGlobalFolder);
-	const bundler = await require(bundlerDir);
+  if (!forceBuild && (await isFile(distPath))) {
+    return distPath;
+  }
 
-	// before we build the final package, remove any existing owndir installation,
-	// because I'm a fucking idiot, and don't know how to force-install programmatically
-	// await fsp.rm(resolve(moduleDir, "node_modules", "owndir.bundle"), {recursive: true}).catch((err) => {})
-	
-	await install(moduleDir, yarnGlobalFolder);
+  await mkdir(platformDir);
 
-  const t1 = (new Date()).getTime()
-	await bundler(moduleDir, buildTo);
-	const t2 = (new Date()).getTime();
+  // load the platform-bundler (custom or default)
+  let bundler;
+  const platformBundlerDir = resolve(platformDir, "bundler");
+  const customPlatformBundlerDir = resolve(path, ".owndir", "build", platform, "bundler");
+  if (await isDir(customPlatformBundlerDir)) {
+    console.log(`using custom ${platform} bundler`)
+    await fsp.cp(customPlatformBundlerDir, platformBundlerDir, {recursive: true});
+
+    // our bundler can have it's own requirements (ie, something like webpack or esbuild)
+    // since this is brought by the .owndir, we can't rely on everything being present
+    await install(platformBundlerDir, yarnGlobalFolder);
+    bundler = await require(platformBundlerDir);
+  }
+  else {
+    bundler = (
+      (platform == "server") ? defaultBundlerServer :
+      (platform == "client") ? defaultBundlerClient :
+      null);
+  }
+
+  // copy the platform-module into <platformDir>/module, either from the default build OR from the custom build
+  const platformModuleDir = resolve(platformDir, "module");
+  const customPlatformModuleDir = resolve(path, ".owndir", "build", platform, "module");
+  if (await isDir(customPlatformModuleDir)) {
+    console.log(`using custom ${platform} module`)
+    await fsp.cp(customPlatformModuleDir, platformModuleDir, {recursive: true});
+  }
+  else {
+    console.log(`using default ${platform} module`);
+    const defaultPlatformModuleDir = resolve(__dirname, "defaults", platform, "module");
+    await fsp.cp(defaultPlatformModuleDir, platformModuleDir, {recursive: true});
+  }
+
+
+  // install the platform module dependencies
+  await install(platformModuleDir, yarnGlobalFolder);
+
+  // bundle the platform
+  const t1 = (new Date()).getTime();
+  await bundler(platformModuleDir, distPath);
+  const t2 = (new Date()).getTime();
   console.log(`    bundle took ${t2-t1} ms`);
 
+  return distPath;
 }
 
 module.exports = bundle;
