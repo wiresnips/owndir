@@ -92,6 +92,7 @@ CLEANUP CANDIDATES:
       2- when custom build is not present, use the built-in instead to skip a compile phase
           note: custom build will never be present
       3- add a CLI flag to specify webpack vs esbuild (as a token towards android support)
+            YEAAAHHHH, I dunno about this one, chief
       4- validate that style loading still works
           central.example uses it with react-fs-navigator
           effect is, to inline the style into the <head> element
@@ -277,10 +278,6 @@ CLEANUP CANDIDATES:
 
       yeah alright, that's all fine then isn't it
 
-      
-
-
-
 
 
 
@@ -289,6 +286,10 @@ DIST vs STATIC
   ie, they would not be DISTRIBUTED
 
   whereas, "distribute" explicitly writes back into the target filestructure
+
+
+
+
 
 
 
@@ -317,6 +318,9 @@ Okay, I think that's enough of a framework to actually get started.
           this seems to be barking up the right tree ... 
 
         alright, that was the right angle, everything is working nicely
+
+
+
 
 
   2- refactor default build into the core, so we can skip a round of installation in the default case
@@ -353,7 +357,7 @@ Okay, I think that's enough of a framework to actually get started.
     AND, the reason that I was able to accidentally inline server-module is, because I HAVE SOMEPLACE TO RUN IT
     whereas the client just _doesn't_, so the module had to build it up from scratch
 
-      fuck, it's even entabled with the client module:
+      fuck, it's even entangled with the client module:
         `app.use('/@/client.js', express.static(clientJsPath));`
 
     okay, so how do I fold more of the server architecture into the server's module, then?
@@ -363,14 +367,6 @@ Okay, I think that's enough of a framework to actually get started.
 
       alright, how does this work?
       weeeelllll ... I need to move all of that code out of the core and into the module ... how do I run it?
-
-
-
-
-
-
-
-
 
 
 
@@ -385,15 +381,56 @@ Okay, I think that's enough of a framework to actually get started.
             like is currently being done by the react-csr plugin
 
 
-
-
-
-
-
-
+  2.1- rename "/module" to "/package" all throughout the build system
+      - this shit is backwards and there's no reason for it
 
   3- refactor the router
       - strip out interface_html routing
       - build router ONCE, on startup
       
   4- circle back to `module.O.distribution`
+
+
+
+
+
+
+
+======================================================
+======================================================
+
+
+A thought that might allow me to escape the issue of the static file malarkey
+
+What if the client-build just directly spat a `.html` folder into the root .owndir?
+
+okay, hear me out:
+
+  1- no fucking around with some subsystem to generate static assets. 
+      We can build that later if we want to, but we don't HAVE to
+
+  2- the server can serve this HTML as a matter of convention, and it becomes FAR less unreasonable,
+      because it's baked into the `.owndir` itself - it isn't a contrived dance between client-build, server-build, and three different plugins or whatever
+
+      Server just serves up what's in `.html`, whatever that happens to be
+        we can even say that it's overridable, but that it falls back towards the root if we want to be clever, we can fill that gap in later
+
+          (but seriously, I don't expect to fill that gap in, I rather like just having the one - this just makes it feel less magical somehow)
+
+  3- how do we solve the problem of serving static assets to the html-only variant?
+
+      SERVICE WORKER PROXY, motherfucker!
+        https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API
+        https://stackoverflow.com/questions/43813770/how-to-intercept-all-http-requests-including-form-submits
+
+      if I can get webRTC working at all, then I can serve static, CACHEABLE assets over webRTC same as anything else
+
+
+this all sounds like some hot fucking shit, how does it inform what I'm going to do next with the build system?
+
+  1- Keep pushing the refactor forwards, don't actually change that much
+  2- add a new parameter so that the client-build can _find_ the damned place to write the `.html` folder out
+  3- abandon `module.O.distribution`, focus on getting the webRTC subsystem up and running
+  4- service worker proxy over webRTC to any running server on the system
+
+
