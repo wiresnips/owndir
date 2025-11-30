@@ -40,3 +40,17 @@ yeah, I feel like when this is actually done, I'll have learned that I can go a 
 
 AND, I think this is relevant here because I'm kinda rolling up to a point where I need to add more _convention_ anyways ....
 so, let's think about what we want to base in
+
+
+
+
+
+
+HERE's a fucking question:
+  can I use _cache manipulation_ to expose static content over WRTC?
+  https://developer.mozilla.org/en-US/docs/Web/API/Cache
+
+  looks like I don't even have to, actually:
+    https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API
+    https://stackoverflow.com/questions/43813770/how-to-intercept-all-http-requests-including-form-submits
+
