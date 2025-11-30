@@ -21,12 +21,18 @@ module.exports = async function (target, globalFolder) {
 
   config.values.set("nodeLinker", "node-modules");
   config.values.set("globalFolder", globalFolder || resolve(target, ".yarn"));
+  // config.values.set("enableScripts", false); // this doe snot appear to be respected by the node-modules linker
   // config.values.set("pnpMode", null);
 
   const { project } = await yarn.Project.find(config, target);
   const cache = await yarn.Cache.find(config);
   const report = new yarn.ThrowReport();
-  await project.install({cache, report});
+
+  // mode: 'skip-build' prevents hooks like postinstall from running, which is kinda important these days
+  // TODO: expose this as a toggle somehow
+  const mode = 'skip-build';
+
+  await project.install({cache, report, mode});
 
   // await dedupeUtils.dedupe(project, {strategy: "highest", patterns: [], cache, report})
 
