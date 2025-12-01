@@ -1,4 +1,4 @@
-const { OwnDir } = require('owndir.bundle');
+const { OwnDir } = require('owndir.package');
 
 import fsInterfaceWs from "./fsNode/interface_ws.js"
 import fsInterfaceHttp from "./fsNode/interface_http.js"
