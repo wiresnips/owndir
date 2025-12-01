@@ -97,9 +97,9 @@ process.on('unhandledRejection', (error, promise) => {
   const clientFsInterfaceHttp = (args.clientFs == 'http');
   const clientFsInterfaceWs = (args.clientFs == 'ws');
 
-  const moduleDir = resolve(buildDir, "module")
-  if (forceBuild || !(await isFile(resolve(moduleDir, 'index.js')))) {
-    await assemble(path, moduleDir);
+  const packageDir = resolve(buildDir, "package")
+  if (forceBuild || !(await isFile(resolve(packageDir, 'index.js')))) {
+    await assemble(path, packageDir);
   }
 
   const serverDistPath = await bundle(path, buildDir, "server", forceBuild);
@@ -110,11 +110,11 @@ process.on('unhandledRejection', (error, promise) => {
     return;
   }
 
-  // mmmkay, so if we were going to achieve symmetry between the client and server modules,
+  // mmmkay, so if we were going to achieve symmetry between the client and server packages,
   // in the sense that one of them is a pass-through and the other is a WHOLE THING,
   // this next section of code is what we need to consider
 
-  // because this bottom section is very much equivalent to the staging portion of the client-side module
+  // because this bottom section is very much equivalent to the staging portion of the client-side package
   // but I inlined it without even noticing
 
 

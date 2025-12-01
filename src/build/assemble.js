@@ -17,9 +17,9 @@ const genSym = (() => {
 })()
 
 
-// return a shitty blob of info that I can use to bundle a module
+// return a shitty blob of info that I can use to assemble a package
 
-async function moduleSpec (root, absPath, dst) {
+async function dependencySpec (root, absPath, dst) {
   const pathIsDir = await isDir(absPath);
   let pathIsJs = !pathIsDir && absPath.match(/\.jsx?$/);
 
@@ -47,15 +47,15 @@ async function moduleSpec (root, absPath, dst) {
           pathIsJs ? absPath :
           null),
 
-    dep: (isPackage ? resolve(dst, 'modules', fullName) :
-          null)
+    depPath: (isPackage ? resolve(dst, 'dependencies', fullName) :
+              null)
   }
 
   return spec
 }
 
-async function ensureVersion (modulePath) {
-  const path = resolve(modulePath, "package.json");
+async function ensureVersion (depPath) {
+  const path = resolve(depPath, "package.json");
   const package = JSON.parse(await fsp.readFile(path));
 
   if (!package.version) {
@@ -65,7 +65,7 @@ async function ensureVersion (modulePath) {
 }
 
 
-function requireModuleJs ({symbol, req}, path) {
+function requireSpecJs ({symbol, req}, path) {
   return req
     ? `import { default as ${symbol} } from ${JSON.stringify(req)}`
     : `const ${symbol} = {};`
@@ -75,7 +75,7 @@ function requireModuleJs ({symbol, req}, path) {
 async function assemble (src, dst) {
   // console.log('ASSEMBLE:', { src, dst });
 
-  await mkdir(resolve(dst, 'modules'), {recursive: true}).catch(err => console.error(err));
+  await mkdir(resolve(dst, 'dependencies'))
 
   if (!await exists(dst)) {
     console.error(`failed to create build directory at ${dst}`);
@@ -106,24 +106,23 @@ async function assemble (src, dst) {
     );
 
     if (!_.isEmpty(owndirCandidates)) {
-      const spec = await moduleSpec(src, owndirCandidates[0], dst)
+      const spec = await dependencySpec(src, owndirCandidates[0], dst)
 
       const pluginDir = resolve(absPath, '.owndir', 'plugins')
       const plugins = await Promise.all(
         (await dirChildren(pluginDir))
-          .map(relPath => moduleSpec(src, resolve(pluginDir, relPath), dst))
+          .map(relPath => dependencySpec(src, resolve(pluginDir, relPath), dst))
        );
 
-      const owndirModuleSpecs = [spec, ...plugins];
+      const owndirDependencySpecs = [spec, ...plugins];
 
-      for (let mod of owndirModuleSpecs) {
-        jsFragments.push(requireModuleJs(mod, relPath));
+      for (let spec of owndirDependencySpecs) {
+        jsFragments.push(requireSpecJs(spec, relPath));
 
-        if (mod.dep) {
-          await fsp.cp(mod.path, mod.dep, { recursive: true });
-          await ensureVersion(mod.dep);
-          //dependencies[mod.symbol] = `link:${mod.dep}`;
-          dependencies[mod.symbol] = mod.dep;
+        if (spec.depPath) {
+          await fsp.cp(spec.path, spec.depPath, { recursive: true });
+          await ensureVersion(spec.depPath);
+          dependencies[spec.symbol] = spec.depPath;
         }
       }
 

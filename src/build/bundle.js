@@ -19,9 +19,9 @@ async function bundle (path, buildDir, platform, forceBuild) {
   // platform   : "client" or "server" - anything else is a mistake
   // forceBuild : if true, ignore the existing dist.js and rebuild
 
-  const moduleDir = resolve(buildDir, 'module');
-  if (!await isDir(moduleDir)) {
-    throw "Expected a module at " + moduleDir + ". Did `assemble` fail to run somehow? (this should not be possible).";
+  const packageDir = resolve(buildDir, 'package');
+  if (!await isDir(packageDir)) {
+    throw "Expected a package at " + packageDir + ". Did `assemble` fail to run somehow? (this should not be possible).";
   }
 
   if (platform != "server" && platform != "client") {
@@ -59,26 +59,26 @@ async function bundle (path, buildDir, platform, forceBuild) {
       null);
   }
 
-  // copy the platform-module into <platformDir>/module, either from the default build OR from the custom build
-  const platformModuleDir = resolve(platformDir, "module");
-  const customPlatformModuleDir = resolve(path, ".owndir", "build", platform, "module");
-  if (await isDir(customPlatformModuleDir)) {
-    console.log(`using custom ${platform} module`)
-    await fsp.cp(customPlatformModuleDir, platformModuleDir, {recursive: true});
+  // copy the platform-package into <platformDir>/package, either from the default build OR from the custom build
+  const platformPackageDir = resolve(platformDir, "package");
+  const customPlatformPackageDir = resolve(path, ".owndir", "build", platform, "package");
+  if (await isDir(customPlatformPackageDir)) {
+    console.log(`using custom ${platform} package`)
+    await fsp.cp(customPlatformPackageDir, platformPackageDir, {recursive: true});
   }
   else {
-    console.log(`using default ${platform} module`);
-    const defaultPlatformModuleDir = resolve(__dirname, "defaults", platform, "module");
-    await fsp.cp(defaultPlatformModuleDir, platformModuleDir, {recursive: true});
+    console.log(`using default ${platform} package`);
+    const defaultPlatformPackageDir = resolve(__dirname, "defaults", platform, "package");
+    await fsp.cp(defaultPlatformPackageDir, platformPackageDir, {recursive: true});
   }
 
 
-  // install the platform module dependencies
-  await install(platformModuleDir, yarnGlobalFolder);
+  // install the platform package dependencies
+  await install(platformPackageDir, yarnGlobalFolder);
 
   // bundle the platform
   const t1 = (new Date()).getTime();
-  await bundler(platformModuleDir, distPath);
+  await bundler(platformPackageDir, distPath);
   const t2 = (new Date()).getTime();
   console.log(`    bundle took ${t2-t1} ms`);
 
