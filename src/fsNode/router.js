@@ -5,13 +5,12 @@ const Router = require('express').Router
 const { status, fsnErr } = require('./errors.js')
 const { FsRouter } = require('./interface_client_http.js')
 
-
 module.exports.router = FsReqHandler
-
 
 function reqInfo (req) {
   return {
     baseUrl: req.baseUrl,
+    url: req.url,
     hostname: req.hostname,
     method: req.method,
     originalUrl: req.originalUrl,
@@ -21,64 +20,7 @@ function reqInfo (req) {
   }
 }
 
-
-
-
-
-
-
-// in order to support literal paths, I need to bypass express' url parsing
-// the mechanism that enables "/foo/:id/", makes it impossible to have proper handling for paths with colons
-// (brackets are also a major problem)
-// so, I'm gonna reach _deep_ into Express' guts and shim that shit out
-function pathLiteralRouter (path, ...fns) {
-
-  if (!path.startsWith('/')) {
-    path = '/' + path;
-  }
-  if (path.endsWith('/')) {
-    path = path.slice(0,-1)
-  }
-  // if removing the last slash emptied the path, it was only a slash
-  const fast_slash = path === ''
-
-  const router = Router();
-  router.label = `pathLiteralRouter ${path}`
-
-  /*
-  router.all("*", (req, res, next) => { 
-    console.log(
-      "pathLiteralRouter", 
-      path, 
-      reqInfo(req)
-    ); 
-    next(); 
-  })
-  //*/
-
-  router.use("fake-path-so-layer-stops-yelling-at-me", ...fns);
-  
-  const layer = _.last(router.stack);
-  layer.regexp = 'this "regex" should never have been used. something is wrong with fsNode/router.js'
-
-  layer.match = function (reqPath) {
-    const match = fast_slash || reqPath === path || reqPath.startsWith(path + '/');
-    // console.log('layer.match', { reqPath, path, match });
-
-    if (match) {
-      this.path = path;
-      this.params = {};
-    }
-
-    return match;
-  }; 
-
-  return router;
-}
-
-
-
-
+const fsNodeHandlerCache = {};
 
 
 function specRouter (spec, owndir) {
@@ -87,7 +29,7 @@ function specRouter (spec, owndir) {
   router.spec = spec
 
   /*
-  router.all("*", (req, res, next) => { 
+  router.use((req, res, next) => { 
     console.log(
       "specRouter", 
       owndir.directory.absolutePath, 
@@ -98,7 +40,7 @@ function specRouter (spec, owndir) {
   })
   //*/
 
-  router.all('*', async (req, res, next) => {
+  router.use(async (req, res, next) => {
     const info = await owndir.directory.info();
     if (info) {
       info.isDirectory
@@ -116,226 +58,84 @@ function specRouter (spec, owndir) {
   return router;
 }
 
-
-
-
-
-function getRouter (cache, spec, owndir) {
-  const path = owndir.O.path;
-  let router = cache[path];
-  
-  if (router) {
-    return router
-  }
-
-  router = pathLiteralRouter(path, specRouter(spec, owndir));
-  cache[path] = router;
-  return router;
-}
-
-const getMiddleware = (function () {
-  const cache = {}
-  const fn = function (owndir) {
-    return getRouter(cache, owndir.O.middleware, owndir);
-  }
-
-  fn._o_middleware = true;
-
-  return fn
-})();
-
-const getRoutes = (function () {
-  const cache = {}
-  const fn = function (owndir) {
-    return getRouter(cache, owndir.O.routes, owndir);
-  }
-  fn._o_routes = true
-  return fn;
-})();
-
-const getFsRouter = (function () {
-  const cache = {}
-  return function (fsNode) {
-    const path = fsNode.relativePath;
-    let router = cache[path]
-    if (router) {
-      return router;
-    }
-
-    router = FsRouter(fsNode);
-    cache[path] = router;
-    return router;
-  }
-})()
-
-
-
-
-
-
-// this is a shitty immitation of how Express handles things
-// because I'm not ready to throw it away entirely, but I also 
-// can't have static routers representing dynamic filepaths
-
-async function stack (opts, fsNode, steps) {
-  const fsNodeInfo = await fsNode.info();
-  const nodeExists = !!fsNodeInfo;
-  const handlers = []
-
-
-  /*
-  handlers.push((req, res, next) => {
-    console.log('\n\nMIDDLEWARE\n\n');
-    console.log({req: reqInfo(req), fsNode: fsNode.absolutePath});
-    next();
-  })
-  //*/
-
-  if (nodeExists) {
-    handlers.push(getMiddleware(fsNode.module));
-  }
-
-  /*
-  handlers.push((req, res, next) => {
-    console.log('\n\nSTEP\n\n');
-    console.log({req: reqInfo(req), fsNode: fsNode.absolutePath});
-    next();
-  })
-  //*/
-
-  const [nextStep, ...restPath] = steps;
-  
-  if (nextStep) {
-    if (nextStep === "@" && _.isEmpty(restPath) && opts.fsInterface) {
-      handlers.push(getFsRouter(fsNode))
-    } else {
-      handlers.push(...(await stack(opts, fsNode.walk(nextStep), restPath)))
-    }
-  }
-
-  /*
-  handlers.push((req, res, next) => {
-    console.log('\n\nROUTES\n\n');
-    console.log({req: reqInfo(req), fsNode: fsNode.absolutePath});
-    next();
-  })
-  //*/
-
-  if (nodeExists) {
-    handlers.push(getRoutes(fsNode.module));
-  }
-
-  /*
-  handlers.push((req, res, next) => {
-    console.log('\n\nDONE\n\n');
-    console.log({req: reqInfo(req), fsNode: fsNode.absolutePath});
-    next();
-  })
-  //*/
-
-  return handlers;
-}
-
-
-
-function stackHandler (stack) {
-  return function (req, res, out) {
-
+function childrenRouter (fsNode) {
+  return async function (req, res, next) {
+    const [, nextStep] = req.path?.match(/^\/([^\/]+)/) || [];
     /*
-    console.log("\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
-    console.log("===========================================")
-    console.log("===========================================")
+    console.log(
+      "childrenRouter", 
+      fsNode.absolutePath, 
+      reqInfo(req),
+      nextStep
+    );
     //*/
-
-    var index = 0;
-    function next (error) {
-
-      /*
-      console.log('NEXT', {
-        req: reqInfo(req),
-        stack: stack.slice(index)
-      })
-      //*/
-
-      if (error) {
-        return out(error)
-      }
-
-      // if (index >= stack.length) {
-      //   return out();
-      // }
-
-      return error 
-        ? out(error)
-        : stack[index++](req, res, next)
-    }
-
-
-    next();
-  }
-}
-
-
-async function fsNodeDirectAccessHandler (fsNode) {
-
-  const isOwndir = fsNode.path.includes(".owndir");
-  if (isOwndir) {
-    return null;
-  }
-
-  const info = await fsNode.info();
-  if (!info?.isFile) {
-    return null;
-  }
-
-  const canRead = await fsNode.canRead();
-  if (!canRead) {
-    return null;
-  }
-
-  /*
-    TODO: evaluate cache handling
-      we should be able to do _something_ clever with etags if the file changes, right?
-  */
-
-  return function (req, res, next) {
-    // there's definitely a better way to do this, but for now I say fuck it
-    if (req.method?.toLowerCase() != "get") {
+    
+    if (!nextStep) {
+      // console.log("childrenRouter NO NEXT STEP")
       return next();
     }
 
-    if (info.mime) {
-      res.setHeader("content-type", info.mime);
+    const child = fsNode.walk(nextStep);
+    const childExists = await child.info();
+
+    if (!childExists) {
+      // console.log("childrenRouter NO MATCHING CHILD")
+      return next();
     }
 
-    fsNode.read()
-      .then(stream => stream.pipe(res))
-      .catch(err => fsnErr(err).respond(res));
+    FsReqHandler(child)(req, res, next);
   }
 }
 
+function FsReqHandler (fsNode) {
+  const cacheHit = fsNodeHandlerCache[fsNode.path];
+  if (cacheHit) {
+    return cacheHit;
+  }
 
-function FsReqHandler (root, opts) {
-  return async function (req, res, next) {
-    const url = new URL(`${req.protocol}://${req.get('host')}${req.originalUrl}`);
-    const reqStack = await stack(opts, root, decodeURI(url.pathname).split('/').filter(s => !_.isEmpty(s)));
+  const owndir = fsNode.module;
+  const {middleware, routes} = owndir.O;
 
-    // if we are pointing directly at a file that we are allowed to read, expose it directly with the lowest priority
-    const directAccessHandler = await fsNodeDirectAccessHandler(root.walk(url.pathname));
+  const isRoot = fsNode.relativePath == "";
+  const relPath = isRoot ? "" : "/" + fsNode.name;
+  const relPathLen = relPath.length;
 
+  const middlewareRouter = specRouter(middleware, owndir);
+  const childRouter = childrenRouter(fsNode);
+  const routesRouter = specRouter(routes, owndir);
 
-    if (directAccessHandler) {
-      reqStack.push(pathLiteralRouter(req.path, directAccessHandler));
+  const fsNodeHandler = async function (req, res, next) {
+    /*
+    console.log(
+      "fsNodeReqHandler", 
+      owndir.directory.absolutePath, 
+      reqInfo(req),
+      {isRoot, "fsNode.relativePath": fsNode.relativePath, relPath, relPathLen},
+      fsNode,
+      fsNode.module
+    ); 
+    //*/
+
+    if (!req.path.startsWith(relPath)) {
+      // console.log("!req.path.startsWith(relPath)", req.path, relPath)
+      return next();
     }
 
-    const handler = stackHandler(reqStack);
-    handler(req, res, next);
+    // mimic express' request path shenanigans
+    const {url, baseUrl} = req;
+    const resetAndExit = (err) => { req.url = url; req.baseUrl = baseUrl; next(err); }
+    req.baseUrl = relPath;
+    req.url = req.url.slice(relPathLen);
+
+    middlewareRouter(req, res, (err) => {
+      err ? resetAndExit(err) :
+      childRouter(req, res, (err) => {
+        err ? resetAndExit(err) :
+        routesRouter(req, res, resetAndExit)
+      })
+    });
   }
+
+  fsNodeHandlerCache[fsNode.path] = fsNodeHandler;
+  return fsNodeHandler;
 }
-
-
-
-
-
-
-

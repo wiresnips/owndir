@@ -384,9 +384,19 @@ Okay, I think that's enough of a framework to actually get started.
   2.1- rename "/module" to "/package" all throughout the build system
       - this shit is backwards and there's no reason for it
 
+
+>>>> I AM ROuGHLY HERE
+
+
+
+  2.2- refactor the routing into build/defaults/server/package/index.js
+
+
   3- refactor the router
       - strip out interface_html routing
       - build router ONCE, on startup
+
+      OKAY, WE DID THIS ONE OUT OF ORDER< BUT I THINK IT'S DONE
       
   4- circle back to `module.O.distribution`
 

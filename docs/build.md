@@ -116,7 +116,7 @@ Starting from the **assembled package**, **Bundle** handles the last mile into p
         - require `../../package` as a dependency, to access the **Assembled** package.
           - ie, by putting `{"dependencies": {"owndir.assembled": "../../package"}}` into `package.json`
         - set up a react-router that walks the owndir package hierarchy based on the url path, and renders from wherever that lands
-          - NOTICE: this is where the method that a package must provide to show a custom view comes from.
+          - NOTICE: this is where the interface that a package must provide to show a custom view comes from.
             In my work so far, I've decided that a package can implement `frame`, which 
           - NOTICE: yes, react. This decision IS made in the client bundler, but not in the `/package` portion. It's implicit in the default way that `esbuild` handles `.jsx` files.
         - inject the router into the DOM

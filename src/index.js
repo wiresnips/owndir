@@ -12,7 +12,7 @@ const { isDir, isFile } = require('../libs/utils/fs-utils.js')
 const assemble = require('./build/assemble.js')
 const bundle = require('./build/bundle.js')
 const fsInterface = require('./fsNode/interface_server.js')
-const { router } = require('./fsNode/router')
+const { router } = require('./fsNode/router.js')
 const { FsServer: ClientFsServerWs } = require('./fsNode/interface_client_ws.js')
 
 
@@ -49,7 +49,7 @@ var args = (require('yargs/yargs')(process.argv.slice(2))
   })
   .option('client-fs', {
     description: 'Enable client filesystem operations',
-    choices: ['none', 'http', 'ws'],
+    choices: ['none', 'ws'],
     default: 'ws',
     type: 'string'
   })
@@ -94,7 +94,6 @@ process.on('unhandledRejection', (error, promise) => {
 
 (async function () {
   const forceBuild = args.build;
-  const clientFsInterfaceHttp = (args.clientFs == 'http');
   const clientFsInterfaceWs = (args.clientFs == 'ws');
 
   const packageDir = resolve(buildDir, "package")
@@ -127,6 +126,7 @@ process.on('unhandledRejection', (error, promise) => {
 
   if (args.verbose) {
     app.use((req, res, next) => {
+      console.log("REQUEST:", req.originalUrl);
       res.on('finish', () => console.info(new Date().getTime(), req.method, req.originalUrl, res.statusCode));
       next();
     })
@@ -138,7 +138,7 @@ process.on('unhandledRejection', (error, promise) => {
   // but I'm not especially interested in exploring that right now, so here we are hardcoding
   app.use('/@/client.js', express.static(clientDistPath)); 
 
-  const owndirRouter = router(root, { fsInterface: clientFsInterfaceHttp });
+  const owndirRouter = router(root);
   app.use(owndirRouter)
 
 
