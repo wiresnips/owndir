@@ -12,8 +12,8 @@ const { isDir, isFile } = require('../libs/utils/fs-utils.js')
 const assemble = require('./build/assemble.js')
 const bundle = require('./build/bundle.js')
 const fsInterface = require('./fsNode/interface_server.js')
-const { router } = require('./fsNode/router.js')
-const { FsServer: ClientFsServerWs } = require('./fsNode/interface_client_ws.js')
+const router = require('./fsNode/router.js')
+const { FsServer: ClientFsServerWs } = require('./fsNode/interface_bridge_ws_server.js')
 
 
 var args = (require('yargs/yargs')(process.argv.slice(2))

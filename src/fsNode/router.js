@@ -3,9 +3,8 @@ const { resolve } = require('path')
 const Router = require('express').Router
 
 const { status, fsnErr } = require('./errors.js')
-const { FsRouter } = require('./interface_client_http.js')
 
-module.exports.router = FsReqHandler
+module.exports = FsReqHandler
 
 function reqInfo (req) {
   return {
@@ -88,6 +87,13 @@ function childrenRouter (fsNode) {
 }
 
 function FsReqHandler (fsNode) {
+  console.log("FsReqHandler", { 
+    fsNode, 
+    'fsNode.module': fsNode.module ,
+    'fsNode.root': fsNode.root 
+  })
+
+
   const cacheHit = fsNodeHandlerCache[fsNode.path];
   if (cacheHit) {
     return cacheHit;

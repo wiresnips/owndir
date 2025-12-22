@@ -1,6 +1,6 @@
 const _ = require('lodash');
 const { WebSocket } = require('ws');
-const { QueueStream } = require('../../libs/utils/queue.js')
+const { QueueStream } = require('../utils/queue.js')
 
 module.exports.FsServer = FsServer
 
