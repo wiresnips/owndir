@@ -131,3 +131,8 @@ Starting from the **assembled package**, **Bundle** handles the last mile into p
           - the client relies on a PLUGIN to inject a route which that serves `index.html`
           - the core inexplicably serves `/@/client.js` (which is the client `dist.js`)
             - why is this not also in the plugin? because the plugin doesn't know anything about `dist.js`, or where it is on disk!
+
+
+## FsNode Injection
+
+I'm not sure if this exactly belongs in build, but it's the next step before we can run, and it's not explained anywhere

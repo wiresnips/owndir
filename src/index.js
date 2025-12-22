@@ -6,9 +6,8 @@ const { resolve, relative } = require('path')
 const crypto = require('crypto')
 
 const express = require('express')
-const wsocket = require('ws')
 
-const { isDir, isFile } = require('../libs/utils/fs-utils.js')
+const { isDir, isFile } = require('./utils/fs.js')
 const assemble = require('./build/assemble.js')
 const bundle = require('./build/bundle.js')
 const fsInterface = require('./fsNode/interface_server.js')
@@ -79,17 +78,9 @@ if (!fs.statSync(path).isDirectory()) {
 const pathHash = crypto.createHash('sha1').update(path).digest('base64');
 const buildDir = resolve(__dirname, "..", "build", pathHash);
 
-
-
-
-
-
 process.on('unhandledRejection', (error, promise) => {
   console.log('Unhandled Rejection:', {error, promise});
 });
-
-
-
 
 
 (async function () {
@@ -104,48 +95,32 @@ process.on('unhandledRejection', (error, promise) => {
   const serverDistPath = await bundle(path, buildDir, "server", forceBuild);
   const clientDistPath = await bundle(path, buildDir, "client", forceBuild);
 
-  // if we turned off the run (presumably because we only wanted to build), we can drop out here
   if (!args.run) {
     return;
   }
 
-  // mmmkay, so if we were going to achieve symmetry between the client and server packages,
-  // in the sense that one of them is a pass-through and the other is a WHOLE THING,
-  // this next section of code is what we need to consider
-
-  // because this bottom section is very much equivalent to the staging portion of the client-side package
-  // but I inlined it without even noticing
-
-
-  const { OwnDir } = require(serverDistPath);
-  const FsInterface = fsInterface.init(path, OwnDir);
-  const root = FsInterface('/');
-  OwnDir.injectFsInterface(FsInterface);
-
-  const app = express() 
-
+  const app = express();
   if (args.verbose) {
     app.use((req, res, next) => {
-      console.log("REQUEST:", req.originalUrl);
+      console.info(new Date().getTime(), "REQUEST:", req.originalUrl);
       res.on('finish', () => console.info(new Date().getTime(), req.method, req.originalUrl, res.statusCode));
       next();
     })
   }
 
-  // just hardcode this shit for now
-  // there should be a flag to disable the client entirely,
-  // because it all _works_ if you ditch the SPA entirely and just use the server as a server
-  // but I'm not especially interested in exploring that right now, so here we are hardcoding
-  app.use('/@/client.js', express.static(clientDistPath)); 
+  const { OwnDir, Router } = require(serverDistPath);
+  const FsInterface = fsInterface.init(path);
+  OwnDir.injectFsInterface(FsInterface);
+  const fsNodeRoot = FsInterface('/');
 
-  const owndirRouter = router(root);
-  app.use(owndirRouter)
+  // these arguments are bullshit, I have not discovered the interface yet
+  // but I think (hope) I'm starting to converge towards something defensible
+  const owndirRouter = Router({
+    fsNodeRoot,
+    clientDistPath
+  })
 
-
-  // if we turned off the run (presumably because we only wanted to build), we can drop out here
-  if (!args.run) {
-    return;
-  }
+  app.use(owndirRouter);
 
   const server = app.listen(args.port, args.host, () => {
     console.log(`listening at ${JSON.stringify(server.address(), null, 2)}`)
@@ -153,18 +128,8 @@ process.on('unhandledRejection', (error, promise) => {
 
   // in parallel, stand up the websocket 
   if (clientFsInterfaceWs) {
-    ClientFsServerWs(server, root);
+    ClientFsServerWs(server, fsNodeRoot);
   }
-
-
-
-
-
-
-
-
-
-
 
 })()
 //*/

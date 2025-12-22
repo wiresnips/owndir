@@ -384,21 +384,20 @@ Okay, I think that's enough of a framework to actually get started.
   2.1- rename "/module" to "/package" all throughout the build system
       - this shit is backwards and there's no reason for it
 
-
->>>> I AM ROuGHLY HERE
-
-
-
   2.2- refactor the routing into build/defaults/server/package/index.js
-
+      - not EXACTLY what happened, but close enough
 
   3- refactor the router
       - strip out interface_html routing
       - build router ONCE, on startup
-
-      OKAY, WE DID THIS ONE OUT OF ORDER< BUT I THINK IT'S DONE
       
-  4- circle back to `module.O.distribution`
+  3.1- refactor the code duplicated between client and server into a shared module
+      - this was not _really_ done, but the symlink is carrying the weight for now
+
+
+<<<<<<<<<<<< WE ARE HERE
+
+  4 - circle back to building _shared_ static assets
 
 
 
@@ -418,6 +417,8 @@ okay, hear me out:
 
   1- no fucking around with some subsystem to generate static assets. 
       We can build that later if we want to, but we don't HAVE to
+
+      okay, here's a thought about that: if the BUILD is reinjecting SHARED DATA, then there's a lot of potential trouble wrt file conflicts
 
   2- the server can serve this HTML as a matter of convention, and it becomes FAR less unreasonable,
       because it's baked into the `.owndir` itself - it isn't a contrived dance between client-build, server-build, and three different plugins or whatever
