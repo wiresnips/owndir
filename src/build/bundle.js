@@ -69,7 +69,7 @@ async function bundle (path, buildDir, platform, forceBuild) {
   else {
     console.log(`using default ${platform} package`);
     const defaultPlatformPackageDir = resolve(__dirname, "defaults", platform, "package");
-    await fsp.cp(defaultPlatformPackageDir, platformPackageDir, {recursive: true});
+    await fsp.cp(defaultPlatformPackageDir, platformPackageDir, {dereference: true, recursive: true});
   }
 
 
