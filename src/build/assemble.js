@@ -8,7 +8,7 @@ const fs = require('fs')
 const fsp = require('fs/promises')
 const pathUtil = require('path')
 const { resolve, relative } = pathUtil
-const { exists, isDir, mkdir, dirChildren } = require('../../libs/utils/fs-utils.js')
+const { exists, isDir, mkdir, dirChildren } = require('../utils/fs.js')
 
 
 const genSym = (() => {

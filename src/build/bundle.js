@@ -7,7 +7,7 @@
 
 const fsp = require('fs/promises')
 const { resolve } = require('path')
-const { isFile, isDir, mkdir } = require('../../libs/utils/fs-utils.js')
+const { isFile, isDir, mkdir } = require('../utils/fs.js')
 const install = require('./yarn-install.js')
 
 const defaultBundlerServer = require('./defaults/server/bundler/index.js')
@@ -31,7 +31,6 @@ async function bundle (path, buildDir, platform, forceBuild) {
   const yarnGlobalFolder = resolve(buildDir, ".yarn");
   const platformDir = resolve(buildDir, platform);
   const distPath = resolve(platformDir, "dist.js");
-
 
   if (!forceBuild && (await isFile(distPath))) {
     return distPath;
