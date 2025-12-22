@@ -1,4 +1,4 @@
-
+// in the client, this requires a polyfill for the node globals
 const { resolve, relative, basename } = require('path')
 const { status, fsnErr } = require('./errors.js')
 
@@ -25,7 +25,7 @@ const InterfaceMethods = [
 ]
 
 
-function Directory (root, OwnDir, Interface) {
+function Directory (root, Interface) {
 
   const DirProto = {
     walk: function (path) {
@@ -50,14 +50,14 @@ function Directory (root, OwnDir, Interface) {
       return this.walk('/')
     },
 
-    get module() {
-      return OwnDir(this.relativePath);
-    },
-  
+    // this getter will exist on fsNode, injected by OwnDir.injectFsInterface
+    // get module() {
+    //   return OwnDir(this.relativePath);
+    // },
+
     text: async function (encoding) {
       return this.readAll().then(buffer => decoder(encoding).decode(buffer))
     },
-
 
     // this "works" in the client, but it ends up being _very_ chatty
     // consider moving to the layer below, even though it doesn't really belong there
