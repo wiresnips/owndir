@@ -144,11 +144,7 @@ function FsReqHandler (fsNode) {
 
   const router = express.Router();
   const staticPath = resolve(fsNode.absolutePath, ".owndir", "static");
-  router.use(express.static(staticPath, {setHeaders: function (res, path, stat) {
-
-    console.log("static file:", {path, stat, res})
-
-  }}));
+  router.use(express.static(staticPath));
   router.use(fsNodeHandler);
 
 

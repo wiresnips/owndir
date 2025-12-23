@@ -115,10 +115,7 @@ process.on('unhandledRejection', (error, promise) => {
 
   // these arguments are bullshit, I have not discovered the interface yet
   // but I think (hope) I'm starting to converge towards something defensible
-  const owndirRouter = Router({
-    fsNodeRoot,
-    clientDistPath
-  })
+  const owndirRouter = Router({ fsNodeRoot })
 
   app.use(owndirRouter);
 

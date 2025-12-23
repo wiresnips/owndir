@@ -1,6 +1,24 @@
 <!DOCTYPE html>
 <html>
   <head>
+
+    <script>
+      // this is some fancy bullshit to anchor ourselves at the root without losing what we have
+      const ___url = new URL(window.location.href);
+      if (___url.pathname != "/") {
+        ___url.searchParams.set("___redirectedToRootFrom", ___url.pathname);
+        ___url.pathname = "/";
+        window.location.replace(___url.toString());
+      }
+    </script>
+
+    <!-- 
+      this is also part of the fancy bullshit:
+      documents are rooted at the relative path they LOADED from, regardless of updates, which can fuck with relative paths
+      thus, when we snap back to '/' and then force the relative path, we can set this as well
+    -->
+    <base href="/"></base>
+
     <!-- dist.js is injected into /assets by the bundler -->
     <script src="dist.js"></script>
     <title>lol fuck</title>
