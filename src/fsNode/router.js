@@ -1,6 +1,6 @@
 const _ = require('lodash')
 const { resolve } = require('path')
-const Router = require('express').Router
+const express = require('express')
 
 const { status, fsnErr } = require('./errors.js')
 
@@ -23,7 +23,7 @@ const fsNodeHandlerCache = {};
 
 
 function specRouter (spec, owndir) {
-  const router = Router();
+  const router = express.Router();
   router.label = `specRouter ${owndir.directory.absolutePath}`
   router.spec = spec
 
@@ -142,6 +142,16 @@ function FsReqHandler (fsNode) {
     });
   }
 
-  fsNodeHandlerCache[fsNode.path] = fsNodeHandler;
-  return fsNodeHandler;
+  const router = express.Router();
+  const staticPath = resolve(fsNode.absolutePath, ".owndir", "static");
+  router.use(express.static(staticPath, {setHeaders: function (res, path, stat) {
+
+    console.log("static file:", {path, stat, res})
+
+  }}));
+  router.use(fsNodeHandler);
+
+
+  fsNodeHandlerCache[fsNode.path] = router;
+  return router;
 }

@@ -62,15 +62,29 @@ async function bundle (path, buildDir, platform, forceBuild) {
   const platformPackageDir = resolve(platformDir, "package");
   const customPlatformPackageDir = resolve(path, ".owndir", "build", platform, "package");
   if (await isDir(customPlatformPackageDir)) {
-    console.log(`using custom ${platform} package`)
+    // console.log(`using custom ${platform} package`)
     await fsp.cp(customPlatformPackageDir, platformPackageDir, {recursive: true});
   }
   else {
-    console.log(`using default ${platform} package`);
+    // console.log(`using default ${platform} package`);
     const defaultPlatformPackageDir = resolve(__dirname, "defaults", platform, "package");
     await fsp.cp(defaultPlatformPackageDir, platformPackageDir, {dereference: true, recursive: true});
   }
 
+  // copy the platform-statics into <platformDir>/static, either from the default build OR from the custom build
+  const platformStaticDir = resolve(platformDir, "static");
+  const customPlatformStaticDir = resolve(path, ".owndir", "build", platform, "static");
+  if (await isDir(customPlatformStaticDir)) {
+    // console.log(`using custom ${platform} /static`)
+    await fsp.cp(customPlatformStaticDir, platformStaticDir, {recursive: true});
+  }
+  else {
+    const defaultPlatformStaticDir = resolve(__dirname, "defaults", platform, "static");
+    if (await isDir(defaultPlatformStaticDir)) {
+      // console.log(`using default ${platform} /static`);
+      await fsp.cp(defaultPlatformStaticDir, platformStaticDir, {dereference: true, recursive: true});
+    }
+  }
 
   // install the platform package dependencies
   await install(platformPackageDir, yarnGlobalFolder);
@@ -80,6 +94,12 @@ async function bundle (path, buildDir, platform, forceBuild) {
   await bundler(platformPackageDir, distPath);
   const t2 = (new Date()).getTime();
   console.log(`    bundle took ${t2-t1} ms`);
+
+  // if present, copy any static assets 
+  const owndirStaticDir = resolve(path, ".owndir", "static");
+  if (await isDir(platformStaticDir)) {
+    await fsp.cp(platformStaticDir, owndirStaticDir, {dereference: true, recursive: true});
+  }
 
   return distPath;
 }
