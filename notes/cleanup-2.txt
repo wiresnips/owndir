@@ -67,11 +67,14 @@ Okay, so let's say that's the next thing I want to build - what do I need to do?
     BUT, I want to be able to do it without needing NodeJS (ie, so I can run it on my phone)
 
     THEREFORE, here's where we go:
-      1- commit to chrome (or equivalent) so that we can have filesystem access from the browser
-      2- use a Service Worker proxy to emulate the nodejs server 
+      - commit to chrome (or equivalent) so that we can have filesystem access from the browser
+          first cut at this will be an fsNode interface that hits the filesystem directly
+      - use a Service Worker proxy to emulate the nodejs server 
           https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API
           the idea here is, to have something that is entirely self-contained, no nodejs required
     
+    there's a secondary issue, which is that android does not play nicely with file:// html 
+    perhaps this can be resolved by pckaging everythig into a PWA? that's a problem for later, right now we focus on proving out the concept of serverless
 
 
 
