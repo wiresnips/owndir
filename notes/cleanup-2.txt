@@ -1,0 +1,107 @@
+
+# Next Steps:
+
+okay, what do we _actually_ want from wrtc? is there a reason not to just use websockets for that?
+
+  I think I was originally looking at wrtc for p2p, which is appealing because it lets me bypass sync issues?
+
+  There's also the notion that it lets me skip having to open a "real" port onto the open internet, which is perhaps _more_ persuasive...
+
+  Yeah, I think that's the part that I wanted
+
+
+Okay, so let's say that's the next thing I want to build - what do I need to do?
+
+  welll ... this has to live in the default server and client implementations, right?
+
+  so, here's what we need
+    - select a server-side library
+
+        https://github.com/node-webrtc/node-webrtc        
+          most popular nodejs implementation, and ALSO out-of-date 
+          I think tha tmeans tha tit doesn't work in newer versions of node?
+        
+        https://github.com/WonderInventions/node-webrtc   
+          forked from node-webrtc, does not appear complete 
+          not clear if the implementation meets the spec, it claims that it hopes to eventually
+
+        https://github.com/versatica/mediasoup 
+          this is a lot more focused on the media side of things
+          honestly, I'm struggling to see through the media-management theory to see how I might use the API
+
+
+      part of the problem that I have here is, there's a LOT of group-video-chat problem-solving mixed in, and I'm not (yet) trying to build that
+
+
+        https://github.com/mappum/electron-webrtc
+          okay, this is pretty funny - seems like the kinda bullshit that I would get up to, TBH
+          but also, no thanks for now
+
+
+      I kinda think that what I'm looking for is this:
+        https://github.com/pion/webrtc
+
+        - it's GO, not js, so that's an immediate problem
+        - but it can compile to WASM maybe?
+        - abd also nothing else I've looked at seriously is JS anyways
+
+        alright, this will of course be harder than I thought, because pion/webrtc is trying to support running in the _browser_, so it's provided alternate implementations of its API that pass through the the BROWSER methods
+
+          this is the opposite of what I'm trying to do
+          okay, so maybe WASM isn't the approach for me
+
+          I might want to go the shared-object route instead, 
+            compile down to c and then wrap that in a js interface layer
+
+
+    - implement the signalling-over-filesystem  ... ?
+
+
+  Okay, no, this is NOT going to work. There is no free lunch here, webrtc is NOT going to allow me to establish peer-to-peer connections without using SOME public IP address. As soon as both peers are behind a NAT (ie, a phone on data and a computer behind a router, which is THE PROBLEM that I'm trying to solve), STUN fails and TURN becomes necessary.
+
+    Fuck me right straight directly up the bunghole.
+
+
+  SO, we fall back towards the original vision, which requires everyone to run a server.
+
+    BUT, I want to be able to do it without needing NodeJS (ie, so I can run it on my phone)
+
+    THEREFORE, here's where we go:
+      1- commit to chrome (or equivalent) so that we can have filesystem access from the browser
+      2- use a Service Worker proxy to emulate the nodejs server 
+          https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API
+          the idea here is, to have something that is entirely self-contained, no nodejs required
+    
+
+
+
+
+
+# rough edges:
+
+Presented in the order I thought of them, not in order of importance or execution
+
+
+1- build documentation
+    the bones are still the same, but we have pretty thoroughly overhauled the _interface_ of the build system
+      server/package needs to provide exports.OwnDir and exports.Router, what's that about?
+
+    what's the current twisty client/server relationship that makes everything still work?
+      we don't have `/@/client.js` anymore, that's good
+      
+      we DO have some god damned bullshit to keep initial requests into subfolders working
+        ie, go to a subfolder and then refresh the page
+        see: `owndirRouter.use("*", express.static(resolve(fsNodeRoot.absolutePath, ".owndir", "static")));`
+
+    document the expectations of the default client build
+      `frame`
+
+    document the starting point of creating a custom build
+      symlinks are tricky, `cp -rL /source /destination`
+
+
+2- document the relationship between FsInterface and OwnDir
+    honestly, I don't even know where to start with this one, but it feels important
+
+
+

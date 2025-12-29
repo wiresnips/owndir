@@ -1,6 +1,8 @@
 const { OwnDir } = require('owndir.package');
-
 import fsInterfaceWs from "./fsNode/interface_bridge_ws_client.js"
+
+const FsInterface = await fsInterface.init();
+OwnDir.injectFsInterface(FsInterface);
 
 import React from 'react';
 import ReactDOM from 'react-dom';
@@ -26,10 +28,7 @@ function OwndirRouter ({ root }) {
   </>
 }
 
-async function renderOwndir (fsInterface) {
-  const FsInterface = await fsInterface.init(OwnDir);
-  OwnDir.injectFsInterface(FsInterface);
-
+(async function () {
   const directory = await FsInterface('/');
   window.directory = directory;
 
@@ -49,8 +48,5 @@ async function renderOwndir (fsInterface) {
     </BrowserRouter>,
     document.getElementById('csr-plugin-root-element')
   );
-}
-
-renderOwndir(fsInterfaceWs);
-
+})()
 
