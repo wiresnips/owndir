@@ -140,7 +140,7 @@ async function Interface () {
     move: async function (path, opts) {
       return new Promise((resolve, reject) => {
         const callback = (error, newPath) => { newPath ? resolve(this.root.walk(newPath)) : reject(error); cleanup(reqId); };
-        const reqId = send(this, METHODS.move, null, callback);
+        const reqId = send(this, METHODS.move, [path, opts], callback);
       })
     },
 

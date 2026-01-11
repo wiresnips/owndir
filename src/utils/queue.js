@@ -68,7 +68,7 @@ function AsyncQueue (initialCapacity) {
     waitlist: Queue(),
 
     async pullOrWait () {
-      console.log("AsyncQueue pullOrWait 1", { queue: this })
+      // console.log("AsyncQueue pullOrWait 1", { queue: this })
       const item = this.pull();
       if (item !== undefined) {
         return item;
@@ -77,7 +77,7 @@ function AsyncQueue (initialCapacity) {
     },
 
     push (item) {
-      console.log("AsyncQueue push 1", { queue: this, item })
+      // console.log("AsyncQueue push 1", { queue: this, item })
 
       // if we have a waitlist, resolve immediately
       if (this.waitlist.size > 0) {
@@ -109,9 +109,9 @@ function QueueStream (initialCapacity, queueingStrat) {
   
   const stream = new ReadableStream({
     async pull (controller) {
-      console.log("QueueStream pull 1", { queue })
+      // console.log("QueueStream pull 1", { queue })
       const chunk = await queue.pullOrWait();
-      console.log("QueueStream pull 2", { chunk })
+      // console.log("QueueStream pull 2", { chunk })
       if (chunk) {
         return controller.enqueue(chunk);
       } else {
