@@ -47,7 +47,8 @@ function OwndirRouter ({ root }) {
     <BrowserRouter>
       <OwndirRouter root={directory} />
     </BrowserRouter>,
-    document.getElementById('csr-plugin-root-element')
+    // document.getElementById('owndir-root')
+     document.getElementsByTagName("body")[0]
   );
 })()
 
