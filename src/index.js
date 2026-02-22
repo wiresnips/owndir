@@ -75,7 +75,7 @@ if (!fs.statSync(path).isDirectory()) {
 
 // we store the built artifacts "here" (with the owndir-server)
 // because we want to keep it (faster launch), and DON'T want to pollute the owndir itself
-const pathHash = crypto.createHash('sha1').update(path).digest('base64');
+const pathHash = crypto.createHash('sha1').update(path).digest('base64url');
 const buildDir = resolve(__dirname, "..", "build", pathHash);
 
 process.on('unhandledRejection', (error, promise) => {
