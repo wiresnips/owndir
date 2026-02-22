@@ -1,3 +1,4 @@
+const { resolve } = require('path')
 const esbuild = require('esbuild')
 const { sassPlugin } = require('esbuild-sass-plugin')
 const { NodeModulesPolyfillPlugin } = require('@esbuild-plugins/node-modules-polyfill')
@@ -7,6 +8,8 @@ const { injectDirnameFilenamePlugin } = require('./plugin-inject-dirname-filenam
 const { styleLoaderPlugin } = require('./plugin-style-loader.js')
 
 module.exports = async function bundle (src, dst) {
+
+
   return esbuild.build({
     platform: 'browser',
     entryPoints: [src],
@@ -15,7 +18,7 @@ module.exports = async function bundle (src, dst) {
     minify: false,
     sourcemap: 'inline',
     plugins: [
-      sassPlugin(),
+      sassPlugin({ loadPaths: [resolve(src, "node_modules")] }),
       NodeModulesPolyfillPlugin(), 
       NodeGlobalsPolyfillPlugin(), 
       externalizeBinariesPlugin, 
