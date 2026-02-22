@@ -380,7 +380,7 @@ Okay, I think that's enough of a framework to actually get started.
           OR
 
           I need to make that the job of the execution substrate (like server does), 
-            ie by forcing the HTML to be some fixed thing that inclues that work
+            ie by forcing the HTML to be some fixed thing that includes that work
             like is currently being done by the react-csr plugin
 
 

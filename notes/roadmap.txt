@@ -1,6 +1,4 @@
 
-TOKEN is broken right now
-
 
 Component CSS
 =============
@@ -70,14 +68,6 @@ Relative Import Paths
 
 
 
-replace Express
-=========================================
-
-	the fact that I can't route to a path that contains "(" is a bridge too far
-	I don't want to fuck with that shit TODAY, but that's gonna be the next major refactor
-
-
-
 plugin distribution mechanism
 =============================
 	a postinstall script that moves the plugin from node_modules up a level
@@ -105,18 +95,9 @@ plugin distribution mechanism
 Loose Ends
 ==========
 
-	hardcoded client.js path
-
-	solution to bundling fsNode_client.js
-		once I get around to experimenting with a plugin-distribution mechanism, 
-		maybe this will get folded into that?
-
 	there might be some shenanigans WRT windows vs posix paths, ie foo/bar/baz vs foo\bar\baz
 		because a lot of this shit runs server-side AND client-side, consider normalizing paths to posix
 		this might entail replacing `require('path')` with `require('path').posix` everywhere
-
-	Current client-side fsNode.write assumed that `fetch` could send ReadableStreams, 
-		which ranges between flatly false in firefox to barely true in chrome
 
 
 browser-specfic values are not stubbed in the server
@@ -127,12 +108,6 @@ if you use `window.location.host` to get the current url, from a _module_, this 
 	this is apparent and confusing if you reference it from the root - if you reference it from inside a function that's never called server-side, everything's fine
 
 
-
-how to deal with static assets?
-===============================
-
-	I want some easy way for plugins to declare, and then make use of, static assets
-	whadaya wanna bet this flows through FsNode somehow?
 
 
 crashes and failed compilation
