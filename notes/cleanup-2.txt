@@ -77,6 +77,12 @@ Okay, so let's say that's the next thing I want to build - what do I need to do?
     perhaps this can be resolved by pckaging everythig into a PWA? that's a problem for later, right now we focus on proving out the concept of serverless
 
 
+    okay, RIGHT - the reason we moved away from that model initially is, the file system api has a very limited ability to watch files for changes
+
+
+
+
+
 
 
 
@@ -95,6 +101,7 @@ Presented in the order I thought of them, not in order of importance or executio
       we DO have some god damned bullshit to keep initial requests into subfolders working
         ie, go to a subfolder and then refresh the page
         see: `owndirRouter.use("*", express.static(resolve(fsNodeRoot.absolutePath, ".owndir", "static")));`
+        see: ___redirectedToRootFrom
 
     document the expectations of the default client build
       `frame`
@@ -102,9 +109,16 @@ Presented in the order I thought of them, not in order of importance or executio
     document the starting point of creating a custom build
       symlinks are tricky, `cp -rL /source /destination`
 
+    document the behaviour of the default style loading plugins
+      esbuild-sass-plugin
+        allows style import via `import "style.scss"`
+        creates `build/<hash>/client/dist.css`
+      plugin-style-loader.js
+        injects code that inlines `dist.css` into a style tag and appends it to <head />
 
-2- document the relationship between FsInterface and OwnDir
-    honestly, I don't even know where to start with this one, but it feels important
+      downside of using this vs the css plugin is, IT PASSES THROUGH FUCKING BUILD
 
-
-
+2- RENAME?
+  I think that `OwnDir` is proably too similar to OwnCloud
+  
+  candidate name: spiderplant🪴

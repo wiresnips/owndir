@@ -1,0 +1,44 @@
+
+@use "@picocss/pico/scss/pico" with (
+  $enable-semantic-container: true,
+  $enable-classes: false,
+  $theme-color: "lime"
+);
+
+@use "@picocss/pico/scss/colors" as *;
+
+
+.test {
+
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+
+    progress {
+      width: 2.5rem;
+    }
+  }
+
+  &.waiting header { background-color: $zinc-100; }
+  &.running header { background-color: $amber-50; }
+  &.passed header { background-color: $green-150; }
+  &.failed header { background-color: $pink-300; }
+
+  .results {
+    display: flex;
+    flex-wrap: wrap;
+
+    .result {
+      width: 1rem;
+      height: 1rem;
+      margin-right: 0.1em;
+
+      border-radius: 20%;
+      &:hover { border: 2px solid black; }
+
+      &.passed { background-color: $green-150; }
+      &.failed { background-color: $pink-300; }
+    } 
+  }
+}

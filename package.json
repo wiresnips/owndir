@@ -15,7 +15,9 @@
     "build": "node src/index.js -b -r false ~/central",
     "test": "time npm run build; date; npm run run",
     "cleanup": "rm -R ./build; exit 0",
-    "clean-test": "npm run cleanup; npm run test"
+    "clean-test": "npm run cleanup; npm run test",
+    "reset-test-server": "rm -rf test-server/fixtures || true; cp -r test-server/_fixtures test-server/fixtures",
+    "test-server": "npm run reset-test-server; node src/index.js -b -v -p 3233 test-server"
   },
   "bin": {
     "owndir": "./bin/owndir.js"
