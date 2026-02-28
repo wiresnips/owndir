@@ -91,9 +91,13 @@ async function bundle (path, buildDir, platform, forceBuild) {
 
   // bundle the platform
   const t1 = (new Date()).getTime();
-  await bundler(platformPackageDir, distPath);
+  const success = await bundler(platformPackageDir, distPath);
   const t2 = (new Date()).getTime();
   console.log(`    bundle took ${t2-t1} ms`);
+
+  if (!success) {
+    return false;
+  }
 
   // if present, copy any static assets 
   const owndirStaticDir = resolve(path, ".owndir", "static");

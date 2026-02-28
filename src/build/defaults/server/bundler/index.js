@@ -9,6 +9,7 @@ module.exports = async function bundle(src, dst) {
     // await webpack(src, dst);
     await esbuild(src, dst);
     console.log('bundle (server) succeeded');
+    return true;
   } catch (err) {
     console.log('bundle (server) failed');
     console.error(err);

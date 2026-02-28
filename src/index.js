@@ -93,7 +93,16 @@ process.on('unhandledRejection', (error, promise) => {
   }
 
   const serverDistPath = await bundle(path, buildDir, "server", forceBuild);
+  if (!serverDistPath) {
+    console.log("server build failed");
+    return;
+  }
+
   const clientDistPath = await bundle(path, buildDir, "client", forceBuild);
+  if (!clientDistPath) {
+    console.log("client build failed");
+    return;
+  }
 
   if (!args.run) {
     return;

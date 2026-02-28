@@ -90,8 +90,17 @@ Okay, so let's say that's the next thing I want to build - what do I need to do?
 
 Presented in the order I thought of them, not in order of importance or execution
 
+  RENAME?
+    I think that `OwnDir` is proably too similar to OwnCloud
+    
+    candidate name: spiderplant🪴
 
-1- build documentation
+  in the client, `absolutePath` and `relativePath` don't seem to actually mean anything
+    maybe get rid of them in that context?
+
+  bundle should FAIL when compilation fails
+
+  build documentation 
     the bones are still the same, but we have pretty thoroughly overhauled the _interface_ of the build system
       server/package needs to provide exports.OwnDir and exports.Router, what's that about?
 
@@ -118,7 +127,3 @@ Presented in the order I thought of them, not in order of importance or executio
 
       downside of using this vs the css plugin is, IT PASSES THROUGH FUCKING BUILD
 
-2- RENAME?
-  I think that `OwnDir` is proably too similar to OwnCloud
-  
-  candidate name: spiderplant🪴
