@@ -122,7 +122,7 @@ async function Interface () {
         return this.walk(path).info();
       }
       return new Promise((resolve, reject) => {
-        const callback = (error, fsNodeInfo) => { fsNodeInfo ? resolve(fsNodeInfo) : reject(error); cleanup(reqId); };
+        const callback = (error, fsNodeInfo) => { !error ? resolve(fsNodeInfo) : reject(error); cleanup(reqId); };
         const reqId = send(this, METHODS.info, null, callback);
       })
     },
@@ -279,13 +279,13 @@ async function Interface () {
         // don't know if I trust this yet, but it also hasn't really come up
         if (data instanceof stream.Readable) {
           for await (const chunk of data) {
-              if (!reqId) {
-                // console.log("SEND", [null, null, METHODS.write, [await toa(chunk)]])
-                reqId = send(this, METHODS.write, [await toa(chunk), opts])
-              } else {
-                // console.log("SEND", [reqId, null, METHODS.write, [await toa(chunk)]])
-                socket.send(JSON.stringify([reqId, null, METHODS.write, [await toa(chunk)]]));
-              }
+            if (!reqId) {
+              // console.log("SEND", [null, null, METHODS.write, [await toa(chunk)]])
+              reqId = send(this, METHODS.write, [await toa(chunk), opts])
+            } else {
+              // console.log("SEND", [reqId, null, METHODS.write, [await toa(chunk)]])
+              socket.send(JSON.stringify([reqId, null, METHODS.write, [await toa(chunk)]]));
+            }
           }  
         }
         else {
