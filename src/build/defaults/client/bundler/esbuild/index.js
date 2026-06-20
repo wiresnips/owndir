@@ -27,8 +27,14 @@ module.exports = async function bundle (src, dst) {
     ]
   }).then(result => {
       console.log('bundle (client) succeeded', result)
-      result.errors.forEach(error => console.error(error))
-      result.warnings.forEach(warning => console.warn(warning))
+
+      if (result.errors?.length > 0) {
+        console.log('bundle (client) failed', err)
+        result.errors.forEach(error => console.error(error))
+        return false
+      }
+
+      result.warnings.forEach(warning => console.warn(warning))      
       return result
   }).catch(err => {
       console.log('bundle (client) failed', err)
