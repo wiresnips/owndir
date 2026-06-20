@@ -19,7 +19,7 @@ Okay, so let's say that's the next thing I want to build - what do I need to do?
 
         https://github.com/node-webrtc/node-webrtc        
           most popular nodejs implementation, and ALSO out-of-date 
-          I think tha tmeans tha tit doesn't work in newer versions of node?
+          I think that means that it doesn't work in newer versions of node?
         
         https://github.com/WonderInventions/node-webrtc   
           forked from node-webrtc, does not appear complete 
