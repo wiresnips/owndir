@@ -2,7 +2,7 @@
 @use "@picocss/pico/scss/pico" with (
   $enable-semantic-container: true,
   $enable-classes: false,
-  $theme-color: "lime"
+  $theme-color: "sand"
 );
 
 @use "@picocss/pico/scss/colors" as *;
@@ -13,10 +13,22 @@
   header {
     display: flex;
     justify-content: space-between;
-    align-items: baseline;
+    align-items: center;
+    gap: 1rem;
+
+    &> * { flex-grow: 0; }
+    &> strong { flex-grow: 1; }
 
     progress {
       width: 2.5rem;
+      margin-bottom: 0;
+    }
+
+    button {
+      --theme-color: "slate";
+      padding: 0;
+      width: 2rem;
+      height: 2rem;
     }
   }
 
@@ -28,17 +40,28 @@
   .results {
     display: flex;
     flex-wrap: wrap;
+    gap: 0.25rem;
+
+    &.expandLabels {
+      flex-direction: column;
+    }
 
     .result {
-      width: 1rem;
-      height: 1rem;
-      margin-right: 0.1em;
+      display: flex;
+      align-items: baseline;
+      gap: 0.25rem;
 
-      border-radius: 20%;
-      &:hover { border: 2px solid black; }
+      .result-indicator {
+        width: 1rem;
+        height: 1rem;
 
-      &.passed { background-color: $green-150; }
-      &.failed { background-color: $pink-300; }
-    } 
+        border-radius: 20%;
+        &:hover { border: 2px solid black; }
+
+        &.passed { background-color: $green-150; }
+        &.failed { background-color: $pink-300; }
+      }
+    }
+
   }
 }

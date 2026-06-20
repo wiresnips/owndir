@@ -28,7 +28,21 @@ import "./relies-on-global-foo.js"
 
 const _ = require('lodash')
 
+// https://github.com/flexdinesh/browser-or-node/blob/master/src/index.js
+const inServer = (
+  typeof process !== "undefined" &&
+  process.versions != null &&
+  process.versions.node != null
+);
+
+globalThis.inServer = inServer;
+globalThis.inBrowser = !inServer;
+
 export const tests = [];
+
+if (inBrowser) {
+  window.tests = tests;
+}
 
 export async function runTests (updateTestResults) {
   const updateFn = () => updateTestResults([...tests]);
@@ -51,13 +65,13 @@ async function runTest (test) {
   ACTIVE_TEST = test;
   try {
     await test.testFn()
-              .catch(e => {
-                console.error("uncaught exception", e);
+              .catch(exception => {
+                console.error("uncaught exception", exception);
                 test.results.push({exception});
               });
   }
   catch (exception) {
-    console.error("uncaught exception", e);
+    console.error("uncaught exception", exception);
     test.results.push({exception});
   }
   finally {
@@ -79,13 +93,26 @@ globalThis.test = function (label, testFn) {
     },
     addResult: function (...newResults) {
       this.results.push(...newResults);
+      
+      for (const result of newResults) {
+        if (!result.pass) {
+          console.error(
+            ["Fail", label, result.message].filter(x => !!x).join("\n  "), "\n",
+            result
+          )
+        }
+      }
+
       if (this.updateFn) {
         this.updateFn();
       }
     }
   }
-
   tests.push(test);
+}
+
+globalThis.sleepFor = (ms) => {
+    return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 globalThis.is = (value, message) => {
@@ -99,7 +126,7 @@ globalThis.is = (value, message) => {
 
 globalThis.isEq = (value1, value2, message) => {
   ACTIVE_TEST.addResult({
-    pass: value1 == value2,
+    pass: _.isEqual(value1, value2),
     message,
     test: "isEq",
     values: [value1, value2]
@@ -113,12 +140,5 @@ globalThis.isEq = (value1, value2, message) => {
 
 
 
-// https://github.com/flexdinesh/browser-or-node/blob/master/src/index.js
-globalThis.inServer = (
-  typeof process !== "undefined" &&
-  process.versions != null &&
-  process.versions.node != null
-);
 
-globalThis.inBrowser = !inServer;
 

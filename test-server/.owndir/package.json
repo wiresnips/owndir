@@ -6,6 +6,7 @@
     "react-dom": "^18.2.0",
     "luxon": "^3.1.0",
     "lodash": "^4.17.21",
+    "@mdi/font": "7.4.47",
     "@picocss/pico": "^2.1.0"
   }
 }
