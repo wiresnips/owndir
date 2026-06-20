@@ -17,6 +17,17 @@ module.exports = async function bundle (src, dst) {
     bundle: true,
     minify: false,
     sourcemap: 'inline',
+    loader: {
+      '.woff2': 'dataurl',
+      // probably only woff2 is needed, the others are included for completeness
+      // but if you wanted to write a custom bundler for a smaller dist, changing these to 'empty' might be a good place to start
+      '.ttf': 'dataurl',
+      '.otf': 'dataurl',
+      '.woff': 'dataurl',
+      '.eot': 'dataurl',
+
+      // probably gonna want to add a bunch of image formats here as well, but it hasn't come up yet
+    },
     plugins: [
       sassPlugin({ loadPaths: [resolve(src, "node_modules")] }),
       NodeModulesPolyfillPlugin(), 
