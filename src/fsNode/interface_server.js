@@ -98,7 +98,13 @@ const Interface = {
       throw fsnErr(`${this.relativePath} cannot be written`, status.forbidden)
     }
 
-    await mkdir(this.absolutePath)
+    try {
+      await mkdir(this.absolutePath)
+    } catch (exception) {
+      console.error("unable to mkDir", exception);
+      throw fsnErr(`unable to mkDir ${this.relativePath}`, status.serverError);
+    }
+
     return this;
   },
 
@@ -258,12 +264,19 @@ const Interface = {
       throw fsnErr(`${this.relativePath} cannot be written`, status.forbidden)
     }
 
-    const exists = await this.info()
-    if (exists) {
-      const t = new Date();
-      fsp.utimes(this.absolutePath, t, t)
-    } else {
-      this.write(null, { flags: 'a' })
+    try {
+      const exists = await this.info()
+      if (exists) {
+        const t = new Date();
+        await fsp.utimes(this.absolutePath, t, t);
+      } else {
+          await this.write(null, { flags: 'a' })
+      }
+    } 
+
+    catch (exception) {
+      console.error("unable to touch", this.absolutePath, exception);
+      throw fsnErr(`unable to touch ${this.relativePath}`, status.serverError);
     }
 
     return this;
