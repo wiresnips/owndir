@@ -8,8 +8,8 @@ module.exports.injectDirnameFilenamePlugin = {
       { filter: /.\.(js|jsx)$/, namespace: "file" },
       async (args) => {
         const prefix = `
-var __filename = ${JSON.stringify(args.path)};          
-var __dirname = ${JSON.stringify(dirname(args.path))};          
+const __filename = ${JSON.stringify(args.path)};          
+const __dirname = ${JSON.stringify(dirname(args.path))};          
 `;
 
         const source = await fsp.readFile(args.path, "utf8");

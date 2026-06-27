@@ -111,7 +111,7 @@ async function assemble (src, dst) {
       const pluginDir = resolve(absPath, '.owndir', 'plugins')
       const plugins = await Promise.all(
         (await dirChildren(pluginDir))
-          .map(relPath => dependencySpec(src, resolve(pluginDir, relPath), dst))
+          .map(depPath => dependencySpec(src, depPath, dst))
        );
 
       const owndirDependencySpecs = [spec, ...plugins];
