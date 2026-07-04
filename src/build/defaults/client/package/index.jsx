@@ -17,11 +17,16 @@ import { BrowserRouter, useLocation, useNavigate, useSearchParams } from 'react-
 function ClientRouter ({ root }) {
   const location = useLocation();
   const {pathname} = location
-  console.log("OwndirRouter",  { location })
-
-  const mod = root.walk(pathname).module;
   document.querySelector('base').setAttribute('href', pathname);
 
+  // inject module classes onto the body
+  const fsNode = root.walk(pathname)
+  pathToModuleClasses(fsNode.absolutePath)
+    .then(classes => document.documentElement.className = classes.join(" "));
+
+  // console.log("ClientRouter", { location, pathname, root, fsNode, })
+
+  const mod = fsNode.module;
   if (mod.frame) {
   // this has to be structured as a "normal" function call in order to preserve `this`
     return mod.frame();
@@ -57,3 +62,25 @@ function initClient (directory) {
 
 
 
+
+async function moduleClass (modulePath) {
+  // note it's important that modulePath match what's emitted into "owndirModulePath" by assemble.js
+  // and that the output be identical to what is produced by client/bundler/esbuild scopeCssByModule
+  const encoder = new TextEncoder();
+  const data = encoder.encode(modulePath);
+  const hashBuffer = await window.crypto.subtle.digest('SHA-1', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return "o" + hashArray.map(byte => byte.toString(16).padStart(2, '0')).join('').slice(0,7);
+}
+
+async function pathToModuleClasses (path) {
+  // the root doesn't get a discriminator, because it's always applied
+  if (path == "/") {
+    return []
+  }
+  
+  path = path.slice(1); // remove the leading slash, otherwise split('/') gets squirrelly
+  const steps = path.split("/");
+  const subPaths = steps.map((step, index) => "/" + steps.slice(0,index+1).join("/"))
+  return Promise.all(subPaths.map(moduleClass))
+}

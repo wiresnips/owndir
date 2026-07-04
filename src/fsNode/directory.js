@@ -33,15 +33,11 @@ function Directory (root, Interface) {
 
   const DirProto = {
     walk: function (path) {
-      // console.log('WALK 1', this, path)
-
-      if (path.startsWith('/')) {
-        path = root + path
-      }
       const absPath = resolve(root, this.relativePath, path);
-      console.log('WALK 2', { fsNode: this, path, absPath, isPathAboveRoot: isPathAboveRoot(root, absPath) })
+      // console.log('WALK', { fsNode: this, path, absPath, isPathAboveRoot: isPathAboveRoot(root, absPath) })
 
       if (isPathAboveRoot(root, absPath)) {
+        console.error("requestedPathAboveRoot", {root, path, absPath})
         process.exit(1)
       }
 

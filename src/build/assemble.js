@@ -62,6 +62,7 @@ async function configurePackage (spec, moduleRelPath) {
     package.version = "0.0.0";
   }
 
+  package.owndirModulePath = "/" + moduleRelPath;
 
   await fsp.writeFile(packagePath, JSON.stringify(package, null, 2))
 }
