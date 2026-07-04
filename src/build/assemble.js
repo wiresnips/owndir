@@ -6,8 +6,7 @@
 const _ = require('lodash')
 const fs = require('fs')
 const fsp = require('fs/promises')
-const pathUtil = require('path')
-const { resolve, relative } = pathUtil
+const { resolve, relative, basename, extname } = require('path')
 const { exists, isDir, mkdir, dirChildren } = require('../utils/fs.js')
 
 
@@ -20,55 +19,51 @@ const genSym = (() => {
 // return a shitty blob of info that I can use to assemble a package
 
 async function dependencySpec (root, absPath, dst) {
+  // possible scenarios:
+  // 1- we are an empty directory, or non-javascript file
+  // 2- we are a naked file, /.owndir.jsx
+  // 3- we are a proper module, with a package.json
+  // 4- we are a half-assed module, /.owndir/index.jsx (no package.json given)
+
+  const symbol = genSym(relative(root, absPath).replaceAll(/[^\w]+/g, '_'));
+  const depPath = resolve(dst, 'dependencies', symbol);
+
   const pathIsDir = await isDir(absPath);
-  let pathIsJs = !pathIsDir && absPath.match(/\.jsx?$/);
+  const pathIsNakedJs = !pathIsDir && absPath.match(/\.jsx?$/);
+  const pathHasPackage = pathIsDir && await exists(resolve(absPath, "package.json"));
+  const pathHasIndex = pathIsDir && (await dirChildren(absPath)).find(child => child.match(/\/index\.jsx?$/i))
 
-  const pathChildren = pathIsDir ? await fsp.readdir(absPath) : [];
-  const isPackage = pathChildren && pathChildren.includes('package.json');
+  const emptyModule = (!pathIsNakedJs && !pathHasPackage && !pathHasIndex);
+  const includeDepJs = !emptyModule
+    ? `import { default as ${symbol} } from "${symbol}"`
+    : `const ${symbol} = {};`
 
-  if (!isPackage && !pathIsJs) {
-    // if we aren't directly indicating a js(x?) file, AND we aren't indicating a module,
-    // then maybe we'll look for index.js(x?) - if we don't have that, there's nothing to load
-    const innerTarget = pathChildren.find(file => file.match(/^index\.jsx?$/));
-    if (innerTarget) {
-      absPath = resolve(absPath, innerTarget);
-      pathIsJs = true;
-    }
-  }
-
-  const fullName = genSym(relative(root, absPath).replaceAll(/[^\w]+/g, '_'));
-
-  const spec = {
-    root,
+  return {
     path: absPath,
-    symbol: fullName,
-
-    req: (isPackage ? fullName :
-          pathIsJs ? absPath :
-          null),
-
-    depPath: (isPackage ? resolve(dst, 'dependencies', fullName) :
-              null)
+    symbol,
+    emptyModule,
+    depPath,
+    copyPathToIndex: pathIsNakedJs && resolve(depPath, `index.${extname(absPath)}`),
+    includeDepJs,
   }
-
-  return spec
 }
 
-async function ensureVersion (depPath) {
-  const path = resolve(depPath, "package.json");
-  const package = JSON.parse(await fsp.readFile(path));
+async function configurePackage (spec, moduleRelPath) {
+  const { depPath } = spec;
+  const packagePath = resolve(depPath, "package.json");
+
+  if (!(await exists(packagePath))) {
+    await fsp.writeFile(packagePath, "{}");
+  }
+
+  const package = JSON.parse(await fsp.readFile(packagePath));
 
   if (!package.version) {
-    package.version = "0.0.0"
-    await fsp.writeFile(path, JSON.stringify(package, null, 2));
+    package.version = "0.0.0";
   }
-}
 
 
-function requireSpecJs ({symbol, req}, path) {
-  return req
-    ? `import { default as ${symbol} } from ${JSON.stringify(req)}`
-    : `const ${symbol} = {};`
+  await fsp.writeFile(packagePath, JSON.stringify(package, null, 2))
 }
 
 
@@ -117,13 +112,22 @@ async function assemble (src, dst) {
       const owndirDependencySpecs = [spec, ...plugins];
 
       for (let spec of owndirDependencySpecs) {
-        jsFragments.push(requireSpecJs(spec, relPath));
+        jsFragments.push(spec.includeDepJs);
 
-        if (spec.depPath) {
-          await fsp.cp(spec.path, spec.depPath, { recursive: true });
-          await ensureVersion(spec.depPath);
-          dependencies[spec.symbol] = spec.depPath;
+        if (spec.emptyModule) {
+          continue;
         }
+
+        if (spec.copyPathToIndex) {
+          await mkdir(spec.depPath);
+          await fsp.cp(spec.path, spec.copyPathToIndex);
+        }
+        else {
+          await fsp.cp(spec.path, spec.depPath, { recursive: true });
+        }
+
+        await configurePackage(spec, relPath);
+        dependencies[spec.symbol] = spec.depPath;
       }
 
       jsFragments.push(`
