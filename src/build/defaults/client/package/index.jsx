@@ -47,8 +47,7 @@ function OwndirRouter ({ root }) {
     <BrowserRouter>
       <OwndirRouter root={directory} />
     </BrowserRouter>,
-    // document.getElementById('owndir-root')
-     document.getElementsByTagName("body")[0]
+    document.body
   );
 })()
 
