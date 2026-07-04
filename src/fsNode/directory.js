@@ -1,5 +1,5 @@
 // in the client, this requires a polyfill for the node globals
-const { resolve, relative, basename } = require('path')
+const { resolve, relative, isAbsolute, basename } = require('path')
 const { status, fsnErr } = require('./errors.js')
 
 
@@ -20,6 +20,10 @@ const decoder = (function () {
 })()
 
 
+function isPathAboveRoot (root, path) {
+  return relative(root, path).startsWith('..');
+}
+
 const InterfaceMethods = [
   "children", "delete", "info", "makeDir", "move", "read", "readAll", "sub", "touch", "write",
 ]
@@ -35,11 +39,15 @@ function Directory (root, Interface) {
         path = root + path
       }
       const absPath = resolve(root, this.relativePath, path);
-      // console.log('WALK 2', {fsNode: this, path, absPath})
+      console.log('WALK 2', { fsNode: this, path, absPath, isPathAboveRoot: isPathAboveRoot(root, absPath) })
 
-      return absPath.startsWith(root) 
-        ? Node(absPath, Interface) 
-        : Node(absPath, OutOfBounds())
+      if (isPathAboveRoot(root, absPath)) {
+        process.exit(1)
+      }
+
+      return isPathAboveRoot(root, absPath)
+        ? Node(absPath, OutOfBounds())
+        : Node(absPath, Interface) 
     },
 
     get parent() {
@@ -133,8 +141,7 @@ function Directory (root, Interface) {
     return node;
   }
 
-  // this feels stupid
-  return Node('/', Interface).walk;
+  return Node('', Interface);
 }
 
 

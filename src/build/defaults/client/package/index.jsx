@@ -6,8 +6,15 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { BrowserRouter, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
-function OwndirRouter ({ root }) {
+(async function () {
+  const directory = await fsInterface.init();
+  OwnDir.injectFsRoot(directory);
+  initClient(directory)
+})()
 
+
+
+function ClientRouter ({ root }) {
   const location = useLocation();
   const {pathname} = location
   console.log("OwndirRouter",  { location })
@@ -26,11 +33,8 @@ function OwndirRouter ({ root }) {
   </>
 }
 
-(async function () {
-  const FsInterface = await fsInterface.init();
-  OwnDir.injectFsInterface(FsInterface);
 
-  const directory = await FsInterface('/');
+function initClient (directory) {
   window.directory = directory;
 
   // inconsistencies arise with the server-side routing when you load a nested directory 
@@ -45,9 +49,11 @@ function OwndirRouter ({ root }) {
 
   ReactDOM.render(
     <BrowserRouter>
-      <OwndirRouter root={directory} />
+      <ClientRouter root={directory} />
     </BrowserRouter>,
     document.body
   );
-})()
+}
+
+
 

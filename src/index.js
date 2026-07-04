@@ -118,9 +118,8 @@ process.on('unhandledRejection', (error, promise) => {
   }
 
   const { OwnDir, Router } = require(serverDistPath);
-  const FsInterface = fsInterface.init(path);
-  OwnDir.injectFsInterface(FsInterface);
-  const fsNodeRoot = FsInterface('/');
+  const fsNodeRoot = fsInterface.init(path);
+  OwnDir.injectFsRoot(fsNodeRoot);
 
   // these arguments are bullshit, I have not discovered the interface yet
   // but I think (hope) I'm starting to converge towards something defensible
