@@ -44,8 +44,8 @@ export default {
     const [tests, setTests] = useState([]);
 
     useEffect(() => {
-      test_cssLoading.Tests(this.directory);
-      test_fsNode.Tests(this.directory);
+      test_cssLoading.Tests(this.directory.root);
+      test_fsNode.Tests(this.directory.root);
       runTests(setTests);
     }, [])
 
