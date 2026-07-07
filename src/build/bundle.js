@@ -13,8 +13,8 @@ const install = require('./yarn-install.js')
 const defaultBundlerServer = require('./defaults/server/bundler/index.js')
 const defaultBundlerClient = require('./defaults/client/bundler/index.js')
 
-async function bundle (path, buildDir, platform, forceBuild) {
-  // path       : target directory-tree for which the .owndir is being built
+async function bundle (root, buildDir, platform, forceBuild) {
+  // root       : target directory-tree for which the .owndir is being built
   // buildDir   : build artifacts are kept here
   // platform   : "client" or "server" - anything else is a mistake
   // forceBuild : if true, ignore the existing dist.js and rebuild
@@ -41,7 +41,7 @@ async function bundle (path, buildDir, platform, forceBuild) {
   // load the platform-bundler (custom or default)
   let bundler;
   const platformBundlerDir = resolve(platformDir, "bundler");
-  const customPlatformBundlerDir = resolve(path, ".owndir", "build", platform, "bundler");
+  const customPlatformBundlerDir = resolve(root, ".owndir", "build", platform, "bundler");
   if (await isDir(customPlatformBundlerDir)) {
     console.log(`using custom ${platform} bundler`)
     await fsp.cp(customPlatformBundlerDir, platformBundlerDir, {recursive: true});
@@ -60,7 +60,7 @@ async function bundle (path, buildDir, platform, forceBuild) {
 
   // copy the platform-package into <platformDir>/package, either from the default build OR from the custom build
   const platformPackageDir = resolve(platformDir, "package");
-  const customPlatformPackageDir = resolve(path, ".owndir", "build", platform, "package");
+  const customPlatformPackageDir = resolve(root, ".owndir", "build", platform, "package");
   if (await isDir(customPlatformPackageDir)) {
     // console.log(`using custom ${platform} package`)
     await fsp.cp(customPlatformPackageDir, platformPackageDir, {recursive: true});
@@ -73,7 +73,7 @@ async function bundle (path, buildDir, platform, forceBuild) {
 
   // copy the platform-statics into <platformDir>/static, either from the default build OR from the custom build
   const platformStaticDir = resolve(platformDir, "static");
-  const customPlatformStaticDir = resolve(path, ".owndir", "build", platform, "static");
+  const customPlatformStaticDir = resolve(root, ".owndir", "build", platform, "static");
   if (await isDir(customPlatformStaticDir)) {
     // console.log(`using custom ${platform} /static`)
     await fsp.cp(customPlatformStaticDir, platformStaticDir, {recursive: true});
@@ -100,7 +100,7 @@ async function bundle (path, buildDir, platform, forceBuild) {
   }
 
   // if present, copy any static assets 
-  const owndirStaticDir = resolve(path, ".owndir", "static");
+  const owndirStaticDir = resolve(root, ".owndir", "static");
   if (await isDir(platformStaticDir)) {
     await fsp.cp(platformStaticDir, owndirStaticDir, {dereference: true, recursive: true});
   }
