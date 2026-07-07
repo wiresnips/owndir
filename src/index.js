@@ -1,11 +1,12 @@
-const _ = require('lodash')
 const fs = require('fs')
 const fsp = require('fs/promises')
 const { resolve, relative } = require('path')
-
 const crypto = require('crypto')
 
+const _ = require('lodash')
 const express = require('express')
+const session = require('express-session');
+const  { default: open } = require('open');
 
 const { isDir, isFile } = require('./utils/fs.js')
 const assemble = require('./build/assemble.js')
@@ -117,6 +118,34 @@ process.on('unhandledRejection', (error, promise) => {
     })
   }
 
+  // see: https://github.com/expressjs/session#readme
+  app.use(session({
+    secret: crypto.randomBytes(64).toString('base64url'), // yes, this will invalidate sessions on server restart
+    resave: false,
+    saveUninitialized: false,
+    rolling: true,
+    cookie: { 
+      path: '/', 
+      httpOnly: false, 
+      secure: false,
+      maxAge: 259200000, // three days
+    }
+  }))
+
+  const authToken = crypto.randomBytes(64).toString('base64url');
+  app.use("/" + authToken, (req, res, next) => {
+    // console.log("AUTH!", { authToken, sessionID: req.sessionID, session: req.session, })
+    req.session.authenticated = true;
+    req.session.save();
+    res.redirect("/");
+  })
+  app.use((req, res, next) => {
+    if (!req.session.authenticated) {
+      return res.send("Session expired.\nRestart the server to initialize a new session.");
+    }
+    return next();
+  })
+
   const { OwnDir, Router } = require(serverDistPath);
   const fsNodeRoot = fsInterface.init(path);
   OwnDir.injectFsRoot(fsNodeRoot);
@@ -128,7 +157,20 @@ process.on('unhandledRejection', (error, promise) => {
   app.use(owndirRouter);
 
   const server = app.listen(args.port, args.host, () => {
-    console.log(`listening at ${JSON.stringify(server.address(), null, 2)}`)
+    const serverAddr = server.address();
+    console.log(`listening at ${JSON.stringify(serverAddr, null, 2)}`);
+
+    const {address, port, family} = serverAddr;
+    const loopbacks = ['::', '::1', '0.0.0.0', '127.0.0.1'];
+    const localAddress = (
+        loopbacks.includes(address) ? "localhost" : 
+        isIpv6(address) ? `[${address}]` :
+        address 
+    );
+
+    const authAddr = `http://${localAddress}:${port}/${authToken}`;
+    console.log(`Auth at: ${authAddr}`);
+    open(authAddr);
   })
 
   // in parallel, stand up the websocket 
