@@ -1,18 +1,15 @@
 const { OwnDir } = require('owndir.package');
-import fsInterface from "./fsNode/interface_bridge_ws_client.js"
-// import fsInterfaceWs from "./fsNode/interface_client_fsapi/index.js"
+import FsInterfaceWs from "./fsNode/interface_bridge_ws_client.js"
 
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { BrowserRouter, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
 (async function () {
-  const directory = await fsInterface.init();
-  OwnDir.injectFsRoot(directory);
-  initClient(directory)
+  const fsNodeRoot = await FsInterfaceWs();
+  OwnDir.injectFsRoot(fsNodeRoot);
+  initClient(fsNodeRoot)
 })()
-
-
 
 function ClientRouter ({ root }) {
   const location = useLocation();
@@ -39,8 +36,8 @@ function ClientRouter ({ root }) {
 }
 
 
-function initClient (directory) {
-  window.directory = directory;
+function initClient (fsNodeRoot) {
+  window.directory = fsNodeRoot;
 
   // inconsistencies arise with the server-side routing when you load a nested directory 
   // (index.html in the root-level /static), and I haven't found a clean solution
@@ -54,7 +51,7 @@ function initClient (directory) {
 
   ReactDOM.render(
     <BrowserRouter>
-      <ClientRouter root={directory} />
+      <ClientRouter root={fsNodeRoot} />
     </BrowserRouter>,
     document.body
   );

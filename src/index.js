@@ -11,7 +11,8 @@ const  { default: open } = require('open');
 const { isDir, isFile } = require('./utils/fs.js')
 const assemble = require('./build/assemble.js')
 const bundle = require('./build/bundle.js')
-const fsInterface = require('./fsNode/interface_server.js')
+
+const FsInterface = require('./fsNode/interface_server.js')
 const router = require('./fsNode/router.js')
 const { FsServer: ClientFsServerWs } = require('./fsNode/interface_bridge_ws_server.js')
 
@@ -39,11 +40,6 @@ var args = (require('yargs/yargs')(process.argv.slice(2))
   })
   .option('v', {
     alias: 'verbose',
-    default: false,
-    type: 'boolean'
-  })
-  .option('wrtc-proxy', {
-    description: 'Allow remote clients to proxy through this server over WebRTC',
     default: false,
     type: 'boolean'
   })
@@ -118,8 +114,18 @@ process.on('unhandledRejection', (error, promise) => {
     })
   }
 
+  if (!clientFsInterfaceWs) {
+    app.use((re, res, next) => {
+      const { upgrade } = req.headers
+      if (upgrade) {
+        return res.status(400).end();
+      }
+      next();
+    })
+  }
+
   // see: https://github.com/expressjs/session#readme
-  app.use(session({
+  const sessionMiddleware = session({
     secret: crypto.randomBytes(64).toString('base64url'), // yes, this will invalidate sessions on server restart
     resave: false,
     saveUninitialized: false,
@@ -130,7 +136,10 @@ process.on('unhandledRejection', (error, promise) => {
       secure: false,
       maxAge: 259200000, // three days
     }
-  }))
+  });
+
+
+  app.use(sessionMiddleware);
 
   const authToken = crypto.randomBytes(64).toString('base64url');
   app.use("/" + authToken, (req, res, next) => {
@@ -146,14 +155,18 @@ process.on('unhandledRejection', (error, promise) => {
     return next();
   })
 
+
+  const fsNodeRoot = FsInterface(path);
+
+  if (clientFsInterfaceHttp) {
+    app.use(fsNodeUrlMatcher, FsRouter(fsNodeRoot));
+  }
   const { OwnDir, Router } = require(serverDistPath);
-  const fsNodeRoot = fsInterface.init(path);
   OwnDir.injectFsRoot(fsNodeRoot);
 
   // these arguments are bullshit, I have not discovered the interface yet
   // but I think (hope) I'm starting to converge towards something defensible
   const owndirRouter = Router({ fsNodeRoot })
-
   app.use(owndirRouter);
 
   const server = app.listen(args.port, args.host, () => {
@@ -173,9 +186,10 @@ process.on('unhandledRejection', (error, promise) => {
     open(authAddr);
   })
 
-  // in parallel, stand up the websocket 
+
   if (clientFsInterfaceWs) {
-    ClientFsServerWs(server, fsNodeRoot);
+    ClientFsServerWs(server, sessionMiddleware, fsNodeRoot);
+  }
   }
 
 })()

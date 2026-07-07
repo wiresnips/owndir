@@ -11,7 +11,7 @@ const mime = require('mime');
 const { status, fsnErr } = require('./errors.js')
 
 const { Directory } = require('./directory.js')
-module.exports.init = (root) => Directory(root, Interface);
+module.exports = (root) => Directory(root, Interface);
 
 
 function canBeWriteData (maybeData) {

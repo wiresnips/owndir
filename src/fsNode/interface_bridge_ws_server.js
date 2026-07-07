@@ -22,10 +22,23 @@ Object.keys(METHODS).forEach(key => METHODS[METHODS[key]] = key)
 // not clear to me why I would ever need more than one of these
 const textEncoder = new TextEncoder();
 
-function FsServer (appServer, fsNodeRoot) {
+function FsServer (appServer, sessionMiddleware, fsNodeRoot) {
   console.log(new Date().getTime(), "LAUNCHING WEBSOCKETS FS-SERVER", {fsNodeRoot, "walk('')": fsNodeRoot.walk('')})
   
-  const server = new WebSocket.Server({server: appServer})
+  const server = new WebSocket.Server({noServer: true});
+
+  appServer.on('upgrade', (req, socket, head) => {
+    sessionMiddleware(req, {}, () => {
+      if (!req?.session?.authenticated) {
+        console.log('unauthenticated websocket upgrade request');
+        socket.write("HTTP/1.1 401 Unauthorized\r\n\r\n");
+        socket.destroy();
+        return;
+      }
+      console.log("connecting websocket websocket");
+      server.handleUpgrade(req, socket, head, ws => server.emit('connection', ws, req))
+    })
+  })
 
   server.on("error", function (error) {
     console.error("websocket FsServer error", error)

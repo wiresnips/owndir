@@ -5,7 +5,7 @@ const { QueueStream } = require('../utils/queue.js')
 const stream = require('stream')
 
 const { Directory } = require('./directory.js')
-module.exports.init = async () => Directory("/", await Interface());
+module.exports = async () => Directory("/", await Interface());
 
 
 function openSocket (url) {
